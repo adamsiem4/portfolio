@@ -1,3 +1,10 @@
+:root {
+	--color-background: #090b0c;
+	--color-text: #ffffff;
+	--color-accent: #08665f;
+	--page-gutter: 1.25rem;
+}
+
 *,
 *::before,
 *::after {
@@ -18,8 +25,8 @@ body {
 	min-height: 100vh;
 	font-family: "Raleway", sans-serif;
 	line-height: 1.5;
-	background-color: #090b0c;
-	color: #ffffff;
+	background-color: var(--color-background);
+	color: var(--color-text);
 }
 
 img,
@@ -49,4 +56,10 @@ a {
 ul,
 ol {
 	list-style: none;
+}
+
+@media (min-width: 48rem) {
+	:root {
+		--page-gutter: 2rem;
+	}
 }
