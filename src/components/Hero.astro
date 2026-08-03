@@ -1,12 +1,119 @@
 ---
 import KineticText from './KineticText.astro';
+
+const eyebrowText = 'Hi, my name is';
+const eyebrowCharacters = Array.from(eyebrowText);
 ---
 
 <section class="hero" id="home">
 	<div class="hero__content">
+		<p class="hero__eyebrow">
+			<span class="hero__eyebrow-accessible">{eyebrowText}</span>
+			<span class="hero__eyebrow-letters" aria-hidden="true" data-eyebrow-repel>
+				{eyebrowCharacters.map((character) => (
+					<span class="hero__eyebrow-letter" data-eyebrow-letter>
+						{character === ' ' ? '\u00a0' : character}
+					</span>
+				))}
+			</span>
+		</p>
 		<KineticText text="Adam Salicki" />
 	</div>
 </section>
+
+<script>
+	const eyebrow = document.querySelector<HTMLElement>('[data-eyebrow-repel]');
+	const letters = eyebrow
+		? Array.from(eyebrow.querySelectorAll<HTMLElement>('[data-eyebrow-letter]'))
+		: [];
+
+	if (eyebrow && letters.length > 0) {
+		const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+		const influenceRadius = 80;
+		const maximumOffset = 18;
+		const offsets = letters.map(() => ({ current: 0, target: 0 }));
+		let animationFrame: number | null = null;
+
+		const render = () => {
+			let settled = true;
+
+			offsets.forEach((offset, index) => {
+				offset.current += (offset.target - offset.current) * 0.2;
+
+				if (Math.abs(offset.target - offset.current) < 0.02) {
+					offset.current = offset.target;
+				} else {
+					settled = false;
+				}
+
+				letters[index].style.transform = `translate3d(${offset.current.toFixed(2)}px, 0, 0)`;
+			});
+
+			if (settled) {
+				animationFrame = null;
+				return;
+			}
+
+			animationFrame = requestAnimationFrame(render);
+		};
+
+		const requestRender = () => {
+			if (animationFrame === null) animationFrame = requestAnimationFrame(render);
+		};
+
+		const reset = (immediate = false) => {
+			offsets.forEach((offset, index) => {
+				offset.target = 0;
+
+				if (immediate) {
+					offset.current = 0;
+					letters[index].style.transform = '';
+				}
+			});
+
+			if (immediate) {
+				if (animationFrame !== null) cancelAnimationFrame(animationFrame);
+				animationFrame = null;
+				return;
+			}
+
+			requestRender();
+		};
+
+		eyebrow.addEventListener('pointermove', (event) => {
+			if (
+				!finePointer.matches ||
+				reducedMotion.matches ||
+				event.pointerType !== 'mouse'
+			) return;
+
+			const eyebrowBounds = eyebrow.getBoundingClientRect();
+			const eyebrowCenter = eyebrowBounds.left + eyebrowBounds.width / 2;
+
+			letters.forEach((letter, index) => {
+				const letterBounds = letter.getBoundingClientRect();
+				const letterCenter = letterBounds.left + letterBounds.width / 2 - offsets[index].current;
+				const distance = letterCenter - event.clientX;
+				const proximity = Math.max(0, 1 - Math.abs(distance) / influenceRadius);
+				const direction = Math.sign(distance) || (letterCenter < eyebrowCenter ? -1 : 1);
+
+				offsets[index].target = direction * maximumOffset * Math.pow(proximity, 1.5);
+			});
+
+			requestRender();
+		});
+
+		eyebrow.addEventListener('pointerleave', () => reset());
+		finePointer.addEventListener?.('change', () => {
+			if (!finePointer.matches) reset(true);
+		});
+		reducedMotion.addEventListener?.('change', () => {
+			if (reducedMotion.matches) reset(true);
+		});
+		window.addEventListener('blur', () => reset(true));
+	}
+</script>
 
 <style>
 	.hero {
@@ -21,5 +128,45 @@ import KineticText from './KineticText.astro';
 	.hero__content {
 		width: min(100%, 72rem);
 		min-width: 0;
+	}
+
+	.hero__eyebrow {
+		position: relative;
+		width: fit-content;
+		margin-bottom: 0.1rem;
+		color: var(--color-accent);
+		font-size: 1.5rem;
+		font-weight: 700;
+		line-height: 1.2;
+		letter-spacing: 0.1em;
+		white-space: nowrap;
+	}
+
+	.hero__eyebrow-letters {
+		display: inline-flex;
+	}
+
+	.hero__eyebrow-letter {
+		display: inline-block;
+		will-change: transform;
+	}
+
+	.hero__eyebrow-accessible {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hero__eyebrow-letter {
+			will-change: auto;
+		}
 	}
 </style>
