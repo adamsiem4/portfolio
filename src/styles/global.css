@@ -2,6 +2,11 @@
 	--color-background: #090b0c;
 	--color-text: #ffffff;
 	--color-accent: #08665f;
+	--glass-surface: rgba(255, 255, 255, 0.04);
+	--glass-surface-hover: rgba(255, 255, 255, 0.075);
+	--glass-border: rgba(255, 255, 255, 0.14);
+	--glass-highlight: rgba(255, 255, 255, 0.2);
+	--glass-shadow: rgba(0, 0, 0, 0.24);
 	--page-gutter: 1.25rem;
 }
 

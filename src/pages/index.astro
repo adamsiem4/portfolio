@@ -1,10 +1,19 @@
 ---
+import Contact from '../components/Contact.astro';
+import Footer from '../components/Footer.astro';
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import Navbar from '../components/Navbar.astro';
+import PlaceholderSection from '../components/PlaceholderSection.astro';
 ---
 
 <Layout title="Adam Salicki Portfolio">
 	<Navbar />
-	<Hero />
+	<main>
+		<Hero />
+		<PlaceholderSection id="about" label="About" />
+		<PlaceholderSection id="portfolio" label="Portfolio" />
+		<Contact />
+	</main>
+	<Footer />
 </Layout>

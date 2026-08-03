@@ -1,0 +1,86 @@
+---
+import { siteConfig } from '../config/site.js';
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+	<div class="site-footer__inner">
+		<p class="site-footer__copyright">
+			© <span data-current-year>{currentYear}</span> {siteConfig.name}
+		</p>
+
+		<a class="site-footer__top-link" href="#home">
+			Back to top
+			<span aria-hidden="true">↑</span>
+		</a>
+	</div>
+</footer>
+
+<script>
+	document.querySelectorAll<HTMLElement>('[data-current-year]').forEach((year) => {
+		year.textContent = String(new Date().getFullYear());
+	});
+</script>
+
+<style>
+	.site-footer {
+		padding: 1.5rem var(--page-gutter) 2rem;
+		border-block-start: 1px solid var(--glass-border);
+		background: var(--color-background);
+		font-family: "Open Sans", sans-serif;
+	}
+
+	.site-footer__inner {
+		display: flex;
+		width: min(100%, 72rem);
+		margin-inline: auto;
+		flex-direction: column-reverse;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.site-footer__copyright {
+		font-size: 0.875rem;
+		font-weight: 700;
+	}
+
+	.site-footer__top-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.6rem 0.85rem;
+		border: 1px solid var(--glass-border);
+		border-radius: 999px;
+		background: var(--glass-surface);
+		font-size: 0.875rem;
+		transition: background-color 180ms ease, transform 180ms ease;
+	}
+
+	.site-footer__top-link:hover {
+		background: var(--glass-surface-hover);
+		transform: translateY(-2px);
+	}
+
+	.site-footer__top-link:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 3px;
+	}
+
+	@media (min-width: 40rem) {
+		.site-footer {
+			padding-block: 2rem;
+		}
+
+		.site-footer__inner {
+			flex-direction: row;
+			justify-content: space-between;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.site-footer__top-link {
+			transition: none;
+		}
+	}
+</style>
