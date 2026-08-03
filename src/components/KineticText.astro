@@ -1,0 +1,46 @@
+---
+const { text = 'Adam Salicki' } = Astro.props;
+---
+
+<kinetic-text
+	class="kinetic-text"
+	data-text={text}
+	role="img"
+	aria-label={text}
+>
+	<span class="kinetic-text__fallback" aria-hidden="true">{text}</span>
+</kinetic-text>
+
+<script>
+	import '../scripts/kinetic-text.js';
+</script>
+
+<style>
+	.kinetic-text {
+		position: relative;
+		display: block;
+		width: 100%;
+		min-width: 0;
+		max-width: 100%;
+		height: clamp(12rem, 45vw, 25rem);
+		overflow: hidden;
+		background: var(--color-background);
+	}
+
+	.kinetic-text__fallback {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		color: #ffffff;
+		font-size: clamp(2.75rem, 13vw, 7rem);
+		font-weight: 800;
+		line-height: 0.95;
+		white-space: nowrap;
+		transition: opacity 150ms ease;
+	}
+
+	.kinetic-text[data-ready='true'] .kinetic-text__fallback {
+		opacity: 0;
+	}
+</style>
