@@ -1,4 +1,5 @@
 ---
+import { Mail } from '@lucide/astro';
 import { siteConfig } from '../config/site.js';
 
 const emailHref = `mailto:${siteConfig.contactEmail}`;
@@ -9,8 +10,10 @@ const emailHref = `mailto:${siteConfig.contactEmail}`;
 		<p class="contact__eyebrow">Contact</p>
 		<h2 id="contact-title">Get in touch</h2>
 		<a class="contact__email" href={emailHref}>
+			<span class="contact__email-icon" aria-hidden="true">
+				<Mail size={20} stroke-width={1.8} />
+			</span>
 			{siteConfig.contactEmail}
-			<span aria-hidden="true">↗</span>
 		</a>
 	</div>
 </section>
@@ -67,6 +70,12 @@ const emailHref = `mailto:${siteConfig.contactEmail}`;
 	.contact__email:hover {
 		background: rgba(255, 255, 255, 0.14);
 		transform: translateY(-2px);
+	}
+
+	.contact__email-icon {
+		display: grid;
+		flex: 0 0 auto;
+		place-items: center;
 	}
 
 	.contact__email:focus-visible {

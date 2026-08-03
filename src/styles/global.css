@@ -1,13 +1,41 @@
 :root {
+	color-scheme: dark;
 	--color-background: #090b0c;
 	--color-text: #ffffff;
+	--color-muted: rgba(255, 255, 255, 0.35);
 	--color-accent: #08665f;
 	--glass-surface: rgba(255, 255, 255, 0.04);
 	--glass-surface-hover: rgba(255, 255, 255, 0.075);
 	--glass-border: rgba(255, 255, 255, 0.14);
+	--glass-border-hover: rgba(255, 255, 255, 0.35);
 	--glass-highlight: rgba(255, 255, 255, 0.2);
+	--glass-highlight-hover: rgba(255, 255, 255, 0.4);
 	--glass-shadow: rgba(0, 0, 0, 0.24);
+	--glass-glow: rgba(255, 255, 255, 0.12);
+	--glass-gradient-start: rgba(255, 255, 255, 0.055);
+	--glass-button-gradient-end: rgba(255, 255, 255, 0.015);
+	--glass-menu-gradient-end: rgba(255, 255, 255, 0.018);
+	--glass-inset-bottom: rgba(255, 255, 255, 0.05);
 	--page-gutter: 1.25rem;
+}
+
+:root[data-theme='light'] {
+	color-scheme: light;
+	--color-background: #f4f3ef;
+	--color-text: #111415;
+	--color-muted: rgba(17, 20, 21, 0.45);
+	--glass-surface: rgba(255, 255, 255, 0.64);
+	--glass-surface-hover: rgba(17, 20, 21, 0.06);
+	--glass-border: rgba(17, 20, 21, 0.14);
+	--glass-border-hover: rgba(17, 20, 21, 0.26);
+	--glass-highlight: rgba(255, 255, 255, 0.9);
+	--glass-highlight-hover: rgba(255, 255, 255, 0.98);
+	--glass-shadow: rgba(17, 20, 21, 0.14);
+	--glass-glow: rgba(255, 255, 255, 0.78);
+	--glass-gradient-start: rgba(255, 255, 255, 0.48);
+	--glass-button-gradient-end: rgba(255, 255, 255, 0.14);
+	--glass-menu-gradient-end: rgba(255, 255, 255, 0.18);
+	--glass-inset-bottom: rgba(17, 20, 21, 0.05);
 }
 
 *,
@@ -23,6 +51,7 @@
 
 html {
 	scroll-behavior: smooth;
+	background-color: var(--color-background);
 }
 
 body {
@@ -32,6 +61,31 @@ body {
 	line-height: 1.5;
 	background-color: var(--color-background);
 	color: var(--color-text);
+	transition: background-color 220ms ease, color 220ms ease;
+}
+
+::view-transition-image-pair(root) {
+	isolation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+	z-index: 1;
+}
+
+::view-transition-new(root) {
+	z-index: 2;
+}
+
+:root[data-theme-transition='true'] *,
+:root[data-theme-transition='true'] *::before,
+:root[data-theme-transition='true'] *::after {
+	transition: none !important;
 }
 
 img,
@@ -66,5 +120,11 @@ ol {
 @media (min-width: 48rem) {
 	:root {
 		--page-gutter: 2rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body {
+		transition: none;
 	}
 }

@@ -75,6 +75,7 @@ export class KineticText {
 		this.tick = this.tick.bind(this);
 		this.handleVisibility = this.handleVisibility.bind(this);
 		this.handleMotionPreference = this.handleMotionPreference.bind(this);
+		this.handleThemeChange = this.handleThemeChange.bind(this);
 
 		this.applyColors();
 		this.motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -91,6 +92,7 @@ export class KineticText {
 		this.intersectionObserver.observe(this.stage);
 
 		document.addEventListener('visibilitychange', this.handleVisibility);
+		document.addEventListener('site-theme-change', this.handleThemeChange);
 		this.resize();
 		this.syncAnimation();
 
@@ -329,12 +331,21 @@ export class KineticText {
 		this.syncAnimation();
 	}
 
+	handleThemeChange() {
+		this.params.paper = cssToken('--color-background', DEFAULT_PARAMS.paper);
+		this.params.ink = cssToken('--color-text', DEFAULT_PARAMS.ink);
+		this.params.accent = cssToken('--color-accent', DEFAULT_PARAMS.accent);
+		this.applyColors();
+		this.renderFrame();
+	}
+
 	destroy() {
 		this.stop();
 		this.resizeObserver.disconnect();
 		this.intersectionObserver.disconnect();
 		this.motionPreference.removeEventListener?.('change', this.handleMotionPreference);
 		document.removeEventListener('visibilitychange', this.handleVisibility);
+		document.removeEventListener('site-theme-change', this.handleThemeChange);
 		this.canvas.remove();
 	}
 }
@@ -346,7 +357,7 @@ class KineticTextElement extends HTMLElement {
 		this.engine = new KineticText(this, {
 			text: this.dataset.text || DEFAULT_PARAMS.text,
 			paper: cssToken('--color-background', DEFAULT_PARAMS.paper),
-			ink: '#ffffff',
+			ink: cssToken('--color-text', DEFAULT_PARAMS.ink),
 			accent: cssToken('--color-accent', DEFAULT_PARAMS.accent),
 		});
 	}

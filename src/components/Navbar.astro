@@ -1,4 +1,6 @@
 ---
+import { Menu, Moon, Sun, X } from '@lucide/astro';
+
 const links = [
 	{ label: 'About', href: '#about' },
 	{ label: 'Portfolio', href: '#portfolio' },
@@ -12,15 +14,18 @@ const links = [
 			<button
 				class="glass-button mode-toggle"
 				type="button"
-				aria-label="Light mode coming soon"
-				title="Light mode coming soon"
+				aria-label="Switch to light mode"
+				title="Switch to light mode"
 				data-theme-toggle
-				disabled
 			>
-				<svg class="mode-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
-					<circle cx="12" cy="12" r="3.5"></circle>
-					<path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.28 5.28l1.42 1.42M17.3 17.3l1.42 1.42M18.72 5.28 17.3 6.7M6.7 17.3l-1.42 1.42"></path>
-				</svg>
+				<span class="mode-toggle__icon" aria-hidden="true">
+					<span class="mode-toggle__glyph mode-toggle__glyph--sun">
+						<Sun size={20} stroke-width={1.7} />
+					</span>
+					<span class="mode-toggle__glyph mode-toggle__glyph--moon">
+						<Moon size={20} stroke-width={1.7} />
+					</span>
+				</span>
 			</button>
 
 			<button
@@ -32,9 +37,12 @@ const links = [
 			>
 				<span class="sr-only">Toggle navigation</span>
 				<span class="menu-toggle__icon" aria-hidden="true">
-					<span class="menu-toggle__line"></span>
-					<span class="menu-toggle__line"></span>
-					<span class="menu-toggle__line"></span>
+					<span class="menu-toggle__glyph menu-toggle__glyph--menu">
+						<Menu size={20} stroke-width={1.8} />
+					</span>
+					<span class="menu-toggle__glyph menu-toggle__glyph--close">
+						<X size={20} stroke-width={1.8} />
+					</span>
 				</span>
 			</button>
 		</div>
@@ -49,8 +57,131 @@ const links = [
 
 <script>
 	const navbar = document.querySelector<HTMLElement>('[data-navbar]');
+	const root = document.documentElement;
+	const themeToggle = navbar?.querySelector<HTMLButtonElement>('[data-theme-toggle]');
 	const menuToggle = navbar?.querySelector<HTMLButtonElement>('[data-menu-toggle]');
 	const menu = navbar?.querySelector<HTMLElement>('[data-navigation-menu]');
+	const themeColor = document.querySelector<HTMLMetaElement>('[data-theme-color]');
+	const themeStorageKey = root.dataset.themeStorageKey || 'portfolio-theme';
+	const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+	type Theme = 'dark' | 'light';
+	type ThemeViewTransition = {
+		ready: Promise<void>;
+		finished: Promise<void>;
+		skipTransition: () => void;
+	};
+	type ThemeDocument = Document & {
+		startViewTransition?: (update: () => void) => ThemeViewTransition;
+	};
+
+	const themeDocument = document as ThemeDocument;
+	let themeTransitionRunning = false;
+	let queuedTheme: Theme | null = null;
+	let activeThemeAnimation: Animation | null = null;
+	let activeViewTransition: ThemeViewTransition | null = null;
+
+	const getTheme = (): Theme => root.dataset.theme === 'light' ? 'light' : 'dark';
+
+	const updateThemeControl = (theme: Theme) => {
+		const nextTheme = theme === 'dark' ? 'light' : 'dark';
+		const label = `Switch to ${nextTheme} mode`;
+		themeToggle?.setAttribute('aria-label', label);
+		themeToggle?.setAttribute('title', label);
+	};
+
+	const setTheme = (theme: Theme, persist = true) => {
+		root.dataset.theme = theme;
+		updateThemeControl(theme);
+
+		const backgroundColor = getComputedStyle(root)
+			.getPropertyValue('--color-background')
+			.trim();
+		if (backgroundColor) themeColor?.setAttribute('content', backgroundColor);
+
+		if (persist) {
+			try {
+				localStorage.setItem(themeStorageKey, theme);
+			} catch {
+				// Theme switching still works when storage is unavailable.
+			}
+		}
+
+		document.dispatchEvent(new CustomEvent('site-theme-change', { detail: { theme } }));
+	};
+
+	const animateThemeChange = async (theme: Theme) => {
+		if (theme === getTheme() || themeTransitionRunning) return;
+
+		if (
+			!themeToggle ||
+			!themeDocument.startViewTransition ||
+			motionPreference.matches ||
+			document.visibilityState !== 'visible'
+		) {
+			setTheme(theme);
+			return;
+		}
+
+		themeTransitionRunning = true;
+		themeToggle.setAttribute('aria-busy', 'true');
+		root.dataset.themeTransition = 'true';
+		let themeApplied = false;
+		const bounds = themeToggle.getBoundingClientRect();
+		const originX = bounds.left + bounds.width / 2;
+		const originY = bounds.top + bounds.height / 2;
+		const radius = Math.ceil(Math.hypot(
+			Math.max(originX, window.innerWidth - originX),
+			Math.max(originY, window.innerHeight - originY),
+		)) + 1;
+
+		try {
+			const transition = themeDocument.startViewTransition(() => {
+				setTheme(theme);
+				themeApplied = true;
+			});
+			activeViewTransition = transition;
+
+			await transition.ready;
+
+			const animation = root.animate(
+				{
+					clipPath: [
+						`circle(0px at ${originX}px ${originY}px)`,
+						`circle(${radius}px at ${originX}px ${originY}px)`,
+					],
+				},
+				{
+					duration: 650,
+					easing: 'cubic-bezier(0.76, 0, 0.24, 1)',
+					fill: 'both',
+					pseudoElement: '::view-transition-new(root)',
+				},
+			);
+			activeThemeAnimation = animation;
+			await animation.finished;
+		} catch {
+			activeViewTransition?.skipTransition();
+			if (!themeApplied) setTheme(theme);
+		} finally {
+			try {
+				await activeViewTransition?.finished;
+			} catch {
+				// Cleanup still runs if the browser aborts the visual transition.
+			}
+			activeThemeAnimation = null;
+			activeViewTransition = null;
+			delete root.dataset.themeTransition;
+			themeToggle.removeAttribute('aria-busy');
+			themeTransitionRunning = false;
+
+			const externalTheme = queuedTheme;
+			queuedTheme = null;
+			if (externalTheme && externalTheme !== getTheme()) {
+				setTheme(externalTheme, false);
+			}
+		}
+	};
 
 	const setMenuState = (isOpen: boolean) => {
 		menuToggle?.setAttribute('aria-expanded', String(isOpen));
@@ -59,6 +190,29 @@ const links = [
 
 	menuToggle?.addEventListener('click', () => {
 		setMenuState(menuToggle.getAttribute('aria-expanded') !== 'true');
+	});
+
+	updateThemeControl(getTheme());
+
+	themeToggle?.addEventListener('click', () => {
+		void animateThemeChange(getTheme() === 'dark' ? 'light' : 'dark');
+	});
+
+	window.addEventListener('storage', (event) => {
+		if (event.key !== themeStorageKey) return;
+		const storedTheme: Theme = event.newValue === 'light' ? 'light' : 'dark';
+		if (themeTransitionRunning) {
+			queuedTheme = storedTheme;
+			return;
+		}
+		if (storedTheme !== getTheme()) setTheme(storedTheme, false);
+	});
+
+	motionPreference.addEventListener?.('change', (event) => {
+		if (event.matches && themeTransitionRunning) {
+			activeThemeAnimation?.cancel();
+			activeViewTransition?.skipTransition();
+		}
 	});
 
 	menu?.querySelectorAll('a').forEach((link) => {
@@ -109,13 +263,13 @@ const links = [
 		border: 1px solid var(--glass-border);
 		border-radius: 50%;
 		background:
-			radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), transparent 42%),
-			linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015)),
+			radial-gradient(circle at 30% 20%, var(--glass-glow), transparent 42%),
+			linear-gradient(145deg, var(--glass-gradient-start), var(--glass-button-gradient-end)),
 			var(--glass-surface);
 		color: var(--color-text);
 		box-shadow:
 			inset 0 1px 0 var(--glass-highlight),
-			inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+			inset 0 -1px 0 var(--glass-inset-bottom),
 			0 10px 24px var(--glass-shadow);
 		backdrop-filter: blur(16px) saturate(160%);
 		-webkit-backdrop-filter: blur(16px) saturate(160%);
@@ -123,54 +277,82 @@ const links = [
 			background-color 180ms ease,
 			border-color 180ms ease,
 			box-shadow 180ms ease,
+			color 180ms ease,
 			transform 180ms ease;
 	}
 
 	.glass-button:hover:not(:disabled),
 	.menu-toggle[aria-expanded='true'] {
-		border-color: rgba(255, 255, 255, 0.35);
+		border-color: var(--glass-border-hover);
 		background-color: var(--glass-surface-hover);
 		box-shadow:
-			inset 0 1px 0 rgba(255, 255, 255, 0.4),
+			inset 0 1px 0 var(--glass-highlight-hover),
 			0 12px 28px var(--glass-shadow);
 		transform: translateY(-1px);
 	}
 
-	.mode-toggle:disabled {
-		cursor: default;
-		opacity: 1;
+	.mode-toggle__icon {
+		position: relative;
+		display: block;
+		width: 1.25rem;
+		height: 1.25rem;
 	}
 
-	.mode-toggle__icon {
-		width: 1.25rem;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 1.7;
-		stroke-linecap: round;
+	.mode-toggle__glyph {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		transition:
+			opacity 160ms ease,
+			transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+
+	.mode-toggle__glyph--moon {
+		opacity: 0;
+		transform: rotate(-45deg) scale(0.75);
+	}
+
+	:global(html[data-theme='light']) .mode-toggle__glyph--sun {
+		opacity: 0;
+		transform: rotate(45deg) scale(0.75);
+	}
+
+	:global(html[data-theme='light']) .mode-toggle__glyph--moon {
+		opacity: 1;
+		transform: rotate(0) scale(1);
 	}
 
 	.menu-toggle__icon {
-		display: grid;
+		position: relative;
+		display: block;
 		width: 1.25rem;
-		gap: 0.25rem;
+		height: 1.25rem;
 	}
 
-	.menu-toggle__line {
-		height: 2px;
-		background: currentColor;
-		transition: opacity 150ms ease, transform 150ms ease;
+	.menu-toggle__glyph {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		transition:
+			opacity 160ms ease,
+			transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 	}
 
-	.menu-toggle[aria-expanded='true'] .menu-toggle__line:first-child {
-		transform: translateY(6px) rotate(45deg);
-	}
-
-	.menu-toggle[aria-expanded='true'] .menu-toggle__line:nth-child(2) {
+	.menu-toggle__glyph--close {
 		opacity: 0;
+		transform: rotate(-45deg) scale(0.75);
 	}
 
-	.menu-toggle[aria-expanded='true'] .menu-toggle__line:last-child {
-		transform: translateY(-6px) rotate(-45deg);
+	.menu-toggle[aria-expanded='true'] .menu-toggle__glyph--menu {
+		opacity: 0;
+		transform: rotate(45deg) scale(0.75);
+	}
+
+	.menu-toggle[aria-expanded='true'] .menu-toggle__glyph--close {
+		opacity: 1;
+		transform: rotate(0) scale(1);
 	}
 
 	.nav-links {
@@ -185,7 +367,7 @@ const links = [
 		border: 1px solid var(--glass-border);
 		border-radius: 1.25rem;
 		background:
-			linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+			linear-gradient(145deg, var(--glass-gradient-start), var(--glass-menu-gradient-end)),
 			var(--glass-surface);
 		box-shadow:
 			inset 0 1px 0 var(--glass-highlight),
@@ -273,7 +455,8 @@ const links = [
 
 	@media (prefers-reduced-motion: reduce) {
 		.nav-links,
-		.menu-toggle__line {
+		.mode-toggle__glyph,
+		.menu-toggle__glyph {
 			transition: none;
 		}
 	}

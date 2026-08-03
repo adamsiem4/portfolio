@@ -25,6 +25,7 @@ const { text = 'Adam Salicki' } = Astro.props;
 		height: clamp(12rem, 45vw, 25rem);
 		overflow: hidden;
 		background: var(--color-background);
+		transition: background-color 220ms ease;
 	}
 
 	.kinetic-text__fallback {
@@ -32,7 +33,7 @@ const { text = 'Adam Salicki' } = Astro.props;
 		inset: 0;
 		display: grid;
 		place-items: center;
-		color: #ffffff;
+		color: var(--color-text);
 		font-size: clamp(2.75rem, 13vw, 7rem);
 		font-weight: 800;
 		line-height: 0.95;
@@ -42,5 +43,10 @@ const { text = 'Adam Salicki' } = Astro.props;
 
 	.kinetic-text[data-ready='true'] .kinetic-text__fallback {
 		opacity: 0;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.kinetic-text {
+			transition: none;
+		}
 	}
 </style>

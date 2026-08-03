@@ -2,13 +2,13 @@
 import '../styles/global.css';
 
 const {
-  title = 'Adam Salicki Portfolio',
+  title = 'Adam Salicki',
   description = 'Portfolio',
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="pl">
+<html lang="en" data-theme="dark" data-theme-storage-key="portfolio-theme">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -19,7 +19,26 @@ const {
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#090B0C" />
+    <meta name="theme-color" content="#090b0c" data-theme-color />
+
+    <script is:inline>
+      (() => {
+        const root = document.documentElement;
+        const storageKey = root.dataset.themeStorageKey || 'portfolio-theme';
+        let theme = 'dark';
+
+        try {
+          theme = localStorage.getItem(storageKey) === 'light' ? 'light' : 'dark';
+        } catch {
+          // Dark mode remains the safe default when storage is unavailable.
+        }
+
+        root.dataset.theme = theme;
+        document
+          .querySelector('[data-theme-color]')
+          ?.setAttribute('content', theme === 'light' ? '#f4f3ef' : '#090b0c');
+      })();
+    </script>
 
     <title>{title}</title>
   </head>
