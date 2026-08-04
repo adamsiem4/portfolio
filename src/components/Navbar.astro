@@ -90,9 +90,9 @@ const links = [
 	const themeToggle = navbar?.querySelector<HTMLButtonElement>('[data-theme-toggle]');
 	const menuToggle = navbar?.querySelector<HTMLButtonElement>('[data-menu-toggle]');
 	const menu = navbar?.querySelector<HTMLElement>('[data-navigation-menu]');
-	const themeColor = document.querySelector<HTMLMetaElement>('[data-theme-color]');
 	const themeStorageKey = root.dataset.themeStorageKey || 'portfolio-theme';
 	const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const colorPreference = window.matchMedia('(prefers-color-scheme: light)');
 
 	type Theme = 'dark' | 'light';
 	type ThemeViewTransition = {
@@ -109,8 +109,13 @@ const links = [
 	let queuedTheme: Theme | null = null;
 	let activeThemeAnimation: Animation | null = null;
 	let activeViewTransition: ThemeViewTransition | null = null;
+	let activeThemeCover: HTMLSpanElement | null = null;
+	let followsSystem = root.dataset.themePreference !== 'user';
 
 	const getTheme = (): Theme => root.dataset.theme === 'light' ? 'light' : 'dark';
+	const getSystemTheme = (): Theme => colorPreference.matches ? 'light' : 'dark';
+	const parseStoredTheme = (value: string | null): Theme | null =>
+		value === 'light' || value === 'dark' ? value : null;
 
 	const updateThemeControl = (theme: Theme) => {
 		const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -123,12 +128,10 @@ const links = [
 		root.dataset.theme = theme;
 		updateThemeControl(theme);
 
-		const backgroundColor = getComputedStyle(root)
-			.getPropertyValue('--color-background')
-			.trim();
-		if (backgroundColor) themeColor?.setAttribute('content', backgroundColor);
-
 		if (persist) {
+			followsSystem = false;
+			root.dataset.themePreference = 'user';
+
 			try {
 				localStorage.setItem(themeStorageKey, theme);
 			} catch {
@@ -144,7 +147,6 @@ const links = [
 
 		if (
 			!themeToggle ||
-			!themeDocument.startViewTransition ||
 			motionPreference.matches ||
 			document.visibilityState !== 'visible'
 		) {
@@ -163,32 +165,64 @@ const links = [
 			Math.max(originX, window.innerWidth - originX),
 			Math.max(originY, window.innerHeight - originY),
 		)) + 1;
+		root.style.setProperty('--theme-wave-x', `${originX}px`);
+		root.style.setProperty('--theme-wave-y', `${originY}px`);
+		root.style.setProperty('--theme-wave-radius', `${radius}px`);
 
 		try {
-			const transition = themeDocument.startViewTransition(() => {
+			if (themeDocument.startViewTransition) {
+				const transition = themeDocument.startViewTransition(() => {
+					setTheme(theme);
+					themeApplied = true;
+				});
+				activeViewTransition = transition;
+
+				await transition.ready;
+				await transition.finished;
+			} else {
+				const cover = document.createElement('span');
+				cover.className = 'theme-transition-cover';
+				cover.dataset.theme = theme;
+				cover.setAttribute('aria-hidden', 'true');
+				document.body.append(cover);
+				activeThemeCover = cover;
+
+				const coverPage = cover.animate(
+					{
+						clipPath: [
+							`circle(0 at ${originX}px ${originY}px)`,
+							`circle(${radius}px at ${originX}px ${originY}px)`,
+						],
+					},
+					{
+						duration: 500,
+						easing: 'cubic-bezier(0.76, 0, 0.24, 1)',
+						fill: 'forwards',
+					},
+				);
+				activeThemeAnimation = coverPage;
+				await coverPage.finished;
+
+				cover.style.clipPath = `circle(${radius}px at ${originX}px ${originY}px)`;
+				coverPage.cancel();
+				activeThemeAnimation = null;
 				setTheme(theme);
 				themeApplied = true;
-			});
-			activeViewTransition = transition;
+				await new Promise<void>((resolve) => {
+					requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+				});
 
-			await transition.ready;
-
-			const animation = root.animate(
-				{
-					clipPath: [
-						`circle(0px at ${originX}px ${originY}px)`,
-						`circle(${radius}px at ${originX}px ${originY}px)`,
-					],
-				},
-				{
-					duration: 650,
-					easing: 'cubic-bezier(0.76, 0, 0.24, 1)',
-					fill: 'both',
-					pseudoElement: '::view-transition-new(root)',
-				},
-			);
-			activeThemeAnimation = animation;
-			await animation.finished;
+				const revealPage = cover.animate(
+					{ opacity: [1, 0] },
+					{
+						duration: 150,
+						easing: 'cubic-bezier(0, 0, 0.2, 1)',
+						fill: 'forwards',
+					},
+				);
+				activeThemeAnimation = revealPage;
+				await revealPage.finished;
+			}
 		} catch {
 			activeViewTransition?.skipTransition();
 			if (!themeApplied) setTheme(theme);
@@ -198,8 +232,14 @@ const links = [
 			} catch {
 				// Cleanup still runs if the browser aborts the visual transition.
 			}
+			activeThemeAnimation?.cancel();
 			activeThemeAnimation = null;
 			activeViewTransition = null;
+			activeThemeCover?.remove();
+			activeThemeCover = null;
+			root.style.removeProperty('--theme-wave-x');
+			root.style.removeProperty('--theme-wave-y');
+			root.style.removeProperty('--theme-wave-radius');
 			delete root.dataset.themeTransition;
 			themeToggle.removeAttribute('aria-busy');
 			themeTransitionRunning = false;
@@ -224,17 +264,37 @@ const links = [
 	updateThemeControl(getTheme());
 
 	themeToggle?.addEventListener('click', () => {
+		if (themeTransitionRunning) return;
+		followsSystem = false;
+		root.dataset.themePreference = 'user';
+		queuedTheme = null;
 		void animateThemeChange(getTheme() === 'dark' ? 'light' : 'dark');
 	});
 
 	window.addEventListener('storage', (event) => {
-		if (event.key !== themeStorageKey) return;
-		const storedTheme: Theme = event.newValue === 'light' ? 'light' : 'dark';
+		if (event.key !== themeStorageKey && event.key !== null) return;
+
+		const storedTheme = parseStoredTheme(event.newValue);
+		followsSystem = storedTheme === null;
+		root.dataset.themePreference = followsSystem ? 'system' : 'user';
+		const nextTheme = storedTheme ?? getSystemTheme();
+
 		if (themeTransitionRunning) {
-			queuedTheme = storedTheme;
+			queuedTheme = nextTheme;
 			return;
 		}
-		if (storedTheme !== getTheme()) setTheme(storedTheme, false);
+		if (nextTheme !== getTheme()) setTheme(nextTheme, false);
+	});
+
+	colorPreference.addEventListener?.('change', (event) => {
+		if (!followsSystem) return;
+
+		const nextTheme: Theme = event.matches ? 'light' : 'dark';
+		if (themeTransitionRunning) {
+			queuedTheme = nextTheme;
+			return;
+		}
+		if (nextTheme !== getTheme()) setTheme(nextTheme, false);
 	});
 
 	motionPreference.addEventListener?.('change', (event) => {

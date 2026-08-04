@@ -42,7 +42,12 @@ const structuredData = {
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark" data-theme-storage-key="portfolio-theme">
+<html
+  lang="en"
+  data-theme="dark"
+  data-theme-preference="system"
+  data-theme-storage-key="portfolio-theme"
+>
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -50,6 +55,7 @@ const structuredData = {
       content="width=device-width, initial-scale=1"
     />
     <meta name="description" content={description} />
+    <meta name="keywords" content={siteConfig.seoKeywords.join(', ')} />
     <meta name="robots" content={siteConfig.robots} />
     <meta name="author" content={siteConfig.authorName} />
     <meta name="publisher" content={siteConfig.authorName} />
@@ -66,25 +72,33 @@ const structuredData = {
     <meta name="twitter:description" content={description} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#090b0c" data-theme-color />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content={siteConfig.authorName} />
+    <meta name="theme-color" content={siteConfig.themeColor} />
 
     <script is:inline>
       (() => {
         const root = document.documentElement;
         const storageKey = root.dataset.themeStorageKey || 'portfolio-theme';
-        let theme = 'dark';
+        let storedTheme = null;
 
         try {
-          theme = localStorage.getItem(storageKey) === 'light' ? 'light' : 'dark';
+          const value = localStorage.getItem(storageKey);
+          storedTheme = value === 'light' || value === 'dark' ? value : null;
         } catch {
-          // Dark mode remains the safe default when storage is unavailable.
+          // System appearance remains available when storage is unavailable.
         }
 
+        const systemTheme = window.matchMedia?.('(prefers-color-scheme: light)').matches
+          ? 'light'
+          : 'dark';
+        const theme = storedTheme || systemTheme;
+
         root.dataset.theme = theme;
-        document
-          .querySelector('[data-theme-color]')
-          ?.setAttribute('content', theme === 'light' ? '#f4f3ef' : '#090b0c');
+        root.dataset.themePreference = storedTheme ? 'user' : 'system';
       })();
     </script>
 
