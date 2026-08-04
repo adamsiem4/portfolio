@@ -2,11 +2,43 @@
 import '../styles/global.css';
 import { siteConfig } from '../config/site.js';
 
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+}
+
 const {
   title = siteConfig.seoTitle,
   description = siteConfig.seoDescription,
   canonical = siteConfig.siteUrl,
-} = Astro.props;
+}: Props = Astro.props;
+
+const canonicalUrl = new URL(canonical, siteConfig.siteUrl).toString();
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: `${siteConfig.authorName} Portfolio`,
+      url: siteConfig.siteUrl,
+      description,
+      inLanguage: 'en',
+      publisher: {
+        '@type': 'Person',
+        name: siteConfig.authorName,
+        url: siteConfig.siteUrl,
+      },
+    },
+    {
+      '@type': 'Person',
+      name: siteConfig.authorName,
+      url: siteConfig.siteUrl,
+      email: siteConfig.contactEmail,
+      sameAs: [siteConfig.githubUrl, siteConfig.linkedinUrl],
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -18,7 +50,20 @@ const {
       content="width=device-width, initial-scale=1"
     />
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={siteConfig.robots} />
+    <meta name="author" content={siteConfig.authorName} />
+    <meta name="publisher" content={siteConfig.authorName} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={`${siteConfig.authorName} Portfolio`} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
@@ -42,6 +87,12 @@ const {
           ?.setAttribute('content', theme === 'light' ? '#f4f3ef' : '#090b0c');
       })();
     </script>
+
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(structuredData)}
+    ></script>
 
     <title>{title}</title>
   </head>
