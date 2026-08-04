@@ -1,0 +1,25 @@
+---
+const { id, text } = Astro.props;
+---
+
+<h2
+	id={id}
+	aria-label={text}
+	data-scramble-heading
+	data-scramble-text={text}
+>
+	{text}
+</h2>
+
+<script>
+	import '../scripts/scramble-heading.js';
+</script>
+
+<style>
+	h2 {
+		font-size: clamp(3.5rem, 16vw, 7rem);
+		font-weight: 800;
+		line-height: 0.88;
+		letter-spacing: -0.055em;
+	}
+</style>

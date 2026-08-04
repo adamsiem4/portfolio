@@ -1,0 +1,297 @@
+---
+import { Image } from 'astro:assets';
+import { ArrowUpRight } from '@lucide/astro';
+import { siGithub, siGitlab } from 'simple-icons';
+
+const {
+	title,
+	description,
+	href,
+	sourceHref,
+	sourcePrivate = false,
+	sourceProvider = 'github',
+	image,
+	imageAlt,
+	technologies = [],
+} = Astro.props;
+
+const source = sourceProvider === 'gitlab'
+	? { icon: siGitlab, name: 'GitLab' }
+	: { icon: siGithub, name: 'GitHub' };
+---
+
+<article class="project-card">
+	<a
+		class="project-card__primary-link"
+		href={href}
+		target="_blank"
+		rel="noopener noreferrer"
+		aria-label={`Open ${title} live website in a new tab`}
+	>
+		<span class="project-card__sr-only">View live project</span>
+	</a>
+
+	<div class="project-card__media">
+		<Image
+			class="project-card__image"
+			src={image}
+			alt={imageAlt}
+			layout="full-width"
+			quality="high"
+		/>
+	</div>
+
+	<div class="project-card__details">
+		<div class="project-card__copy">
+			<p class="project-card__label">Live website</p>
+			<h3>{title}</h3>
+			<p class="project-card__description">{description}</p>
+
+			{technologies.length > 0 && (
+				<ul class="project-card__stack" aria-label={`${title} technology stack`}>
+					{technologies.map((technology) => <li>{technology}</li>)}
+				</ul>
+			)}
+		</div>
+
+		<div class="project-card__actions">
+			{sourceHref && (sourcePrivate ? (
+				<span
+					class="project-card__source project-card__source--disabled"
+					role="link"
+					aria-disabled="true"
+					aria-label={`Private ${source.name} source repository`}
+					title={`Private ${source.name} repository`}
+				>
+					<svg
+						class="project-card__source-icon"
+						viewBox="0 0 24 24"
+						aria-hidden="true"
+						focusable="false"
+					>
+						<path d={source.icon.path} />
+					</svg>
+				</span>
+			) : (
+				<a
+					class="project-card__source"
+					href={sourceHref}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label={`Open ${source.name} source repository in a new tab`}
+					title={`${source.name} repository`}
+				>
+					<svg
+						class="project-card__source-icon"
+						viewBox="0 0 24 24"
+						aria-hidden="true"
+						focusable="false"
+					>
+						<path d={source.icon.path} />
+					</svg>
+				</a>
+			))}
+
+			<span class="project-card__action" aria-hidden="true">
+				<ArrowUpRight size={24} stroke-width={1.6} />
+			</span>
+		</div>
+	</div>
+</article>
+
+<style>
+	.project-card {
+		position: relative;
+		display: block;
+		overflow: hidden;
+		border: 1px solid var(--glass-border);
+		border-radius: 1.5rem;
+		background: var(--glass-surface);
+		box-shadow: inset 0 1px 0 var(--glass-highlight);
+		transition: border-color 220ms ease, background-color 220ms ease;
+	}
+
+	.project-card:hover {
+		border-color: var(--glass-border-hover);
+		background: var(--glass-surface-hover);
+	}
+
+	.project-card:focus-within {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 4px;
+	}
+
+	.project-card__primary-link {
+		position: absolute;
+		z-index: 1;
+		inset: 0;
+		border-radius: inherit;
+	}
+
+	.project-card__primary-link:focus-visible {
+		outline: 0;
+	}
+
+	.project-card__media {
+		position: relative;
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		border-block-end: 1px solid var(--glass-border);
+		background: var(--glass-surface);
+	}
+
+	.project-card__image {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+
+	.project-card:hover .project-card__image {
+		transform: scale(1.025);
+	}
+
+	.project-card__details {
+		display: flex;
+		align-items: stretch;
+		justify-content: space-between;
+		flex-direction: column;
+		gap: 1.5rem;
+		padding: clamp(1.25rem, 4vw, 2rem);
+	}
+
+	.project-card__copy {
+		display: grid;
+		gap: 0.4rem;
+	}
+
+	.project-card__label {
+		color: var(--color-accent);
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
+	}
+
+	h3 {
+		font-size: clamp(2rem, 8vw, 3.5rem);
+		font-weight: 800;
+		line-height: 0.95;
+		letter-spacing: -0.045em;
+	}
+
+	.project-card__description {
+		max-width: 32ch;
+		color: var(--color-muted);
+		font-size: clamp(0.9rem, 3vw, 1.05rem);
+		line-height: 1.45;
+	}
+
+	.project-card__stack {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		margin-block-start: 0.65rem;
+	}
+
+	.project-card__stack li {
+		padding: 0.32rem 0.55rem;
+		border: 1px solid var(--glass-border);
+		border-radius: 999px;
+		color: var(--color-muted);
+		font-size: 0.65rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		line-height: 1;
+	}
+
+	.project-card__actions {
+		position: relative;
+		display: flex;
+		align-self: flex-end;
+		gap: 0.6rem;
+	}
+
+	.project-card__source,
+	.project-card__action {
+		display: grid;
+		width: 3.25rem;
+		aspect-ratio: 1;
+		flex: 0 0 auto;
+		place-items: center;
+		border: 1px solid var(--glass-border);
+		border-radius: 50%;
+		background: var(--glass-surface);
+		transition: border-color 220ms ease, transform 220ms ease;
+	}
+
+	.project-card__source {
+		position: relative;
+		z-index: 2;
+		color: var(--color-text);
+	}
+
+	a.project-card__source:hover,
+	a.project-card__source:focus-visible {
+		border-color: var(--glass-border-hover);
+	}
+
+	a.project-card__source:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 3px;
+	}
+
+	.project-card__source--disabled {
+		color: var(--color-muted);
+		cursor: not-allowed;
+		opacity: 0.45;
+	}
+
+	.project-card__source-icon {
+		width: 1.35rem;
+		height: 1.35rem;
+		fill: currentColor;
+	}
+
+	.project-card:hover .project-card__action {
+		border-color: var(--glass-border-hover);
+		transform: translate(0.15rem, -0.15rem);
+	}
+
+	@media (min-width: 48rem) {
+		.project-card {
+			display: grid;
+			grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 0.7fr);
+		}
+
+		.project-card__media {
+			border-block-end: 0;
+			border-inline-end: 1px solid var(--glass-border);
+		}
+
+		.project-card__details {
+			height: 100%;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.project-card,
+		.project-card__image,
+		.project-card__source,
+		.project-card__action {
+			transition: none;
+		}
+	}
+
+	.project-card__sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+</style>

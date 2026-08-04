@@ -1,18 +1,19 @@
 ---
+import About from '../components/About.astro';
 import Contact from '../components/Contact.astro';
 import Footer from '../components/Footer.astro';
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import Navbar from '../components/Navbar.astro';
-import PlaceholderSection from '../components/PlaceholderSection.astro';
+import Projects from '../components/Projects.astro';
 ---
 
 <Layout>
 	<Navbar />
 	<main>
 		<Hero />
-		<PlaceholderSection id="about" label="About" />
-		<PlaceholderSection id="projects" label="Projects" />
+		<About />
+		<Projects />
 		<Contact />
 	</main>
 	<Footer />

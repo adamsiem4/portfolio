@@ -1,0 +1,79 @@
+---
+import hedgeHopImage from '../assets/hedgehop.webp';
+import touchOfBeautyImage from '../assets/touchofbeauty.webp';
+import ProjectCard from './ProjectCard.astro';
+import ScrambleHeading from './ScrambleHeading.astro';
+
+const projects = [
+	{
+		title: 'Touch of Beauty',
+		description: 'Beauty salon website with services, pricing, team profiles, and Booksy booking.',
+		technologies: ['React', 'Vite', 'React Router', 'CSS Modules', 'Swiper'],
+		href: 'https://touchofbeauty.vercel.app',
+		sourceHref: 'https://gitlab.com/gdx160230/dotykpieknauwsb',
+		sourcePrivate: true,
+		sourceProvider: 'gitlab',
+		image: touchOfBeautyImage,
+		imageAlt: 'Touch of Beauty salon website homepage',
+	},
+	{
+		title: 'HedgeHop',
+		description: 'Language-learning platform with flashcards, lessons, progress tracking, and daily streaks.',
+		technologies: ['React', 'Firebase', 'Tailwind CSS', 'Chart.js', 'Docker'],
+		href: 'https://hedgehop.vercel.app',
+		sourceHref: 'https://github.com/adamsiem4/hedgehop',
+		sourceProvider: 'github',
+		image: hedgeHopImage,
+		imageAlt: 'HedgeHop language-learning dashboard',
+	},
+];
+---
+
+<section class="projects" id="projects" aria-labelledby="projects-title">
+	<div class="projects__inner">
+		<header class="projects__heading">
+			<ScrambleHeading id="projects-title" text="Projects" />
+		</header>
+
+		<div class="projects__grid">
+			{projects.map((project) => <ProjectCard {...project} />)}
+		</div>
+	</div>
+</section>
+
+<style>
+	.projects {
+		min-height: 100vh;
+		min-height: 100svh;
+		display: grid;
+		align-items: center;
+		padding: clamp(5rem, 8vw, 6rem) var(--page-gutter);
+		border-block-start: 1px solid var(--glass-border);
+		scroll-margin-top: 5rem;
+	}
+
+	.projects__inner {
+		width: min(100%, 72rem);
+		margin-inline: auto;
+	}
+
+	.projects__heading {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1rem;
+		padding-block-end: clamp(1.5rem, 4vw, 2.5rem);
+	}
+
+	.projects__heading span {
+		color: var(--color-muted);
+		font-family: monospace;
+		font-size: 0.8rem;
+		letter-spacing: 0.12em;
+	}
+
+	.projects__grid {
+		display: grid;
+		gap: 1.25rem;
+	}
+</style>
