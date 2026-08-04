@@ -11,6 +11,12 @@ const DEFAULT_PARAMS = {
 	shade: 0.28,
 };
 
+const MOBILE_BREAKPOINT = 768;
+const MOBILE_MAX_DPR = 1.25;
+const MOBILE_MAX_TILES = 30;
+const TARGET_FPS = 60;
+const FRAME_DURATION = 1000 / TARGET_FPS;
+
 function parseHex(value, fallback) {
 	let hex = value.trim().replace('#', '');
 	if (hex.length === 3) {
@@ -43,10 +49,15 @@ export class KineticText {
 		this.params = { ...DEFAULT_PARAMS, ...params };
 		this.frame = 0;
 		this.raf = 0;
+		this.resizeFrame = 0;
+		this.lastFrameTime = 0;
+		this.frameInterval = FRAME_DURATION;
 		this.running = false;
 		this.inView = true;
 		this.pageHidden = document.hidden;
+		this.reducedQuality = false;
 		this.box = { x0: 0, y0: 0, x1: 0, y1: 0 };
+		this.coarsePointer = window.matchMedia('(pointer: coarse)');
 
 		this.canvas = document.createElement('canvas');
 		this.canvas.setAttribute('aria-hidden', 'true');
@@ -64,7 +75,7 @@ export class KineticText {
 		this.tint = document.createElement('canvas');
 
 		this.ctx = this.canvas.getContext('2d');
-		this.maskContext = this.mask.getContext('2d', { willReadFrequently: true });
+		this.maskContext = this.mask.getContext('2d');
 		this.warpContext = this.warp.getContext('2d');
 		this.tintContext = this.tint.getContext('2d');
 
@@ -82,13 +93,22 @@ export class KineticText {
 		this.reducedMotion = this.motionPreference.matches;
 		this.motionPreference.addEventListener?.('change', this.handleMotionPreference);
 
-		this.resizeObserver = new ResizeObserver(() => this.resize());
+		this.resizeObserver = new ResizeObserver(() => {
+			if (this.resizeFrame) return;
+
+			this.resizeFrame = window.requestAnimationFrame(() => {
+				this.resizeFrame = 0;
+				this.resize();
+			});
+		});
 		this.resizeObserver.observe(this.stage);
 
 		this.intersectionObserver = new IntersectionObserver(([entry]) => {
-			this.inView = entry?.isIntersecting ?? true;
+			this.inView = entry
+				? entry.isIntersecting && entry.intersectionRatio >= 0.05
+				: true;
 			this.syncAnimation();
-		});
+		}, { threshold: [0, 0.05] });
 		this.intersectionObserver.observe(this.stage);
 
 		document.addEventListener('visibilitychange', this.handleVisibility);
@@ -113,9 +133,23 @@ export class KineticText {
 		const bounds = this.stage.getBoundingClientRect();
 		if (!bounds.width || !bounds.height) return;
 
-		this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-		this.width = Math.round(bounds.width * this.dpr);
-		this.height = Math.round(bounds.height * this.dpr);
+		const reducedQuality = bounds.width < MOBILE_BREAKPOINT || this.coarsePointer.matches;
+		const maximumDpr = reducedQuality ? MOBILE_MAX_DPR : 2;
+		const dpr = Math.min(window.devicePixelRatio || 1, maximumDpr);
+		const width = Math.round(bounds.width * dpr);
+		const height = Math.round(bounds.height * dpr);
+
+		if (
+			width === this.width &&
+			height === this.height &&
+			reducedQuality === this.reducedQuality
+		) return;
+
+		this.reducedQuality = reducedQuality;
+		this.frameInterval = FRAME_DURATION;
+		this.dpr = dpr;
+		this.width = width;
+		this.height = height;
 
 		for (const canvas of [this.canvas, this.mask, this.warp, this.tint]) {
 			canvas.width = this.width;
@@ -145,40 +179,30 @@ export class KineticText {
 		};
 
 		setFont();
-		const measuredWidth = context.measureText(text).width;
-		if (measuredWidth > maxWidth) {
-			fontSize = Math.max(12, Math.floor(fontSize * (maxWidth / measuredWidth)));
+		let metrics = context.measureText(text);
+		if (metrics.width > maxWidth) {
+			fontSize = Math.max(12, Math.floor(fontSize * (maxWidth / metrics.width)));
 			setFont();
+			metrics = context.measureText(text);
 		}
 
 		context.fillText(text, this.width / 2, this.height / 2);
-		this.measureInkBounds();
+		this.measureInkBounds(metrics.width, fontSize);
 	}
 
-	measureInkBounds() {
-		try {
-			const pixels = this.maskContext.getImageData(0, 0, this.width, this.height).data;
-			let x0 = this.width;
-			let y0 = this.height;
-			let x1 = 0;
-			let y1 = 0;
+	measureInkBounds(measuredWidth, fontSize) {
+		const centerX = this.width / 2;
+		const centerY = this.height / 2;
+		const padding = Math.ceil((this.params.offset + 4) * this.dpr);
+		const halfWidth = measuredWidth / 2;
+		const halfHeight = fontSize * 0.65;
 
-			for (let y = 0; y < this.height; y += 2) {
-				for (let x = 0; x < this.width; x += 2) {
-					if (pixels[(y * this.width + x) * 4 + 3] <= 20) continue;
-					x0 = Math.min(x0, x);
-					y0 = Math.min(y0, y);
-					x1 = Math.max(x1, x);
-					y1 = Math.max(y1, y);
-				}
-			}
-
-			this.box = x1 >= x0
-				? { x0, y0, x1, y1 }
-				: { x0: 0, y0: 0, x1: this.width, y1: this.height };
-		} catch {
-			this.box = { x0: 0, y0: 0, x1: this.width, y1: this.height };
-		}
+		this.box = {
+			x0: Math.max(0, Math.floor(centerX - halfWidth - padding)),
+			y0: Math.max(0, Math.floor(centerY - halfHeight - padding)),
+			x1: Math.min(this.width, Math.ceil(centerX + halfWidth + padding)),
+			y1: Math.min(this.height, Math.ceil(centerY + halfHeight + padding)),
+		};
 	}
 
 	renderFrame() {
@@ -189,7 +213,8 @@ export class KineticText {
 		const isMobile = this.width / this.dpr < 768;
 		const motionScale = isMobile ? 0.5 : 1;
 		const activeSpread = spread * motionScale;
-		const tilesX = Math.max(2, Math.round(tiles));
+		const activeTiles = this.reducedQuality ? Math.min(tiles, MOBILE_MAX_TILES) : tiles;
+		const tilesX = Math.max(2, Math.round(activeTiles));
 		const tilesY = Math.max(2, Math.round(tilesX * (this.height / this.width)));
 		const tileWidth = Math.floor(this.width / tilesX);
 		const tileHeight = Math.floor(this.height / tilesY);
@@ -262,6 +287,15 @@ export class KineticText {
 		this.ctx.fillStyle = rgba(this.paperColor);
 		this.ctx.fillRect(0, 0, this.width, this.height);
 
+		if (this.reducedQuality) {
+			this.warpContext.globalCompositeOperation = 'source-in';
+			this.warpContext.fillStyle = rgba(this.inkColor);
+			this.warpContext.fillRect(0, 0, this.width, this.height);
+			this.warpContext.globalCompositeOperation = 'source-over';
+			this.ctx.drawImage(this.warp, 0, 0);
+			return;
+		}
+
 		if (chroma > 0) {
 			const shift = Math.round(chroma * 5 * this.dpr) + 1;
 			this.compositeTint(this.accentColor, shift, chroma * 0.7);
@@ -292,10 +326,22 @@ export class KineticText {
 		this.renderFrame();
 	}
 
-	tick() {
+	tick(timestamp) {
 		if (!this.running) return;
-		this.frame += 1;
-		this.renderFrame();
+
+		const elapsed = timestamp - this.lastFrameTime;
+		if (this.lastFrameTime === 0 || elapsed >= this.frameInterval) {
+			const frameTime = this.lastFrameTime === 0
+				? FRAME_DURATION
+				: Math.min(elapsed, 100);
+
+			this.frame += frameTime / FRAME_DURATION;
+			this.lastFrameTime = this.lastFrameTime === 0
+				? timestamp
+				: timestamp - (elapsed % this.frameInterval);
+			this.renderFrame();
+		}
+
 		this.raf = window.requestAnimationFrame(this.tick);
 	}
 
@@ -309,6 +355,7 @@ export class KineticText {
 		this.running = false;
 		window.cancelAnimationFrame(this.raf);
 		this.raf = 0;
+		this.lastFrameTime = 0;
 	}
 
 	syncAnimation() {
@@ -341,6 +388,7 @@ export class KineticText {
 
 	destroy() {
 		this.stop();
+		window.cancelAnimationFrame(this.resizeFrame);
 		this.resizeObserver.disconnect();
 		this.intersectionObserver.disconnect();
 		this.motionPreference.removeEventListener?.('change', this.handleMotionPreference);

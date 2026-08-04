@@ -1,9 +1,11 @@
 ---
 import '../styles/global.css';
+import { siteConfig } from '../config/site.js';
 
 const {
-  title = 'Adam Salicki',
-  description = 'Portfolio',
+  title = siteConfig.seoTitle,
+  description = siteConfig.seoDescription,
+  canonical = siteConfig.siteUrl,
 } = Astro.props;
 ---
 
@@ -16,6 +18,7 @@ const {
       content="width=device-width, initial-scale=1"
     />
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
