@@ -1,4 +1,5 @@
 ---
+import { ChevronDown } from '@lucide/astro';
 import KineticText from './KineticText.astro';
 
 const eyebrowText = 'Hi, my name is';
@@ -19,10 +20,28 @@ const eyebrowCharacters = Array.from(eyebrowText);
 		</p>
 		<KineticText text="Adam Salicki" />
 	</div>
+
+	<span class="hero__scroll-magnetic" data-magnetic data-magnetic-max="8">
+		<a
+			class="hero__scroll-link"
+			href="#about"
+			aria-label="Scroll to About"
+			data-magnetic-target
+		>
+			<span class="hero__scroll-icon" aria-hidden="true">
+				<ChevronDown size={28} stroke-width={1.6} />
+			</span>
+		</a>
+	</span>
 </section>
 
 <script>
-	const eyebrow = document.querySelector<HTMLElement>('[data-eyebrow-repel]');
+	import { initMagneticHover } from '../scripts/magnetic-hover.js';
+
+	const hero = document.querySelector<HTMLElement>('#home');
+	initMagneticHover(hero);
+
+	const eyebrow = hero?.querySelector<HTMLElement>('[data-eyebrow-repel]');
 	const letters = eyebrow
 		? Array.from(eyebrow.querySelectorAll<HTMLElement>('[data-eyebrow-letter]'))
 		: [];
@@ -117,6 +136,7 @@ const eyebrowCharacters = Array.from(eyebrowText);
 
 <style>
 	.hero {
+		position: relative;
 		min-height: 100vh;
 		min-height: 100svh;
 		display: grid;
@@ -164,9 +184,70 @@ const eyebrowCharacters = Array.from(eyebrowText);
 		border: 0;
 	}
 
+	.hero__scroll-magnetic {
+		position: absolute;
+		inset-inline-start: 50%;
+		bottom: max(1.25rem, env(safe-area-inset-bottom));
+		display: block;
+		width: 3rem;
+		height: 3rem;
+		transform: translateX(-50%);
+	}
+
+	.hero__scroll-link {
+		display: grid;
+		width: 100%;
+		height: 100%;
+		place-items: center;
+		border: 1px solid var(--glass-border);
+		border-radius: 50%;
+		background: var(--glass-surface);
+		color: var(--color-text);
+		box-shadow: inset 0 1px 0 var(--glass-highlight);
+		backdrop-filter: blur(12px);
+		transition: border-color 180ms ease, background-color 180ms ease;
+		will-change: transform;
+	}
+
+	.hero__scroll-link:hover {
+		border-color: var(--glass-border-hover);
+		background: var(--glass-surface-hover);
+	}
+
+	.hero__scroll-link:focus-visible {
+		outline: 2px solid var(--color-accent);
+		outline-offset: 4px;
+	}
+
+	.hero__scroll-icon {
+		display: block;
+		animation: scroll-nudge 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+	}
+
+	.hero__scroll-link:hover .hero__scroll-icon {
+		animation-duration: 1s;
+	}
+
+	@keyframes scroll-nudge {
+		0%,
+		100% {
+			opacity: 0.45;
+			transform: translateY(-0.2rem);
+		}
+
+		50% {
+			opacity: 1;
+			transform: translateY(0.25rem);
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.hero__eyebrow-letter {
 			will-change: auto;
+		}
+
+		.hero__scroll-icon {
+			animation: none;
 		}
 	}
 </style>
