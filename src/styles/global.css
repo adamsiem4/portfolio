@@ -4,8 +4,9 @@
 	--color-background-light: #f4f3ef;
 	--color-background: var(--color-background-dark);
 	--color-text: #ffffff;
-	--color-muted: rgba(255, 255, 255, 0.35);
+	--color-muted: rgba(255, 255, 255, 0.45);
 	--color-accent: #08665f;
+	--color-accent-text: #0d887f;
 	--glass-surface: rgba(255, 255, 255, 0.04);
 	--glass-surface-hover: rgba(255, 255, 255, 0.075);
 	--glass-border: rgba(255, 255, 255, 0.14);
@@ -25,7 +26,8 @@
 	color-scheme: light;
 	--color-background: var(--color-background-light);
 	--color-text: #111415;
-	--color-muted: rgba(17, 20, 21, 0.45);
+	--color-muted: rgba(17, 20, 21, 0.6);
+	--color-accent-text: var(--color-accent);
 	--glass-surface: rgba(255, 255, 255, 0.28);
 	--glass-surface-hover: rgba(255, 255, 255, 0.38);
 	--glass-border: rgba(17, 20, 21, 0.11);

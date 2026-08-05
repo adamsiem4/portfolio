@@ -1,7 +1,7 @@
 ---
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
-import { ArrowUpRight } from '@lucide/astro';
+import { ArrowUpRight, ChevronDown, ChevronUp } from '@lucide/astro';
 import { siGithub, siGitlab } from 'simple-icons';
 
 interface ProjectImage {
@@ -27,6 +27,7 @@ interface Props {
 }
 
 const {
+	slug,
 	title,
 	eyebrow = 'Project',
 	description,
@@ -39,8 +40,8 @@ const {
 const source = sourceConfig?.provider === 'gitlab'
 	? { icon: siGitlab, name: 'GitLab' }
 	: { icon: siGithub, name: 'GitHub' };
-const visibleImages = images.slice(0, 3);
-const additionalImageCount = Math.max(0, images.length - visibleImages.length);
+const imageCount = images.length;
+const galleryId = slug ? `project-gallery-${slug}` : undefined;
 ---
 
 <article class="project-card">
@@ -56,27 +57,57 @@ const additionalImageCount = Math.max(0, images.length - visibleImages.length);
 		</a>
 	)}
 
-	{visibleImages.length > 0 && (
-		<div class="project-card__media" data-image-count={visibleImages.length}>
-			{visibleImages.map((image) => (
-				<div class="project-card__image-frame">
-					<Image
-						class="project-card__image"
-						src={image.src}
-						alt={image.alt}
-						layout="full-width"
-						quality="high"
-					/>
+	{imageCount > 0 && (
+		<div class="project-card__media-shell">
+			<div
+				class="project-card__media"
+				id={galleryId}
+				data-project-gallery={imageCount > 1 ? '' : undefined}
+				data-scrollable={imageCount > 1 ? 'true' : 'false'}
+				role={imageCount > 1 ? 'region' : undefined}
+				aria-label={imageCount > 1
+					? `${title} image gallery, ${imageCount} images. Use the up and down controls or scroll vertically.`
+					: undefined}
+				tabindex={imageCount > 1 ? 0 : undefined}
+			>
+				<div class="project-card__media-track">
+					{images.map((image) => (
+						<div class="project-card__image-frame">
+							<Image
+								class="project-card__image"
+								src={image.src}
+								alt={image.alt}
+								layout="full-width"
+								quality="high"
+							/>
+						</div>
+					))}
 				</div>
-			))}
+			</div>
 
-			{additionalImageCount > 0 && (
-				<span
-					class="project-card__image-count"
-					aria-label={`${additionalImageCount} additional project images`}
-				>
-					+{additionalImageCount}
-				</span>
+			{imageCount > 1 && (
+				<div class="project-card__gallery-controls" aria-label={`${title} image navigation`}>
+					<button
+						class="project-card__gallery-control"
+						type="button"
+						aria-label={`Show previous ${title} image`}
+						aria-controls={galleryId}
+						data-gallery-previous
+						disabled
+					>
+						<ChevronUp size={18} stroke-width={1.8} aria-hidden="true" />
+					</button>
+
+					<button
+						class="project-card__gallery-control"
+						type="button"
+						aria-label={`Show next ${title} image`}
+						aria-controls={galleryId}
+						data-gallery-next
+					>
+						<ChevronDown size={18} stroke-width={1.8} aria-hidden="true" />
+					</button>
+				</div>
 			)}
 		</div>
 	)}
@@ -162,8 +193,8 @@ const additionalImageCount = Math.max(0, images.length - visibleImages.length);
 		box-shadow: inset 0 1px 0 var(--glass-highlight);
 	}
 
-	.project-card:focus-within {
-		outline: 2px solid var(--color-accent);
+	.project-card:has(.project-card__primary-link:focus-visible) {
+		outline: 2px solid var(--color-text);
 		outline-offset: 4px;
 	}
 
@@ -178,57 +209,109 @@ const additionalImageCount = Math.max(0, images.length - visibleImages.length);
 		outline: 0;
 	}
 
-	.project-card__media {
+	.project-card__media-shell {
 		position: relative;
-		display: grid;
+		z-index: 2;
 		aspect-ratio: 16 / 9;
 		overflow: hidden;
 		border-block-end: 1px solid var(--glass-border);
 		background: var(--glass-surface);
 	}
 
-	.project-card__media[data-image-count='2'],
-	.project-card__media[data-image-count='3'] {
-		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-		gap: 2px;
+	.project-card__media {
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+		cursor: auto;
+		touch-action: pan-y;
 	}
 
-	.project-card__media[data-image-count='3'] {
-		grid-template-rows: repeat(2, minmax(0, 1fr));
+	.project-card__media[data-scrollable='true'] {
+		overflow-y: auto;
+		scrollbar-width: none;
 	}
 
-	.project-card__media[data-image-count='3'] .project-card__image-frame:first-child {
-		grid-row: 1 / -1;
+	.project-card__media[data-scrollable='true']:focus-visible {
+		outline: 2px solid var(--color-text);
+		outline-offset: -4px;
+	}
+
+	.project-card__media::-webkit-scrollbar {
+		display: none;
+	}
+
+	.project-card__media[data-gallery-hinting='true'] .project-card__media-track {
+		animation: project-gallery-scroll-hint 900ms cubic-bezier(0.22, 1, 0.36, 1);
 	}
 
 	.project-card__image-frame {
+		position: relative;
+		width: 100%;
+		height: 100%;
 		min-width: 0;
 		min-height: 0;
 		overflow: hidden;
+		border-block-end: 2px solid var(--glass-border);
+	}
+
+	.project-card__image-frame:last-child {
+		border-block-end: 0;
 	}
 
 	.project-card__image {
 		width: 100%;
 		height: 100%;
-		object-fit: cover;
+		object-fit: contain;
 	}
 
-	.project-card__image-count {
+	@keyframes project-gallery-scroll-hint {
+		0%,
+		100% {
+			transform: translate3d(0, 0, 0);
+		}
+
+		40%,
+		58% {
+			transform: translate3d(0, -3rem, 0);
+		}
+	}
+
+	.project-card__gallery-controls {
 		position: absolute;
-		right: 0.75rem;
-		bottom: 0.75rem;
+		z-index: 3;
+		inset-block-start: 0.65rem;
+		inset-inline-end: 0.65rem;
 		display: grid;
-		min-width: 2rem;
-		min-height: 2rem;
-		padding: 0.35rem;
+		gap: 0.4rem;
+	}
+
+	.project-card__gallery-control {
+		display: grid;
+		width: 2.25rem;
+		aspect-ratio: 1;
 		place-items: center;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		border-radius: 999px;
-		background: rgba(9, 11, 12, 0.72);
+		border: 1px solid rgba(255, 255, 255, 0.24);
+		border-radius: 50%;
+		background: rgba(9, 11, 12, 0.76);
 		color: #ffffff;
-		font-size: 0.7rem;
-		font-weight: 700;
-		backdrop-filter: blur(0.5rem);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+		transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+	}
+
+	.project-card__gallery-control:hover:not(:disabled) {
+		border-color: rgba(255, 255, 255, 0.42);
+		background: rgba(9, 11, 12, 0.9);
+	}
+
+	.project-card__gallery-control:focus-visible {
+		outline: 2px solid #ffffff;
+		outline-offset: 2px;
+		box-shadow: 0 0 0 4px rgba(9, 11, 12, 0.78);
+	}
+
+	.project-card__gallery-control:disabled {
+		cursor: default;
+		opacity: 0.32;
 	}
 
 	.project-card__details {
@@ -246,7 +329,7 @@ const additionalImageCount = Math.max(0, images.length - visibleImages.length);
 	}
 
 	.project-card__label {
-		color: var(--color-accent);
+		color: var(--color-accent-text);
 		font-size: 0.7rem;
 		font-weight: 700;
 		letter-spacing: 0.15em;
@@ -324,7 +407,7 @@ const additionalImageCount = Math.max(0, images.length - visibleImages.length);
 
 	a.project-card__source:focus-visible,
 	a.project-card__action:focus-visible {
-		outline: 2px solid var(--color-accent);
+		outline: 2px solid var(--color-accent-text);
 		outline-offset: 3px;
 	}
 
@@ -346,7 +429,7 @@ const additionalImageCount = Math.max(0, images.length - visibleImages.length);
 			grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 0.7fr);
 		}
 
-		.project-card__media {
+		.project-card__media-shell {
 			border-block-end: 0;
 			border-inline-end: 1px solid var(--glass-border);
 		}
@@ -366,5 +449,15 @@ const additionalImageCount = Math.max(0, images.length - visibleImages.length);
 		clip: rect(0, 0, 0, 0);
 		white-space: nowrap;
 		border: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.project-card__media-track {
+			animation: none;
+		}
+
+		.project-card__gallery-control {
+			transition: none;
+		}
 	}
 </style>

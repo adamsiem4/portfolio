@@ -12,22 +12,38 @@ const currentYear = new Date().getFullYear();
 		</p>
 
 		<div class="site-footer__actions">
-			<button
-				class="site-footer__privacy-button"
-				type="button"
-				aria-label="Privacy and data notice"
-				title="Privacy and data notice"
-				aria-haspopup="dialog"
-				aria-controls="privacy-notice"
-				data-privacy-open
+			<span
+				class="site-footer__magnetic"
+				data-magnetic
+				data-magnetic-max="6"
+				data-magnetic-strength="0.16"
 			>
-				<Info size={18} stroke-width={1.8} aria-hidden="true" />
-			</button>
+				<button
+					class="site-footer__privacy-button"
+					type="button"
+					aria-label="Privacy and data notice"
+					title="Privacy and data notice"
+					aria-haspopup="dialog"
+					aria-expanded="false"
+					aria-controls="privacy-notice"
+					data-privacy-open
+					data-magnetic-target
+				>
+					<Info size={18} stroke-width={1.8} aria-hidden="true" />
+				</button>
+			</span>
 
-			<a class="site-footer__top-link" href="#home">
-				Back to top
-				<CircleArrowUp size={18} stroke-width={1.8} />
-			</a>
+			<span
+				class="site-footer__magnetic"
+				data-magnetic
+				data-magnetic-max="6"
+				data-magnetic-strength="0.16"
+			>
+				<a class="site-footer__top-link" href="#home" data-magnetic-target>
+					Back to top
+					<CircleArrowUp size={18} stroke-width={1.8} />
+				</a>
+			</span>
 		</div>
 	</div>
 
@@ -81,19 +97,224 @@ const currentYear = new Date().getFullYear();
 	const privacyTrigger = document.querySelector<HTMLButtonElement>('[data-privacy-open]');
 	const privacyDialog = document.querySelector<HTMLDialogElement>('[data-privacy-dialog]');
 	const privacyClose = privacyDialog?.querySelector<HTMLButtonElement>('[data-privacy-close]');
+	const privacySurface = privacyDialog?.querySelector<HTMLElement>('.privacy-dialog__surface');
+	const privacyMotionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-	privacyTrigger?.addEventListener('click', () => {
-		if (!privacyDialog?.open) privacyDialog?.showModal();
-	});
+	type PrivacyDialogState = 'closed' | 'opening' | 'open' | 'closing';
 
-	privacyClose?.addEventListener('click', () => privacyDialog?.close());
+	let privacyDialogState: PrivacyDialogState = 'closed';
+	let activePrivacyAnimations: Animation[] = [];
+
+	const clearPrivacyAnimations = () => {
+		activePrivacyAnimations.forEach((animation) => animation.cancel());
+		activePrivacyAnimations = [];
+	};
+
+	const waitForPrivacyAnimations = (animations: Animation[]) => Promise.all(
+		animations.map(async (animation) => {
+			try {
+				await animation.finished;
+			} catch {
+				// Cancellation is expected when the dialog or motion preference changes.
+			}
+		}),
+	);
+
+	const getPrivacyMorphTransform = (sourceBounds?: DOMRect) => {
+		if (!privacyTrigger || !privacyDialog) return null;
+
+		const triggerBounds = sourceBounds ?? privacyTrigger.getBoundingClientRect();
+		const dialogBounds = privacyDialog.getBoundingClientRect();
+		if (dialogBounds.width === 0 || dialogBounds.height === 0) return null;
+
+		const translateX = (
+			triggerBounds.left + (triggerBounds.width / 2)
+			- dialogBounds.left - (dialogBounds.width / 2)
+		);
+		const translateY = (
+			triggerBounds.top + (triggerBounds.height / 2)
+			- dialogBounds.top - (dialogBounds.height / 2)
+		);
+		const scaleX = Math.max(0.01, triggerBounds.width / dialogBounds.width);
+		const scaleY = Math.max(0.01, triggerBounds.height / dialogBounds.height);
+
+		return `translate3d(${translateX.toFixed(2)}px, ${translateY.toFixed(2)}px, 0) scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`;
+	};
+
+	const canAnimatePrivacyDialog = () => (
+		!privacyMotionPreference.matches
+		&& document.visibilityState === 'visible'
+		&& typeof privacyDialog?.animate === 'function'
+	);
+
+	const closePrivacyDialog = async () => {
+		if (!privacyDialog?.open || privacyDialogState === 'closing') return;
+
+		if (privacyDialogState === 'opening') {
+			privacyDialogState = 'closing';
+			const reversingAnimations = [...activePrivacyAnimations];
+			reversingAnimations.forEach((animation) => animation.reverse());
+			await waitForPrivacyAnimations(reversingAnimations);
+
+			if (privacyDialogState !== 'closing') return;
+			clearPrivacyAnimations();
+			if (privacyDialog.open) privacyDialog.close();
+			return;
+		}
+
+		privacyDialogState = 'closing';
+		if (!canAnimatePrivacyDialog()) {
+			privacyDialog.close();
+			return;
+		}
+
+		const morphTransform = getPrivacyMorphTransform();
+		if (!morphTransform) {
+			privacyDialog.close();
+			return;
+		}
+
+		const dialogAnimation = privacyDialog.animate(
+			[
+				{
+					transform: 'translate3d(0, 0, 0) scale(1)',
+					borderRadius: '1.5rem',
+				},
+				{
+					transform: morphTransform,
+					borderRadius: '999px',
+				},
+			],
+			{
+				duration: 360,
+				easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+				fill: 'both',
+			},
+		);
+		const surfaceAnimation = privacySurface?.animate(
+			[
+				{ opacity: 1, transform: 'translate3d(0, 0, 0)' },
+				{ opacity: 0, transform: 'translate3d(0, 0.35rem, 0)' },
+			],
+			{
+				duration: 150,
+				easing: 'ease-in',
+				fill: 'both',
+			},
+		);
+
+		activePrivacyAnimations = [
+			dialogAnimation,
+			...(surfaceAnimation ? [surfaceAnimation] : []),
+		];
+		await waitForPrivacyAnimations(activePrivacyAnimations);
+
+		if (privacyDialogState !== 'closing') return;
+		clearPrivacyAnimations();
+		if (privacyDialog.open) privacyDialog.close();
+	};
+
+	const openPrivacyDialog = async () => {
+		if (!privacyDialog || privacyDialog.open || privacyDialogState !== 'closed') return;
+
+		const triggerBounds = privacyTrigger?.getBoundingClientRect();
+		privacyDialogState = 'opening';
+		privacyTrigger?.setAttribute('aria-expanded', 'true');
+		privacyDialog.showModal();
+
+		if (!canAnimatePrivacyDialog()) {
+			privacyDialogState = 'open';
+			return;
+		}
+
+		const morphTransform = getPrivacyMorphTransform(triggerBounds);
+		if (!morphTransform) {
+			privacyDialogState = 'open';
+			return;
+		}
+
+		const dialogAnimation = privacyDialog.animate(
+			[
+				{
+					transform: morphTransform,
+					borderRadius: '999px',
+				},
+				{
+					transform: 'translate3d(0, 0, 0) scale(1)',
+					borderRadius: '1.5rem',
+				},
+			],
+			{
+				duration: 520,
+				easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+				fill: 'both',
+			},
+		);
+		const surfaceAnimation = privacySurface?.animate(
+			[
+				{
+					opacity: 0,
+					transform: 'translate3d(0, 0.6rem, 0)',
+					offset: 0,
+				},
+				{
+					opacity: 0,
+					transform: 'translate3d(0, 0.6rem, 0)',
+					offset: 0.42,
+				},
+				{
+					opacity: 1,
+					transform: 'translate3d(0, 0, 0)',
+					offset: 1,
+				},
+			],
+			{
+				duration: 520,
+				easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+				fill: 'both',
+			},
+		);
+
+		activePrivacyAnimations = [
+			dialogAnimation,
+			...(surfaceAnimation ? [surfaceAnimation] : []),
+		];
+		await waitForPrivacyAnimations(activePrivacyAnimations);
+
+		if (privacyDialogState !== 'opening') return;
+		clearPrivacyAnimations();
+		privacyDialogState = 'open';
+	};
+
+	privacyTrigger?.addEventListener('click', () => void openPrivacyDialog());
+	privacyClose?.addEventListener('click', () => void closePrivacyDialog());
 
 	privacyDialog?.addEventListener('click', (event) => {
-		if (event.target === privacyDialog) privacyDialog.close();
+		if (event.target === privacyDialog) void closePrivacyDialog();
+	});
+
+	privacyDialog?.addEventListener('cancel', (event) => {
+		event.preventDefault();
+		void closePrivacyDialog();
 	});
 
 	privacyDialog?.addEventListener('close', () => {
+		clearPrivacyAnimations();
+		privacyDialogState = 'closed';
+		privacyTrigger?.setAttribute('aria-expanded', 'false');
 		privacyTrigger?.focus({ preventScroll: true });
+	});
+
+	privacyMotionPreference.addEventListener?.('change', (event) => {
+		if (!event.matches) return;
+
+		activePrivacyAnimations.forEach((animation) => {
+			try {
+				animation.finish();
+			} catch {
+				animation.cancel();
+			}
+		});
 	});
 </script>
 
@@ -101,7 +322,9 @@ const currentYear = new Date().getFullYear();
 	.site-footer {
 		padding: 0.875rem var(--page-gutter);
 		border-block-start: 1px solid var(--glass-border);
-		background: var(--color-background);
+		background:
+			linear-gradient(var(--glass-surface), var(--glass-surface)),
+			var(--color-background);
 		font-family: "Open Sans", sans-serif;
 	}
 
@@ -127,6 +350,10 @@ const currentYear = new Date().getFullYear();
 		gap: 0.4rem;
 	}
 
+	.site-footer__magnetic {
+		display: inline-flex;
+	}
+
 	.site-footer__privacy-button,
 	.site-footer__top-link,
 	.privacy-dialog__close {
@@ -136,7 +363,13 @@ const currentYear = new Date().getFullYear();
 		border: 1px solid var(--glass-border);
 		background: var(--glass-surface);
 		color: var(--color-text);
-		transition: background-color 180ms ease, transform 180ms ease;
+		transition: background-color 180ms ease;
+	}
+
+	.site-footer__privacy-button,
+	.site-footer__top-link {
+		transform: translate3d(0, 0, 0);
+		will-change: transform;
 	}
 
 	.site-footer__privacy-button,
@@ -160,34 +393,39 @@ const currentYear = new Date().getFullYear();
 	.site-footer__top-link:hover,
 	.privacy-dialog__close:hover {
 		background: var(--glass-surface-hover);
-		transform: translateY(-2px);
 	}
 
 	.site-footer__privacy-button:focus-visible,
 	.site-footer__top-link:focus-visible,
 	.privacy-dialog__close:focus-visible,
 	.privacy-dialog__provider-link:focus-visible {
-		outline: 2px solid var(--color-accent);
+		outline: 2px solid var(--color-accent-text);
 		outline-offset: 3px;
 	}
 
 	.privacy-dialog {
+		position: fixed;
+		inset-block-start: auto;
+		inset-block-end: max(0.75rem, env(safe-area-inset-bottom));
+		inset-inline: 0;
 		width: min(calc(100% - 2rem), 32rem);
 		max-width: none;
 		max-height: min(80dvh, 32rem);
-		margin: auto;
+		margin: 0 auto;
 		padding: 0;
 		overflow: hidden;
 		border: 1px solid var(--glass-border);
-		border-radius: 1.25rem;
+		border-radius: 1.5rem;
 		background: var(--color-background);
 		color: var(--color-text);
 		box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+		transform-origin: center;
 	}
 
 	.privacy-dialog::backdrop {
-		background: rgba(0, 0, 0, 0.62);
-		backdrop-filter: blur(4px);
+		background: transparent;
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
 	}
 
 	.privacy-dialog__surface {
@@ -212,7 +450,7 @@ const currentYear = new Date().getFullYear();
 
 	.privacy-dialog__icon {
 		display: grid;
-		color: var(--color-accent);
+		color: var(--color-accent-text);
 		place-items: center;
 	}
 
@@ -237,7 +475,7 @@ const currentYear = new Date().getFullYear();
 
 	.privacy-dialog__provider-link {
 		width: fit-content;
-		color: var(--color-accent);
+		color: var(--color-accent-text);
 		font-weight: 700;
 		text-decoration: underline;
 		text-underline-offset: 0.2em;

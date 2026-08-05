@@ -1,5 +1,6 @@
 import hedgeHopImage from '../assets/hedgehop.webp';
 import touchOfBeautyImage from '../assets/touchofbeauty.webp';
+import touchOfBeautyAdminImage from '../assets/touchofbeauty2.webp';
 
 // Add a project by copying one object. Add more photos to its `images` array.
 export const projects = [
@@ -19,6 +20,10 @@ export const projects = [
 			{
 				src: touchOfBeautyImage,
 				alt: 'Touch of Beauty salon website homepage',
+			},
+			{
+				src: touchOfBeautyAdminImage,
+				alt: 'Touch of Beauty admin dashboard with content-management modules',
 			},
 		],
 	},

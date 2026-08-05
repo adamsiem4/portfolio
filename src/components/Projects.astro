@@ -105,6 +105,7 @@ const getInitialSlideStyle = (index: number) => {
 
 <script>
 	import '../scripts/project-deck.js';
+	import '../scripts/project-gallery.js';
 </script>
 
 <style>
@@ -181,7 +182,7 @@ const getInitialSlideStyle = (index: number) => {
 	}
 
 	.projects__deck:focus-visible .projects__slide[data-active='true'] {
-		outline: 2px solid var(--color-accent);
+		outline: 2px solid var(--color-accent-text);
 		outline-offset: 0.35rem;
 		border-radius: 1.5rem;
 	}
@@ -204,7 +205,7 @@ const getInitialSlideStyle = (index: number) => {
 	}
 
 	.projects__activate:focus-visible {
-		outline: 2px solid var(--color-accent);
+		outline: 2px solid var(--color-accent-text);
 		outline-offset: 0.35rem;
 	}
 
@@ -234,7 +235,7 @@ const getInitialSlideStyle = (index: number) => {
 	}
 
 	.projects__control:focus-visible {
-		outline: 2px solid var(--color-accent);
+		outline: 2px solid var(--color-accent-text);
 		outline-offset: 3px;
 	}
 
