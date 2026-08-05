@@ -10,10 +10,12 @@ import {
 	siFirebase,
 	siGithub,
 	siGitlab,
+	siJavascript,
 	siMongodb,
 	siNodedotjs,
 	siProxmox,
 	siReact,
+	siTailwindcss,
 	siUptimekuma,
 } from 'simple-icons';
 
@@ -57,6 +59,7 @@ const technologyIcons = new Map([
 	['MongoDB', siMongodb],
 	['Express.js', siExpress],
 	['React', siReact],
+	['JavaScript', siJavascript],
 	['Node.js', siNodedotjs],
 	['Firebase', siFirebase],
 	['Proxmox', siProxmox],
@@ -64,6 +67,9 @@ const technologyIcons = new Map([
 	['Docker', siDocker],
 	['AdGuard Home', siAdguard],
 	['Uptime Kuma', siUptimekuma],
+	['GitHub', siGithub],
+	['GitLab', siGitlab],
+	['Tailwind CSS', siTailwindcss]
 ]);
 const imageCount = images.length;
 const galleryId = slug ? `project-gallery-${slug}` : undefined;
@@ -171,54 +177,73 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 
 		{hasActions && (
 			<div class="project-card__actions">
-				{sourceConfig?.url && (sourceConfig.private ? (
+				{sourceConfig?.url && (
 					<span
-						class="project-card__source project-card__source--disabled"
-						role="link"
-						aria-disabled="true"
-						aria-label={`Private ${source.name} source repository`}
-						title={`Private ${source.name} repository`}
+						class="project-card__action-magnetic"
+						data-magnetic
+						data-magnetic-max="7"
+						data-magnetic-strength="0.16"
 					>
-						<svg
-							class="project-card__source-icon"
-							viewBox="0 0 24 24"
-							aria-hidden="true"
-							focusable="false"
-						>
-							<path d={source.icon.path} />
-						</svg>
+						{sourceConfig.private ? (
+							<span
+								class="project-card__source project-card__source--disabled"
+								role="link"
+								aria-disabled="true"
+								aria-label={`Private ${source.name} source repository`}
+								title={`Private ${source.name} repository`}
+								data-magnetic-target
+							>
+								<svg
+									class="project-card__source-icon"
+									viewBox="0 0 24 24"
+									aria-hidden="true"
+									focusable="false"
+								>
+									<path d={source.icon.path} />
+								</svg>
+							</span>
+						) : (
+							<a
+								class="project-card__source"
+								href={sourceConfig.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label={`Open ${source.name} source repository in a new tab`}
+								title={`${source.name} repository`}
+								data-magnetic-target
+							>
+								<svg
+									class="project-card__source-icon"
+									viewBox="0 0 24 24"
+									aria-hidden="true"
+									focusable="false"
+								>
+									<path d={source.icon.path} />
+								</svg>
+							</a>
+						)}
 					</span>
-				) : (
-					<a
-						class="project-card__source"
-						href={sourceConfig.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label={`Open ${source.name} source repository in a new tab`}
-						title={`${source.name} repository`}
-					>
-						<svg
-							class="project-card__source-icon"
-							viewBox="0 0 24 24"
-							aria-hidden="true"
-							focusable="false"
-						>
-							<path d={source.icon.path} />
-						</svg>
-					</a>
-				))}
+				)}
 
 				{liveUrl && (
-					<a
-						class="project-card__action"
-						href={liveUrl}
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label={`Open ${title} live website in a new tab`}
-						title="Open live website"
+					<span
+						class="project-card__action-magnetic"
+						data-magnetic
+						data-magnetic-max="7"
+						data-magnetic-strength="0.16"
 					>
-						<ArrowUpRight size={24} stroke-width={1.6} />
-					</a>
+						<a
+							class="project-card__action"
+							href={liveUrl}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={`Open ${title} live website in a new tab`}
+							title="Open live website"
+							data-magnetic-target
+						>
+							<ArrowUpRight size={24} stroke-width={1.6} />
+						</a>
+					</span>
 				)}
 			</div>
 		)}
@@ -327,10 +352,11 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 	.project-card__gallery-controls {
 		position: absolute;
 		z-index: 3;
-		inset-block-start: 0.65rem;
-		inset-inline-end: 0.65rem;
-		display: grid;
+		inset-block-end: 0.65rem;
+		inset-inline-start: 50%;
+		display: flex;
 		gap: 0.4rem;
+		transform: translateX(-50%);
 	}
 
 	.project-card__gallery-control {
@@ -433,6 +459,13 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		align-self: flex-end;
 		gap: 0.6rem;
 		margin-block-start: auto;
+	}
+
+	.project-card__action-magnetic {
+		position: relative;
+		z-index: 2;
+		display: inline-flex;
+		border-radius: 50%;
 	}
 
 	.project-card__source,

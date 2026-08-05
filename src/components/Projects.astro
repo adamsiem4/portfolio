@@ -68,28 +68,44 @@ const getInitialSlideStyle = (index: number) => {
 
 			{projectCount > 1 && (
 				<div class="projects__controls" aria-label="Project navigation">
-					<button
-						class="projects__control"
-						type="button"
-						data-project-previous
-						aria-label="Show previous project"
-						disabled
+					<span
+						class="projects__control-magnetic"
+						data-magnetic
+						data-magnetic-max="6"
+						data-magnetic-strength="0.16"
 					>
-						<ChevronLeft size={20} stroke-width={1.7} aria-hidden="true" />
-					</button>
+						<button
+							class="projects__control"
+							type="button"
+							data-project-previous
+							data-magnetic-target
+							aria-label="Show previous project"
+							disabled
+						>
+							<ChevronLeft size={20} stroke-width={1.7} aria-hidden="true" />
+						</button>
+					</span>
 
 					<span class="projects__position" data-project-position>
 						{formatPosition(1)} / {formatPosition(projectCount)}
 					</span>
 
-					<button
-						class="projects__control"
-						type="button"
-						data-project-next
-						aria-label="Show next project"
+					<span
+						class="projects__control-magnetic"
+						data-magnetic
+						data-magnetic-max="6"
+						data-magnetic-strength="0.16"
 					>
-						<ChevronRight size={20} stroke-width={1.7} aria-hidden="true" />
-					</button>
+						<button
+							class="projects__control"
+							type="button"
+							data-project-next
+							data-magnetic-target
+							aria-label="Show next project"
+						>
+							<ChevronRight size={20} stroke-width={1.7} aria-hidden="true" />
+						</button>
+					</span>
 				</div>
 			)}
 
@@ -227,6 +243,11 @@ const getInitialSlideStyle = (index: number) => {
 		background: var(--glass-surface);
 		color: var(--color-text);
 		transition: border-color 180ms ease, opacity 180ms ease;
+	}
+
+	.projects__control-magnetic {
+		display: inline-flex;
+		border-radius: 50%;
 	}
 
 	.projects__control:hover:not(:disabled),

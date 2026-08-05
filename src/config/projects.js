@@ -58,7 +58,7 @@ export const projects = [
 		title: 'HedgeHop',
 		eyebrow: 'Live website',
 		description: 'Language-learning platform with flashcards, lessons, progress tracking, and daily streaks.',
-		technologies: ['React', 'Firebase'],
+		technologies: ['React', 'JavaScript', 'Tailwind CSS', 'Firebase'],
 		liveUrl: 'https://hedgehop.vercel.app',
 		source: {
 			provider: 'github',
