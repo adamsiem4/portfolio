@@ -1,4 +1,5 @@
 import hedgeHopImage from '../assets/hedgehop.webp';
+import hedgeHopLearningImage from '../assets/hedgehop2.webp';
 import touchOfBeautyImage from '../assets/touchofbeauty.webp';
 import touchOfBeautyAdminImage from '../assets/touchofbeauty2.webp';
 
@@ -44,6 +45,10 @@ export const projects = [
 				src: hedgeHopImage,
 				alt: 'HedgeHop language-learning dashboard',
 			},
+			{
+				src: hedgeHopLearningImage,
+				alt: 'HedgeHop learning interface',
+			}
 		],
 	},
 ];

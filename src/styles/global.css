@@ -55,6 +55,7 @@
 
 html {
 	scroll-behavior: smooth;
+	scrollbar-gutter: stable;
 	background-color: var(--color-background);
 }
 

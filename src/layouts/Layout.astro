@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { siteConfig } from '../config/site.js';
+import PageLoader from '../components/PageLoader.astro';
 
 interface Props {
   title?: string;
@@ -99,6 +100,14 @@ const structuredData = {
 
         root.dataset.theme = theme;
         root.dataset.themePreference = storedTheme ? 'user' : 'system';
+        root.dataset.pageLoading = 'true';
+
+        window.setTimeout(() => {
+          if (root.dataset.pageLoading !== 'true') return;
+          delete root.dataset.pageLoading;
+          document.body?.removeAttribute('aria-busy');
+          document.querySelector('[data-page-loader]')?.remove();
+        }, 6000);
       })();
     </script>
 
@@ -112,6 +121,7 @@ const structuredData = {
   </head>
 
   <body>
+    <PageLoader />
     <slot />
   </body>
 </html>

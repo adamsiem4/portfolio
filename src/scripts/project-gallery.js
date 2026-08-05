@@ -41,6 +41,14 @@ const initializeProjectGallery = (gallery) => {
 		if (!track) return;
 		let isArmed = true;
 		let isHinting = false;
+		let hintDelay = null;
+		let visibleRatio = 0;
+
+		const clearHintDelay = () => {
+			if (hintDelay === null) return;
+			clearTimeout(hintDelay);
+			hintDelay = null;
+		};
 
 		const clearHint = () => {
 			delete gallery.dataset.galleryHinting;
@@ -53,9 +61,11 @@ const initializeProjectGallery = (gallery) => {
 		const observer = new IntersectionObserver((entries) => {
 			const entry = entries.find((item) => item.target === gallery);
 			if (!entry) return;
+			visibleRatio = entry.intersectionRatio;
 
 			if (!entry.isIntersecting || entry.intersectionRatio <= 0.1) {
 				isArmed = true;
+				clearHintDelay();
 				if (isHinting) clearHint();
 				return;
 			}
@@ -65,11 +75,20 @@ const initializeProjectGallery = (gallery) => {
 				|| !isArmed
 				|| isHinting
 				|| reducedMotion.matches
-			) return;
+			) {
+				if (entry.intersectionRatio < 0.45) clearHintDelay();
+				return;
+			}
 
-			isArmed = false;
-			isHinting = true;
-			gallery.dataset.galleryHinting = 'true';
+			if (hintDelay !== null) return;
+			hintDelay = setTimeout(() => {
+				hintDelay = null;
+				if (visibleRatio < 0.45 || !isArmed || reducedMotion.matches) return;
+
+				isArmed = false;
+				isHinting = true;
+				gallery.dataset.galleryHinting = 'true';
+			}, 700);
 		}, { threshold: [0, 0.1, 0.45] });
 
 		observer.observe(gallery);

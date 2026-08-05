@@ -1,0 +1,226 @@
+<div
+	class="page-loader"
+	role="status"
+	aria-label="Loading portfolio"
+	data-page-loader
+>
+	<div class="page-loader__counter" aria-hidden="true">
+		<span data-page-loader-value>000</span><span class="page-loader__percent">%</span>
+	</div>
+
+	<div class="page-loader__curtain" aria-hidden="true"></div>
+</div>
+
+<script is:inline>
+	(() => {
+		const root = document.documentElement;
+		const loader = document.querySelector('[data-page-loader]');
+		const value = loader?.querySelector('[data-page-loader-value]');
+		const curtain = loader?.querySelector('.page-loader__curtain');
+		if (!loader || !value || root.dataset.pageLoading !== 'true') return;
+
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+		const startedAt = performance.now();
+		const minimumDuration = 650;
+		const waitingDuration = 900;
+		const completionDuration = 280;
+		const waitingLimit = 92;
+		let pageLoaded = document.readyState === 'complete';
+		let completionStartedAt = null;
+		let completionStartedFrom = 0;
+		let displayedValue = -1;
+		let hasFinished = false;
+		let isExiting = false;
+
+		document.body.setAttribute('aria-busy', 'true');
+
+		const markPageLoaded = () => {
+			pageLoaded = true;
+		};
+
+		if (!pageLoaded) window.addEventListener('load', markPageLoaded, { once: true });
+
+		const setProgress = (progress) => {
+			const normalizedProgress = Math.min(Math.max(progress, 0), 100);
+			const nextValue = Math.floor(normalizedProgress);
+			if (nextValue !== displayedValue) {
+				displayedValue = nextValue;
+				value.textContent = String(nextValue).padStart(3, '0');
+			}
+		};
+
+		const removeLoader = () => {
+			if (hasFinished) return;
+			hasFinished = true;
+			delete root.dataset.pageLoading;
+			document.body.removeAttribute('aria-busy');
+			loader.remove();
+		};
+
+		const exitLoader = () => {
+			if (isExiting || !loader.isConnected) return;
+			isExiting = true;
+
+			const handleTransitionEnd = (event) => {
+				if (event.target !== loader || event.propertyName !== 'transform') return;
+				loader.removeEventListener('transitionend', handleTransitionEnd);
+				removeLoader();
+			};
+
+			loader.addEventListener('transitionend', handleTransitionEnd);
+			loader.dataset.state = 'complete';
+			window.setTimeout(removeLoader, 900);
+		};
+
+		const revealPage = () => {
+			if (!curtain) {
+				exitLoader();
+				return;
+			}
+
+			const handleCurtainTransition = (event) => {
+				if (event.target !== curtain || event.propertyName !== 'transform') return;
+				curtain.removeEventListener('transitionend', handleCurtainTransition);
+				window.setTimeout(exitLoader, 140);
+			};
+
+			curtain.addEventListener('transitionend', handleCurtainTransition);
+			loader.dataset.state = 'accent';
+			window.setTimeout(exitLoader, 750);
+		};
+
+		const finishLoader = () => {
+			setProgress(100);
+
+			if (reducedMotion.matches) {
+				removeLoader();
+				return;
+			}
+
+			window.setTimeout(() => {
+				if (!loader.isConnected) return;
+				revealPage();
+			}, 200);
+		};
+
+		if (reducedMotion.matches) {
+			setProgress(pageLoaded ? 100 : 0);
+			if (pageLoaded) removeLoader();
+			else window.addEventListener('load', removeLoader, { once: true });
+			return;
+		}
+
+		const easeOutCubic = (progress) => 1 - ((1 - progress) ** 3);
+
+		const updateLoader = (now) => {
+			if (!loader.isConnected || hasFinished) return;
+
+			const elapsed = now - startedAt;
+			let progress;
+
+			if (completionStartedAt === null) {
+				const waitingProgress = Math.min(elapsed / waitingDuration, 1);
+				progress = easeOutCubic(waitingProgress) * waitingLimit;
+
+				if (pageLoaded && elapsed >= minimumDuration) {
+					completionStartedAt = now;
+					completionStartedFrom = progress;
+				}
+			} else {
+				const completionProgress = Math.min(
+					(now - completionStartedAt) / completionDuration,
+					1,
+				);
+				progress = completionStartedFrom
+					+ ((100 - completionStartedFrom) * easeOutCubic(completionProgress));
+
+				if (completionProgress >= 1) {
+					finishLoader();
+					return;
+				}
+			}
+
+			setProgress(progress);
+			requestAnimationFrame(updateLoader);
+		};
+
+		setProgress(0);
+		requestAnimationFrame(updateLoader);
+	})();
+</script>
+
+<style>
+	.page-loader {
+		position: fixed;
+		z-index: 2147483647;
+		inset: 0;
+		display: none;
+		place-items: center;
+		overflow: hidden;
+		background: var(--color-background);
+		color: var(--color-text);
+		cursor: wait;
+		isolation: isolate;
+		transform: translate3d(0, 0, 0);
+		transition: transform 580ms cubic-bezier(0.76, 0, 0.24, 1);
+	}
+
+	:global(html[data-page-loading='true']) .page-loader {
+		display: grid;
+	}
+
+	:global(html[data-page-loading='true']) {
+		overflow: hidden;
+	}
+
+	.page-loader__counter {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: baseline;
+		font-family: "Open Sans", sans-serif;
+		font-size: clamp(4.5rem, 13vw, 9rem);
+		font-variant-numeric: tabular-nums;
+		font-weight: 800;
+		letter-spacing: -0.075em;
+		line-height: 0.85;
+		white-space: nowrap;
+		transform: translate3d(0, 0, 0);
+	}
+
+	.page-loader__percent {
+		margin-inline-start: 0.02em;
+	}
+
+	.page-loader__curtain {
+		position: absolute;
+		z-index: 2;
+		inset-block-start: 100%;
+		inset-inline-start: 50%;
+		width: 140vw;
+		height: 125vh;
+		background: var(--color-accent);
+		border-radius: 50% 50% 0 0 / 8vh 8vh 0 0;
+		transform: translate3d(-50%, 0, 0);
+		transition: transform 460ms cubic-bezier(0.16, 1, 0.3, 1);
+		will-change: transform;
+	}
+
+	.page-loader[data-state='accent'] .page-loader__curtain,
+	.page-loader[data-state='complete'] .page-loader__curtain {
+		transform: translate3d(-50%, -100%, 0);
+	}
+
+	.page-loader[data-state='complete'] {
+		pointer-events: none;
+		transform: translate3d(0, -100%, 0);
+		will-change: transform;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.page-loader,
+		.page-loader__curtain {
+			transition: none;
+		}
+	}
+</style>

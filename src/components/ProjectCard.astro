@@ -2,7 +2,15 @@
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import { ArrowUpRight, ChevronDown, ChevronUp } from '@lucide/astro';
-import { siGithub, siGitlab } from 'simple-icons';
+import {
+	siExpress,
+	siFirebase,
+	siGithub,
+	siGitlab,
+	siMongodb,
+	siNodedotjs,
+	siReact,
+} from 'simple-icons';
 
 interface ProjectImage {
 	src: ImageMetadata;
@@ -40,6 +48,13 @@ const {
 const source = sourceConfig?.provider === 'gitlab'
 	? { icon: siGitlab, name: 'GitLab' }
 	: { icon: siGithub, name: 'GitHub' };
+const technologyIcons = new Map([
+	['MongoDB', siMongodb],
+	['Express.js', siExpress],
+	['React', siReact],
+	['Node.js', siNodedotjs],
+	['Firebase', siFirebase],
+]);
 const imageCount = images.length;
 const galleryId = slug ? `project-gallery-${slug}` : undefined;
 ---
@@ -120,7 +135,25 @@ const galleryId = slug ? `project-gallery-${slug}` : undefined;
 
 			{technologies.length > 0 && (
 				<ul class="project-card__stack" aria-label={`${title} technology stack`}>
-					{technologies.map((technology) => <li>{technology}</li>)}
+					{technologies.map((technology) => {
+						const icon = technologyIcons.get(technology);
+
+						return (
+							<li>
+								{icon && (
+									<svg
+										class="project-card__stack-icon"
+										viewBox="0 0 24 24"
+										aria-hidden="true"
+										focusable="false"
+									>
+										<path d={icon.path} />
+									</svg>
+								)}
+								<span>{technology}</span>
+							</li>
+						);
+					})}
 				</ul>
 			)}
 		</div>
@@ -358,6 +391,9 @@ const galleryId = slug ? `project-gallery-${slug}` : undefined;
 	}
 
 	.project-card__stack li {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
 		padding: 0.32rem 0.55rem;
 		border: 1px solid var(--glass-border);
 		border-radius: 999px;
@@ -366,6 +402,13 @@ const galleryId = slug ? `project-gallery-${slug}` : undefined;
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		line-height: 1;
+	}
+
+	.project-card__stack-icon {
+		width: 0.8rem;
+		height: 0.8rem;
+		flex: 0 0 auto;
+		fill: currentColor;
 	}
 
 	.project-card__actions {
