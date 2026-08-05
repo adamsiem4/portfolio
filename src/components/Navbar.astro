@@ -73,7 +73,7 @@ const links = [
 				data-magnetic-target
 			>
 				{links.map(({ label, href }) => (
-					<li><a href={href}>{label}</a></li>
+					<li><a href={href} aria-label={label}>{label}</a></li>
 				))}
 			</ul>
 		</div>

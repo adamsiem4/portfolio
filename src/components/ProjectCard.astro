@@ -178,12 +178,7 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		{hasActions && (
 			<div class="project-card__actions">
 				{sourceConfig?.url && (
-					<span
-						class="project-card__action-magnetic"
-						data-magnetic
-						data-magnetic-max="7"
-						data-magnetic-strength="0.16"
-					>
+					<span>
 						{sourceConfig.private ? (
 							<span
 								class="project-card__source project-card__source--disabled"
@@ -226,12 +221,7 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 				)}
 
 				{liveUrl && (
-					<span
-						class="project-card__action-magnetic"
-						data-magnetic
-						data-magnetic-max="7"
-						data-magnetic-strength="0.16"
-					>
+					<span>
 						<a
 							class="project-card__action"
 							href={liveUrl}
@@ -264,23 +254,19 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 			var(--color-background);
 		box-shadow: inset 0 1px 0 var(--glass-highlight);
 	}
-
 	.project-card:has(.project-card__primary-link:focus-visible) {
 		outline: 2px solid var(--color-text);
 		outline-offset: 4px;
 	}
-
 	.project-card__primary-link {
 		position: absolute;
 		z-index: 1;
 		inset: 0;
 		border-radius: inherit;
 	}
-
 	.project-card__primary-link:focus-visible {
 		outline: 0;
 	}
-
 	.project-card__media-shell {
 		position: relative;
 		z-index: 2;
@@ -290,7 +276,6 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		border-block-end: 1px solid var(--glass-border);
 		background: var(--glass-surface);
 	}
-
 	.project-card__media {
 		width: 100%;
 		height: 100%;
@@ -298,25 +283,20 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		cursor: auto;
 		touch-action: pan-y;
 	}
-
 	.project-card__media[data-scrollable='true'] {
 		overflow-y: auto;
 		scrollbar-width: none;
 	}
-
 	.project-card__media[data-scrollable='true']:focus-visible {
 		outline: 2px solid var(--color-text);
 		outline-offset: -4px;
 	}
-
 	.project-card__media::-webkit-scrollbar {
 		display: none;
 	}
-
 	.project-card__media[data-gallery-hinting='true'] .project-card__media-track {
 		animation: project-gallery-scroll-hint 900ms cubic-bezier(0.22, 1, 0.36, 1);
 	}
-
 	.project-card__image-frame {
 		position: relative;
 		width: 100%;
@@ -326,17 +306,14 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		overflow: hidden;
 		border-block-end: 2px solid var(--glass-border);
 	}
-
 	.project-card__image-frame:last-child {
 		border-block-end: 0;
 	}
-
 	.project-card__image {
 		width: 100%;
 		height: 100%;
 		object-fit: contain;
 	}
-
 	@keyframes project-gallery-scroll-hint {
 		0%,
 		100% {
@@ -348,7 +325,6 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 			transform: translate3d(0, -3rem, 0);
 		}
 	}
-
 	.project-card__gallery-controls {
 		position: absolute;
 		z-index: 3;
@@ -358,7 +334,6 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		gap: 0.4rem;
 		transform: translateX(-50%);
 	}
-
 	.project-card__gallery-control {
 		display: grid;
 		width: 2.25rem;
@@ -371,23 +346,19 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 		transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
 	}
-
 	.project-card__gallery-control:hover:not(:disabled) {
 		border-color: rgba(255, 255, 255, 0.42);
 		background: rgba(9, 11, 12, 0.9);
 	}
-
 	.project-card__gallery-control:focus-visible {
 		outline: 2px solid #ffffff;
 		outline-offset: 2px;
 		box-shadow: 0 0 0 4px rgba(9, 11, 12, 0.78);
 	}
-
 	.project-card__gallery-control:disabled {
 		cursor: default;
 		opacity: 0.32;
 	}
-
 	.project-card__details {
 		display: flex;
 		flex: 1;
@@ -397,12 +368,10 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		gap: 1.5rem;
 		padding: clamp(1.25rem, 4vw, 2rem);
 	}
-
 	.project-card__copy {
 		display: grid;
 		gap: 0.4rem;
 	}
-
 	.project-card__label {
 		color: var(--color-accent-text);
 		font-size: 0.7rem;
@@ -410,28 +379,24 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		letter-spacing: 0.15em;
 		text-transform: uppercase;
 	}
-
 	h3 {
 		font-size: clamp(2rem, 8vw, 3.5rem);
 		font-weight: 800;
 		line-height: 0.95;
 		letter-spacing: -0.045em;
 	}
-
 	.project-card__description {
 		max-width: 32ch;
 		color: var(--color-muted);
 		font-size: clamp(0.9rem, 3vw, 1.05rem);
 		line-height: 1.45;
 	}
-
 	.project-card__stack {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.4rem;
 		margin-block-start: 0.65rem;
 	}
-
 	.project-card__stack li {
 		display: inline-flex;
 		align-items: center;
@@ -445,14 +410,12 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		letter-spacing: 0.06em;
 		line-height: 1;
 	}
-
 	.project-card__stack-icon {
 		width: 0.8rem;
 		height: 0.8rem;
 		flex: 0 0 auto;
 		fill: currentColor;
 	}
-
 	.project-card__actions {
 		position: relative;
 		display: flex;
@@ -460,14 +423,6 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		gap: 0.6rem;
 		margin-block-start: auto;
 	}
-
-	.project-card__action-magnetic {
-		position: relative;
-		z-index: 2;
-		display: inline-flex;
-		border-radius: 50%;
-	}
-
 	.project-card__source,
 	.project-card__action {
 		display: grid;
@@ -479,59 +434,49 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		border-radius: 50%;
 		background: var(--glass-surface);
 	}
-
 	.project-card__source {
 		position: relative;
 		z-index: 2;
 		color: var(--color-text);
 	}
-
 	.project-card__action {
 		position: relative;
 		z-index: 2;
 	}
-
 	a.project-card__source:hover,
 	a.project-card__source:focus-visible,
 	a.project-card__action:hover,
 	a.project-card__action:focus-visible {
 		border-color: var(--glass-border-hover);
 	}
-
 	a.project-card__source:focus-visible,
 	a.project-card__action:focus-visible {
 		outline: 2px solid var(--color-accent-text);
 		outline-offset: 3px;
 	}
-
 	.project-card__source--disabled {
 		color: var(--color-muted);
 		cursor: not-allowed;
 		opacity: 0.45;
 	}
-
 	.project-card__source-icon {
 		width: 1.35rem;
 		height: 1.35rem;
 		fill: currentColor;
 	}
-
 	@media (min-width: 48rem) {
 		.project-card {
 			display: grid;
 			grid-template-columns: minmax(0, 1.7fr) minmax(18rem, 0.7fr);
 		}
-
 		.project-card__media-shell {
 			border-block-end: 0;
 			border-inline-end: 1px solid var(--glass-border);
 		}
-
 		.project-card__details {
 			height: 100%;
 		}
 	}
-
 	.project-card__sr-only {
 		position: absolute;
 		width: 1px;
@@ -543,12 +488,10 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 		white-space: nowrap;
 		border: 0;
 	}
-
 	@media (prefers-reduced-motion: reduce) {
 		.project-card__media-track {
 			animation: none;
 		}
-
 		.project-card__gallery-control {
 			transition: none;
 		}
