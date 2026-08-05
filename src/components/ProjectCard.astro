@@ -3,13 +3,18 @@ import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import { ArrowUpRight, ChevronDown, ChevronUp } from '@lucide/astro';
 import {
+	siAdguard,
+	siDebian,
+	siDocker,
 	siExpress,
 	siFirebase,
 	siGithub,
 	siGitlab,
 	siMongodb,
 	siNodedotjs,
+	siProxmox,
 	siReact,
+	siUptimekuma,
 } from 'simple-icons';
 
 interface ProjectImage {
@@ -54,9 +59,15 @@ const technologyIcons = new Map([
 	['React', siReact],
 	['Node.js', siNodedotjs],
 	['Firebase', siFirebase],
+	['Proxmox', siProxmox],
+	['Debian', siDebian],
+	['Docker', siDocker],
+	['AdGuard Home', siAdguard],
+	['Uptime Kuma', siUptimekuma],
 ]);
 const imageCount = images.length;
 const galleryId = slug ? `project-gallery-${slug}` : undefined;
+const hasActions = Boolean(sourceConfig?.url || liveUrl);
 ---
 
 <article class="project-card">
@@ -158,64 +169,67 @@ const galleryId = slug ? `project-gallery-${slug}` : undefined;
 			)}
 		</div>
 
-		<div class="project-card__actions">
-			{sourceConfig?.url && (sourceConfig.private ? (
-				<span
-					class="project-card__source project-card__source--disabled"
-					role="link"
-					aria-disabled="true"
-					aria-label={`Private ${source.name} source repository`}
-					title={`Private ${source.name} repository`}
-				>
-					<svg
-						class="project-card__source-icon"
-						viewBox="0 0 24 24"
-						aria-hidden="true"
-						focusable="false"
+		{hasActions && (
+			<div class="project-card__actions">
+				{sourceConfig?.url && (sourceConfig.private ? (
+					<span
+						class="project-card__source project-card__source--disabled"
+						role="link"
+						aria-disabled="true"
+						aria-label={`Private ${source.name} source repository`}
+						title={`Private ${source.name} repository`}
 					>
-						<path d={source.icon.path} />
-					</svg>
-				</span>
-			) : (
-				<a
-					class="project-card__source"
-					href={sourceConfig.url}
-					target="_blank"
-					rel="noopener noreferrer"
-					aria-label={`Open ${source.name} source repository in a new tab`}
-					title={`${source.name} repository`}
-				>
-					<svg
-						class="project-card__source-icon"
-						viewBox="0 0 24 24"
-						aria-hidden="true"
-						focusable="false"
+						<svg
+							class="project-card__source-icon"
+							viewBox="0 0 24 24"
+							aria-hidden="true"
+							focusable="false"
+						>
+							<path d={source.icon.path} />
+						</svg>
+					</span>
+				) : (
+					<a
+						class="project-card__source"
+						href={sourceConfig.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label={`Open ${source.name} source repository in a new tab`}
+						title={`${source.name} repository`}
 					>
-						<path d={source.icon.path} />
-					</svg>
-				</a>
-			))}
+						<svg
+							class="project-card__source-icon"
+							viewBox="0 0 24 24"
+							aria-hidden="true"
+							focusable="false"
+						>
+							<path d={source.icon.path} />
+						</svg>
+					</a>
+				))}
 
-			{liveUrl && (
-				<a
-					class="project-card__action"
-					href={liveUrl}
-					target="_blank"
-					rel="noopener noreferrer"
-					aria-label={`Open ${title} live website in a new tab`}
-					title="Open live website"
-				>
-					<ArrowUpRight size={24} stroke-width={1.6} />
-				</a>
-			)}
-		</div>
+				{liveUrl && (
+					<a
+						class="project-card__action"
+						href={liveUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label={`Open ${title} live website in a new tab`}
+						title="Open live website"
+					>
+						<ArrowUpRight size={24} stroke-width={1.6} />
+					</a>
+				)}
+			</div>
+		)}
 	</div>
 </article>
 
 <style>
 	.project-card {
 		position: relative;
-		display: block;
+		display: flex;
+		flex-direction: column;
 		height: 100%;
 		overflow: hidden;
 		border: 1px solid var(--glass-border);
@@ -245,6 +259,7 @@ const galleryId = slug ? `project-gallery-${slug}` : undefined;
 	.project-card__media-shell {
 		position: relative;
 		z-index: 2;
+		flex: 0 0 auto;
 		aspect-ratio: 16 / 9;
 		overflow: hidden;
 		border-block-end: 1px solid var(--glass-border);
@@ -349,6 +364,7 @@ const galleryId = slug ? `project-gallery-${slug}` : undefined;
 
 	.project-card__details {
 		display: flex;
+		flex: 1;
 		align-items: stretch;
 		justify-content: space-between;
 		flex-direction: column;
@@ -416,6 +432,7 @@ const galleryId = slug ? `project-gallery-${slug}` : undefined;
 		display: flex;
 		align-self: flex-end;
 		gap: 0.6rem;
+		margin-block-start: auto;
 	}
 
 	.project-card__source,

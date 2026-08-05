@@ -1,5 +1,7 @@
 import hedgeHopImage from '../assets/hedgehop.webp';
 import hedgeHopLearningImage from '../assets/hedgehop2.webp';
+import homeLabDashboardImage from '../assets/homelabdash.webp';
+import homeLabImage from '../assets/homelabrack.webp';
 import touchOfBeautyImage from '../assets/touchofbeauty.webp';
 import touchOfBeautyAdminImage from '../assets/touchofbeauty2.webp';
 
@@ -29,6 +31,29 @@ export const projects = [
 		],
 	},
 	{
+		slug: 'homelab',
+		title: 'Self-Hosted Homelab',
+		eyebrow: 'Infrastructure lab',
+		description: 'Proxmox-based lab for containerized services, reverse proxying, DNS filtering, and infrastructure monitoring.',
+		technologies: [
+			'Proxmox',
+			'Debian',
+			'Docker',
+			'AdGuard Home',
+			'Uptime Kuma',
+		],
+		images: [
+			{
+				src: homeLabDashboardImage,
+				alt: 'Homelab dashboard showing service status, system metrics, and running containers',
+			},
+			{
+				src: homeLabImage,
+				alt: 'Custom homelab rack with compute nodes, networking equipment, and storage',
+			},
+		],
+	},
+	{
 		slug: 'hedgehop',
 		title: 'HedgeHop',
 		eyebrow: 'Live website',
@@ -48,7 +73,7 @@ export const projects = [
 			{
 				src: hedgeHopLearningImage,
 				alt: 'HedgeHop learning interface',
-			}
+			},
 		],
 	},
 ];

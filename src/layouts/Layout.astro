@@ -102,6 +102,27 @@ const structuredData = {
         root.dataset.themePreference = storedTheme ? 'user' : 'system';
         root.dataset.pageLoading = 'true';
 
+        const navigationEntry = performance.getEntriesByType('navigation')[0];
+        if (navigationEntry?.type === 'reload') {
+          const resetScroll = () => window.scrollTo(0, 0);
+
+          history.scrollRestoration = 'manual';
+          root.style.scrollBehavior = 'auto';
+          resetScroll();
+
+          window.addEventListener('load', () => {
+            resetScroll();
+            requestAnimationFrame(() => {
+              resetScroll();
+              requestAnimationFrame(() => {
+                resetScroll();
+                root.style.removeProperty('scroll-behavior');
+                history.scrollRestoration = 'auto';
+              });
+            });
+          }, { once: true });
+        }
+
         window.setTimeout(() => {
           if (root.dataset.pageLoading !== 'true') return;
           delete root.dataset.pageLoading;
