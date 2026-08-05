@@ -1,5 +1,5 @@
 ---
-import { CircleArrowUp } from '@lucide/astro';
+import { CircleArrowUp, Info, X } from '@lucide/astro';
 import { siteConfig } from '../config/site.js';
 
 const currentYear = new Date().getFullYear();
@@ -11,16 +11,89 @@ const currentYear = new Date().getFullYear();
 			© <span data-current-year>{currentYear}</span> {siteConfig.name}
 		</p>
 
-		<a class="site-footer__top-link" href="#home">
-			Back to top
-			<CircleArrowUp size={18} stroke-width={1.8} />
-		</a>
+		<div class="site-footer__actions">
+			<button
+				class="site-footer__privacy-button"
+				type="button"
+				aria-label="Privacy and data notice"
+				title="Privacy and data notice"
+				aria-haspopup="dialog"
+				aria-controls="privacy-notice"
+				data-privacy-open
+			>
+				<Info size={18} stroke-width={1.8} aria-hidden="true" />
+			</button>
+
+			<a class="site-footer__top-link" href="#home">
+				Back to top
+				<CircleArrowUp size={18} stroke-width={1.8} />
+			</a>
+		</div>
 	</div>
+
+	<dialog
+		class="privacy-dialog"
+		id="privacy-notice"
+		aria-labelledby="privacy-notice-title"
+		aria-describedby="privacy-notice-description"
+		data-privacy-dialog
+	>
+		<div class="privacy-dialog__surface">
+			<header class="privacy-dialog__header">
+				<span class="privacy-dialog__icon" aria-hidden="true">
+					<Info size={20} stroke-width={1.8} />
+				</span>
+				<h2 id="privacy-notice-title">{siteConfig.privacyNotice.title}</h2>
+				<button
+					class="privacy-dialog__close"
+					type="button"
+					aria-label="Close privacy notice"
+					data-privacy-close
+					autofocus
+				>
+					<X size={19} stroke-width={1.8} aria-hidden="true" />
+				</button>
+			</header>
+
+			<div class="privacy-dialog__body" id="privacy-notice-description">
+				<p>{siteConfig.privacyNotice.summary}</p>
+				<p>{siteConfig.privacyNotice.preference}</p>
+				<p>{siteConfig.privacyNotice.hosting}</p>
+				<p>{siteConfig.privacyNotice.contact}</p>
+				<a
+					class="privacy-dialog__provider-link"
+					href={siteConfig.privacyNotice.providerUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Cloudflare Privacy Policy
+				</a>
+			</div>
+		</div>
+	</dialog>
 </footer>
 
 <script>
 	document.querySelectorAll<HTMLElement>('[data-current-year]').forEach((year) => {
 		year.textContent = String(new Date().getFullYear());
+	});
+
+	const privacyTrigger = document.querySelector<HTMLButtonElement>('[data-privacy-open]');
+	const privacyDialog = document.querySelector<HTMLDialogElement>('[data-privacy-dialog]');
+	const privacyClose = privacyDialog?.querySelector<HTMLButtonElement>('[data-privacy-close]');
+
+	privacyTrigger?.addEventListener('click', () => {
+		if (!privacyDialog?.open) privacyDialog?.showModal();
+	});
+
+	privacyClose?.addEventListener('click', () => privacyDialog?.close());
+
+	privacyDialog?.addEventListener('click', (event) => {
+		if (event.target === privacyDialog) privacyDialog.close();
+	});
+
+	privacyDialog?.addEventListener('close', () => {
+		privacyTrigger?.focus({ preventScroll: true });
 	});
 </script>
 
@@ -47,31 +120,131 @@ const currentYear = new Date().getFullYear();
 		white-space: nowrap;
 	}
 
-	.site-footer__top-link {
+	.site-footer__actions {
+		display: flex;
+		align-items: center;
+		flex: 0 0 auto;
+		gap: 0.4rem;
+	}
+
+	.site-footer__privacy-button,
+	.site-footer__top-link,
+	.privacy-dialog__close {
 		display: inline-flex;
 		align-items: center;
 		flex: 0 0 auto;
-		gap: 0.35rem;
-		padding: 0.45rem 0.65rem;
 		border: 1px solid var(--glass-border);
-		border-radius: 999px;
 		background: var(--glass-surface);
-		font-size: 0.75rem;
-		white-space: nowrap;
+		color: var(--color-text);
 		transition: background-color 180ms ease, transform 180ms ease;
 	}
 
-	.site-footer__top-link:hover {
+	.site-footer__privacy-button,
+	.privacy-dialog__close {
+		width: 2.25rem;
+		height: 2.25rem;
+		justify-content: center;
+		padding: 0;
+		border-radius: 50%;
+	}
+
+	.site-footer__top-link {
+		gap: 0.35rem;
+		padding: 0.45rem 0.65rem;
+		border-radius: 999px;
+		font-size: 0.75rem;
+		white-space: nowrap;
+	}
+
+	.site-footer__privacy-button:hover,
+	.site-footer__top-link:hover,
+	.privacy-dialog__close:hover {
 		background: var(--glass-surface-hover);
 		transform: translateY(-2px);
 	}
 
-	.site-footer__top-link:focus-visible {
+	.site-footer__privacy-button:focus-visible,
+	.site-footer__top-link:focus-visible,
+	.privacy-dialog__close:focus-visible,
+	.privacy-dialog__provider-link:focus-visible {
 		outline: 2px solid var(--color-accent);
 		outline-offset: 3px;
 	}
 
+	.privacy-dialog {
+		width: min(calc(100% - 2rem), 32rem);
+		max-width: none;
+		max-height: min(80dvh, 32rem);
+		margin: auto;
+		padding: 0;
+		overflow: hidden;
+		border: 1px solid var(--glass-border);
+		border-radius: 1.25rem;
+		background: var(--color-background);
+		color: var(--color-text);
+		box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+	}
+
+	.privacy-dialog::backdrop {
+		background: rgba(0, 0, 0, 0.62);
+		backdrop-filter: blur(4px);
+	}
+
+	.privacy-dialog__surface {
+		display: flex;
+		max-height: min(80dvh, 32rem);
+		flex-direction: column;
+	}
+
+	.privacy-dialog__header {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 1rem clamp(1rem, 4vw, 1.5rem);
+		border-block-end: 1px solid var(--glass-border);
+	}
+
+	.privacy-dialog__header h2 {
+		font-size: clamp(1rem, 4vw, 1.2rem);
+		line-height: 1.2;
+	}
+
+	.privacy-dialog__icon {
+		display: grid;
+		color: var(--color-accent);
+		place-items: center;
+	}
+
+	.privacy-dialog__close {
+		width: 2.5rem;
+		height: 2.5rem;
+	}
+
+	.privacy-dialog__body {
+		display: grid;
+		overflow-y: auto;
+		gap: 1rem;
+		padding: clamp(1.25rem, 4vw, 1.75rem);
+		color: var(--color-muted);
+		font-size: 0.9rem;
+		line-height: 1.65;
+	}
+
+	.privacy-dialog__body p:first-child {
+		color: var(--color-text);
+	}
+
+	.privacy-dialog__provider-link {
+		width: fit-content;
+		color: var(--color-accent);
+		font-weight: 700;
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
+		.site-footer__privacy-button,
 		.site-footer__top-link {
 			transition: none;
 		}

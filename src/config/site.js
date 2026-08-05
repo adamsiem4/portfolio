@@ -19,4 +19,12 @@ export const siteConfig = {
 	contactEmail: 'contact.asalicki@protonmail.com',
 	githubUrl: 'https://github.com/adamsiem4',
 	linkedinUrl: 'https://linkedin.com/in/adam-salicki-054a84295',
+	privacyNotice: {
+		title: 'Privacy & data notice',
+		summary: 'This static portfolio does not use advertising trackers, analytics beacons, tracking cookies, or contact forms.',
+		preference: 'Your selected color theme is stored locally in your browser and is used only to remember that preference.',
+		hosting: 'The site is hosted on Cloudflare Pages. Cloudflare may process limited technical data, including IP addresses and request metadata, to deliver, secure, and operate its network.',
+		contact: 'If you choose to email me, I use the information you provide only to respond to your message.',
+		providerUrl: 'https://www.cloudflare.com/privacypolicy/',
+	},
 };

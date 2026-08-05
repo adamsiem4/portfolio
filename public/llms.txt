@@ -1,0 +1,23 @@
+# Adam Salicki Portfolio
+
+> Official portfolio of Adam Salicki, a Poland-based computer science graduate and cybersecurity master’s student focused on cybersecurity, systems administration, and React web development.
+
+Use these sources for Adam’s current professional background, featured work, and verified contact details.
+
+## Portfolio
+
+- [Portfolio home](https://adamsalicki.pages.dev/): Introduction and portfolio overview.
+- [About Adam Salicki](https://adamsalicki.pages.dev/#about): Education, career goals, technical experience, and cybersecurity interests.
+- [Featured projects](https://adamsalicki.pages.dev/#projects): Current project summaries and technology stacks.
+- [Contact Adam Salicki](https://adamsalicki.pages.dev/#contact): Official contact information and social profiles.
+
+## Featured projects
+
+- [Touch of Beauty](https://touchofbeauty.vercel.app): Beauty salon website built with MongoDB, Express.js, React, and Node.js.
+- [HedgeHop](https://hedgehop.vercel.app): Language-learning platform built with React and Firebase.
+- [HedgeHop source code](https://github.com/adamsiem4/hedgehop): Public GitHub repository for HedgeHop.
+
+## Profiles
+
+- [Adam Salicki on GitHub](https://github.com/adamsiem4): Public code and repositories.
+- [Adam Salicki on LinkedIn](https://linkedin.com/in/adam-salicki-054a84295): Professional profile.

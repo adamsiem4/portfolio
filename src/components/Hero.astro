@@ -36,10 +36,7 @@ const eyebrowCharacters = Array.from(eyebrowText);
 </section>
 
 <script>
-	import { initMagneticHover } from '../scripts/magnetic-hover.js';
-
 	const hero = document.querySelector<HTMLElement>('#home');
-	initMagneticHover(hero);
 
 	const eyebrow = hero?.querySelector<HTMLElement>('[data-eyebrow-repel]');
 	const letters = eyebrow
