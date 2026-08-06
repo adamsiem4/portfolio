@@ -2,6 +2,8 @@ import hedgeHopImage from '../assets/hedgehop.webp';
 import hedgeHopLearningImage from '../assets/hedgehop2.webp';
 import homeLabDashboardImage from '../assets/homelabdash.webp';
 import homeLabImage from '../assets/homelabrack.webp';
+import piOledImage from '../assets/pi5.webp';
+import piOledCodeImage from '../assets/pi5code.webp';
 import touchOfBeautyImage from '../assets/touchofbeauty.webp';
 import touchOfBeautyAdminImage from '../assets/touchofbeauty2.webp';
 
@@ -50,6 +52,28 @@ export const projects = [
 			{
 				src: homeLabImage,
 				alt: 'Custom homelab rack with compute nodes, networking equipment, and storage',
+			},
+		],
+	},
+	{
+		slug: 'pi-oled-stats-sh1106',
+		title: 'Raspberry Pi Monitor',
+		eyebrow: 'Python script',
+		description: 'Displays hostname, IP, CPU load, temperature, and memory usage on an SH1106 OLED.',
+		technologies: ['Python', 'Raspberry Pi', 'Linux'],
+		source: {
+			provider: 'github',
+			url: 'https://github.com/adamsiem4/pi-oled-stats-sh1106',
+			private: false,
+		},
+		images: [
+			{
+				src: piOledImage,
+				alt: 'Raspberry Pi system statistics displayed on an SH1106 OLED',
+			},
+			{
+				src: piOledCodeImage,
+				alt: 'Python source code for the Raspberry Pi SH1106 status display',
 			},
 		],
 	},
