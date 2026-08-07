@@ -43,6 +43,7 @@ const currentYear = new Date().getFullYear();
 					class="site-footer__top-link"
 					href="#home"
 					aria-label="Back to top"
+					data-back-to-top
 					data-magnetic-target
 				>
 					Back to top
@@ -99,6 +100,18 @@ const currentYear = new Date().getFullYear();
 <script>
 	document.querySelectorAll<HTMLElement>('[data-current-year]').forEach((year) => {
 		year.textContent = String(new Date().getFullYear());
+	});
+
+	const backToTop = document.querySelector<HTMLAnchorElement>('[data-back-to-top]');
+	const pageMotionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+	backToTop?.addEventListener('click', (event) => {
+		event.preventDefault();
+		window.scrollTo({
+			top: 0,
+			left: 0,
+			behavior: pageMotionPreference.matches ? 'auto' : 'smooth',
+		});
 	});
 
 	const privacyTrigger = document.querySelector<HTMLButtonElement>('[data-privacy-open]');
