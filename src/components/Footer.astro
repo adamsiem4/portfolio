@@ -64,7 +64,9 @@ const currentYear = new Date().getFullYear();
 				<span class="privacy-dialog__icon" aria-hidden="true">
 					<Info size={20} stroke-width={1.8} />
 				</span>
-				<h2 id="privacy-notice-title">{siteConfig.privacyNotice.title}</h2>
+				<h2 id="privacy-notice-title" tabindex="-1" data-privacy-title>
+					{siteConfig.privacyNotice.title}
+				</h2>
 				<button
 					class="privacy-dialog__close"
 					type="button"
@@ -102,6 +104,7 @@ const currentYear = new Date().getFullYear();
 	const privacyTrigger = document.querySelector<HTMLButtonElement>('[data-privacy-open]');
 	const privacyDialog = document.querySelector<HTMLDialogElement>('[data-privacy-dialog]');
 	const privacyClose = privacyDialog?.querySelector<HTMLButtonElement>('[data-privacy-close]');
+	const privacyTitle = privacyDialog?.querySelector<HTMLElement>('[data-privacy-title]');
 	const privacySurface = privacyDialog?.querySelector<HTMLElement>('.privacy-dialog__surface');
 	const privacyMotionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -226,6 +229,7 @@ const currentYear = new Date().getFullYear();
 		privacyDialogState = 'opening';
 		privacyTrigger?.setAttribute('aria-expanded', 'true');
 		privacyDialog.showModal();
+		privacyTitle?.focus({ preventScroll: true });
 
 		if (!canAnimatePrivacyDialog()) {
 			privacyDialogState = 'open';
@@ -450,6 +454,10 @@ const currentYear = new Date().getFullYear();
 	.privacy-dialog__header h2 {
 		font-size: clamp(1rem, 4vw, 1.2rem);
 		line-height: 1.2;
+	}
+
+	.privacy-dialog__header h2:focus {
+		outline: none;
 	}
 
 	.privacy-dialog__icon {
