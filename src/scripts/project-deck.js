@@ -10,6 +10,10 @@ const initializeProjectDeck = (deck) => {
 
 	const slides = Array.from(deck.querySelectorAll('[data-project-slide]'));
 	if (slides.length === 0) return;
+	const slideParts = slides.map((slide) => ({
+		content: slide.querySelector('[data-project-content]'),
+		activateButton: slide.querySelector('[data-project-activate]'),
+	}));
 
 	const previousButton = deck.querySelector('[data-project-previous]');
 	const nextButton = deck.querySelector('[data-project-next]');
@@ -33,8 +37,7 @@ const initializeProjectDeck = (deck) => {
 				: direction * Math.min(0.7 + (distanceFromActive * 0.2), 1.5);
 			const layer = offset === 0 ? slides.length + 1 : slides.length - distanceFromActive;
 			const isActive = index === activeIndex;
-			const content = slide.querySelector('[data-project-content]');
-			const activateButton = slide.querySelector('[data-project-activate]');
+			const { content, activateButton } = slideParts[index];
 
 			slide.dataset.active = String(isActive);
 			slide.dataset.side = offset < 0 ? 'previous' : offset > 0 ? 'next' : 'active';
@@ -76,8 +79,8 @@ const initializeProjectDeck = (deck) => {
 	previousButton?.addEventListener('click', () => moveTo(activeIndex - 1));
 	nextButton?.addEventListener('click', () => moveTo(activeIndex + 1));
 
-	slides.forEach((slide, index) => {
-		slide.querySelector('[data-project-activate]')?.addEventListener('click', () => {
+	slideParts.forEach(({ activateButton }, index) => {
+		activateButton?.addEventListener('click', () => {
 			moveTo(index, true);
 		});
 	});
@@ -131,8 +134,6 @@ const initializeProjectDeck = (deck) => {
 			deck.dataset.dragging = 'true';
 		}
 
-		if (pointerState.direction !== 'horizontal') return;
-
 		event.preventDefault();
 		const isPastStart = activeIndex === 0 && deltaX > 0;
 		const isPastEnd = activeIndex === slides.length - 1 && deltaX < 0;
@@ -178,9 +179,4 @@ const initializeProjectDeck = (deck) => {
 	deck.dataset.projectDeckReady = 'true';
 };
 
-const initializeProjectDecks = () => {
-	document.querySelectorAll('[data-project-deck]').forEach(initializeProjectDeck);
-};
-
-initializeProjectDecks();
-document.addEventListener('astro:page-load', initializeProjectDecks);
+document.querySelectorAll('[data-project-deck]').forEach(initializeProjectDeck);

@@ -80,6 +80,17 @@ const technologyIcons = new Map([
 const imageCount = images.length;
 const galleryId = slug ? `project-gallery-${slug}` : undefined;
 const hasActions = Boolean(sourceConfig?.url || liveUrl);
+const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 1668];
+const formatImageSize = (value: number) => Number(value.toFixed(4));
+const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
+	const containScale = Math.min(1, (width * 9) / (height * 16));
+	const viewportShare = formatImageSize(containScale * 100);
+	const desktopWidth = formatImageSize(containScale * 768);
+	const tabletOffset = formatImageSize(containScale * 132);
+	const mobileOffset = formatImageSize(containScale * 108);
+
+	return `(min-width: 75rem) ${desktopWidth}px, (min-width: 48rem) calc(${viewportShare}vw - ${tabletOffset}px), calc(${viewportShare}vw - ${mobileOffset}px)`;
+};
 ---
 
 <article class="project-card">
@@ -116,6 +127,8 @@ const hasActions = Boolean(sourceConfig?.url || liveUrl);
 								src={image.src}
 								alt={image.alt}
 								layout="full-width"
+								widths={projectImageWidths.filter((width) => width <= image.src.width)}
+								sizes={getProjectImageSizes(image.src)}
 								quality="high"
 							/>
 						</div>

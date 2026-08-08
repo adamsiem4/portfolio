@@ -96,10 +96,12 @@ export const initMagneticHover = (root) => {
 			requestRender();
 		});
 
-		element.addEventListener('pointerleave', () => {
+		const releaseAndReset = () => {
 			isPressed = false;
 			reset();
-		});
+		};
+
+		element.addEventListener('pointerleave', releaseAndReset);
 		element.addEventListener('pointerdown', () => {
 			isPressed = true;
 			reset();
@@ -107,10 +109,7 @@ export const initMagneticHover = (root) => {
 		element.addEventListener('pointerup', () => {
 			isPressed = false;
 		});
-		element.addEventListener('pointercancel', () => {
-			isPressed = false;
-			reset();
-		});
+		element.addEventListener('pointercancel', releaseAndReset);
 
 		controllers.push({ isEnabled, reset, responsiveQuery });
 	});

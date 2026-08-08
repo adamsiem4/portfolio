@@ -1,3 +1,5 @@
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
 const initializeProjectGallery = (gallery) => {
 	if (gallery.dataset.projectGalleryReady === 'true') return;
 
@@ -7,16 +9,18 @@ const initializeProjectGallery = (gallery) => {
 	const nextButton = shell?.querySelector('[data-gallery-next]');
 	if (frames.length < 2 || !previousButton || !nextButton) return;
 
-	const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 	let activeIndex = 0;
 	let scrollFrame = null;
 
 	const updateControls = () => {
 		const galleryTop = gallery.scrollTop;
+		let closestDistance = Number.POSITIVE_INFINITY;
 		activeIndex = frames.reduce((closestIndex, frame, index) => {
-			const closestDistance = Math.abs(frames[closestIndex].offsetTop - galleryTop);
 			const frameDistance = Math.abs(frame.offsetTop - galleryTop);
-			return frameDistance < closestDistance ? index : closestIndex;
+			if (frameDistance >= closestDistance) return closestIndex;
+
+			closestDistance = frameDistance;
+			return index;
 		}, 0);
 
 		previousButton.disabled = activeIndex === 0;
@@ -58,9 +62,7 @@ const initializeProjectGallery = (gallery) => {
 		track.addEventListener('animationend', clearHint);
 		track.addEventListener('animationcancel', clearHint);
 
-		const observer = new IntersectionObserver((entries) => {
-			const entry = entries.find((item) => item.target === gallery);
-			if (!entry) return;
+		const observer = new IntersectionObserver(([entry]) => {
 			visibleRatio = entry.intersectionRatio;
 
 			if (!entry.isIntersecting || entry.intersectionRatio <= 0.1) {
@@ -105,9 +107,4 @@ const initializeProjectGallery = (gallery) => {
 	gallery.dataset.projectGalleryReady = 'true';
 };
 
-const initializeProjectGalleries = () => {
-	document.querySelectorAll('[data-project-gallery]').forEach(initializeProjectGallery);
-};
-
-initializeProjectGalleries();
-document.addEventListener('astro:page-load', initializeProjectGalleries);
+document.querySelectorAll('[data-project-gallery]').forEach(initializeProjectGallery);

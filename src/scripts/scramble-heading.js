@@ -4,11 +4,11 @@ const REVEAL_STEP = 0.35;
 const headingTimers = new WeakMap();
 
 const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-const headings = Array.from(document.querySelectorAll('[data-scramble-heading]'));
+const headings = document.querySelectorAll('[data-scramble-heading]');
 
 const getHeadingText = (heading) => heading.dataset.scrambleText ?? heading.textContent ?? '';
 
-const stopScramble = (heading, restoreText = true) => {
+const stopScramble = (heading) => {
 	const timer = headingTimers.get(heading);
 
 	if (timer !== undefined) {
@@ -16,7 +16,7 @@ const stopScramble = (heading, restoreText = true) => {
 		headingTimers.delete(heading);
 	}
 
-	if (restoreText) heading.textContent = getHeadingText(heading);
+	heading.textContent = getHeadingText(heading);
 };
 
 const getRandomCharacter = () => (

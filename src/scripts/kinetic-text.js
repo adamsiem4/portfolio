@@ -32,8 +32,8 @@ function parseHex(value, fallback) {
 	];
 }
 
-function rgba([red, green, blue], alpha = 1) {
-	return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+function rgba([red, green, blue]) {
+	return `rgba(${red}, ${green}, ${blue}, 1)`;
 }
 
 function cssToken(name, fallback) {
@@ -51,7 +51,6 @@ export class KineticText {
 		this.raf = 0;
 		this.resizeFrame = 0;
 		this.lastFrameTime = 0;
-		this.frameInterval = FRAME_DURATION;
 		this.running = false;
 		this.inView = true;
 		this.pageHidden = document.hidden;
@@ -146,7 +145,6 @@ export class KineticText {
 		) return;
 
 		this.reducedQuality = reducedQuality;
-		this.frameInterval = FRAME_DURATION;
 		this.dpr = dpr;
 		this.width = width;
 		this.height = height;
@@ -165,7 +163,7 @@ export class KineticText {
 		const context = this.maskContext;
 		const text = (this.params.text || DEFAULT_PARAMS.text).slice(0, 40);
 		const singleCharacter = text.length === 1;
-		const isMobile = this.width / this.dpr < 768;
+		const isMobile = this.width / this.dpr < MOBILE_BREAKPOINT;
 		const maxWidth = this.width * (isMobile ? 0.82 : 0.9);
 		let fontSize = Math.round(this.height * (singleCharacter ? 0.82 : 0.58));
 
@@ -210,7 +208,7 @@ export class KineticText {
 
 		const context = this.warpContext;
 		const { tiles, offset, speed, spread, shade } = this.params;
-		const isMobile = this.width / this.dpr < 768;
+		const isMobile = this.width / this.dpr < MOBILE_BREAKPOINT;
 		const motionScale = isMobile ? 0.5 : 1;
 		const activeSpread = spread * motionScale;
 		const activeTiles = this.reducedQuality ? Math.min(tiles, MOBILE_MAX_TILES) : tiles;
@@ -330,7 +328,7 @@ export class KineticText {
 		if (!this.running) return;
 
 		const elapsed = timestamp - this.lastFrameTime;
-		if (this.lastFrameTime === 0 || elapsed >= this.frameInterval) {
+		if (this.lastFrameTime === 0 || elapsed >= FRAME_DURATION) {
 			const frameTime = this.lastFrameTime === 0
 				? FRAME_DURATION
 				: Math.min(elapsed, 100);
@@ -338,7 +336,7 @@ export class KineticText {
 			this.frame += frameTime / FRAME_DURATION;
 			this.lastFrameTime = this.lastFrameTime === 0
 				? timestamp
-				: timestamp - (elapsed % this.frameInterval);
+				: timestamp - (elapsed % FRAME_DURATION);
 			this.renderFrame();
 		}
 
