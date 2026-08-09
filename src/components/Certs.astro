@@ -1,0 +1,26 @@
+---
+import ScrambleHeading from './ScrambleHeading.astro';
+---
+
+<section class="certs" id="certs" aria-labelledby="certs-title">
+	<div class="certs__inner">
+		<ScrambleHeading id="certs-title" text="Certs" />
+	</div>
+</section>
+
+<style>
+	.certs {
+		min-height: 100vh;
+		min-height: 100svh;
+		display: grid;
+		align-items: center;
+		padding: clamp(5rem, 10vw, 7rem) var(--page-gutter);
+		border-block-start: 1px solid var(--glass-border);
+		scroll-margin-top: 5rem;
+	}
+
+	.certs__inner {
+		width: min(100%, 72rem);
+		margin-inline: auto;
+	}
+</style>
