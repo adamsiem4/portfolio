@@ -91,3 +91,14 @@ element box, composition, quality setting, or lazy-loading behavior.
 - Reduced-motion handling is functional, not cosmetic: loaders exit directly,
   galleries use immediate scrolling, heading substitution stops, and continuous
   canvas animation resolves to a static frame.
+
+## Optional section integration
+
+`src/components/Certs.astro` is a dormant section template. It remains outside the
+current page render graph, so Astro does not emit its markup or scoped CSS in the
+published page. To expose it later, import and render `Certs` between `Projects`
+and `Contact` in `src/pages/index.astro`, then add
+`{ label: 'Certs', href: '#certs' }` between the matching entries in the navbar's
+link configuration. The component already owns the `#certs` fragment target and
+its accessible heading relationship; no client-side controller or hydration is
+required.
