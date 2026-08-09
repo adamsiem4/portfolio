@@ -16,6 +16,7 @@ const {
 }: Props = Astro.props;
 
 const canonicalUrl = new URL(canonical, siteConfig.siteUrl).toString();
+const socialImageUrl = new URL(siteConfig.socialImage, siteConfig.siteUrl).toString();
 const structuredData = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -64,13 +65,20 @@ const structuredData = {
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={`${siteConfig.authorName} Portfolio`} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={siteConfig.socialTitle} />
+    <meta property="og:description" content={siteConfig.socialDescription} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:locale" content="en_US" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
+    <meta property="og:image" content={socialImageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Adam Salicki portfolio" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={siteConfig.socialTitle} />
+    <meta name="twitter:description" content={siteConfig.socialDescription} />
+    <meta name="twitter:image" content={socialImageUrl} />
+    <meta name="twitter:image:alt" content="Adam Salicki portfolio" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />

@@ -4,6 +4,9 @@ export const siteConfig = {
 	siteUrl: 'https://adamsalicki.pages.dev',
 	seoTitle: 'Adam Salicki | Developer & Creative Portfolio',
 	seoDescription: 'Explore Adam Salicki’s portfolio of web development projects, creative experiments, and ways to get in touch for collaborations and opportunities.',
+	socialTitle: 'Adam Salicki — Portfolio',
+	socialDescription: 'Front-end developer expanding into cybersecurity.',
+	socialImage: '/social-preview.png',
 	seoKeywords: [
 		'Adam Salicki',
 		'cybersecurity portfolio',
