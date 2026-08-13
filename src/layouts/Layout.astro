@@ -135,6 +135,10 @@ const structuredData = {
           if (root.dataset.pageLoading !== 'true') return;
           delete root.dataset.pageLoading;
           document.body?.removeAttribute('aria-busy');
+          document.querySelectorAll('[data-page-loader-inert]').forEach((element) => {
+            element.removeAttribute('inert');
+            element.removeAttribute('data-page-loader-inert');
+          });
           document.querySelector('[data-page-loader]')?.remove();
         }, 6000);
       })();

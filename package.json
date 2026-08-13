@@ -9,6 +9,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "check": "astro-check",
+    "test:smoke": "bun run build && playwright test --project=chromium",
+    "test:smoke:all": "bun run build && playwright test",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -19,6 +21,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
     "typescript": "^6.0.0"
   }
 }

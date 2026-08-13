@@ -102,15 +102,10 @@ const currentYear = new Date().getFullYear();
 	});
 
 	const backToTop = document.querySelector<HTMLAnchorElement>('[data-back-to-top]');
-	const pageMotionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+	const pageStart = document.querySelector<HTMLElement>('#home');
 
-	backToTop?.addEventListener('click', (event) => {
-		event.preventDefault();
-		window.scrollTo({
-			top: 0,
-			left: 0,
-			behavior: pageMotionPreference.matches ? 'auto' : 'smooth',
-		});
+	backToTop?.addEventListener('click', () => {
+		requestAnimationFrame(() => pageStart?.focus({ preventScroll: true }));
 	});
 
 	const privacyTrigger = document.querySelector<HTMLButtonElement>('[data-privacy-open]');
@@ -323,6 +318,7 @@ const currentYear = new Date().getFullYear();
 		clearPrivacyAnimations();
 		privacyDialogState = 'closed';
 		privacyTrigger?.setAttribute('aria-expanded', 'false');
+		privacyTrigger?.focus({ preventScroll: true });
 	});
 
 	privacyMotionPreference.addEventListener?.('change', (event) => {

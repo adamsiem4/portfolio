@@ -15,6 +15,10 @@ yarn-error.log*
 pnpm-debug.log*
 bun-debug.log*
 
+# browser test output
+playwright-report/
+test-results/
+
 # environment variables
 .env
 .env.*
@@ -46,3 +50,4 @@ AGENTS.md
 *.swo
 *~
 todo.md
+QA.md

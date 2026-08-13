@@ -18,6 +18,26 @@
 		const value = loader?.querySelector('[data-page-loader-value]');
 		const curtain = loader?.querySelector('.page-loader__curtain');
 		if (!loader || !value || root.dataset.pageLoading !== 'true') return;
+		const lockPageContent = () => {
+			Array.from(document.body.children).forEach((element) => {
+				if (element === loader || element.tagName === 'SCRIPT' || element.hasAttribute('inert')) return;
+
+				element.setAttribute('inert', '');
+				element.setAttribute('data-page-loader-inert', '');
+			});
+		};
+		const unlockPageContent = () => {
+			document.querySelectorAll('[data-page-loader-inert]').forEach((element) => {
+				element.removeAttribute('inert');
+				element.removeAttribute('data-page-loader-inert');
+			});
+		};
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', lockPageContent, { once: true });
+		} else {
+			lockPageContent();
+		}
 
 		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 		const startedAt = performance.now();
@@ -54,6 +74,7 @@
 			hasFinished = true;
 			delete root.dataset.pageLoading;
 			document.body.removeAttribute('aria-busy');
+			unlockPageContent();
 			loader.remove();
 		};
 

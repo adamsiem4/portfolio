@@ -79,6 +79,7 @@ const technologyIcons = new Map([
 ]);
 const imageCount = images.length;
 const galleryId = slug ? `project-gallery-${slug}` : undefined;
+const galleryStatusId = slug ? `project-gallery-status-${slug}` : undefined;
 const hasActions = Boolean(sourceConfig?.url || liveUrl);
 const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 1668];
 const formatImageSize = (value: number) => Number(value.toFixed(4));
@@ -117,11 +118,15 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 				aria-label={imageCount > 1
 					? `${title} image gallery, ${imageCount} images. Use the up and down controls or scroll vertically.`
 					: undefined}
+				aria-describedby={imageCount > 1 ? galleryStatusId : undefined}
 				tabindex={imageCount > 1 ? 0 : undefined}
 			>
 				<div class="project-card__media-track">
-					{images.map((image) => (
-						<div class="project-card__image-frame">
+					{images.map((image, index) => (
+						<div
+							class="project-card__image-frame"
+							aria-current={imageCount > 1 && index === 0 ? 'true' : undefined}
+						>
 							<Image
 								class="project-card__image"
 								src={image.src}
@@ -137,7 +142,11 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 			</div>
 
 			{imageCount > 1 && (
-				<div class="project-card__gallery-controls" aria-label={`${title} image navigation`}>
+				<div
+					class="project-card__gallery-controls"
+					role="group"
+					aria-label={`${title} image navigation`}
+				>
 					<button
 						class="project-card__gallery-control"
 						type="button"
@@ -158,6 +167,15 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 					>
 						<ChevronDown size={18} stroke-width={1.8} aria-hidden="true" />
 					</button>
+
+					<p
+						class="project-card__sr-only"
+						id={galleryStatusId}
+						data-gallery-status
+						aria-live="polite"
+					>
+						Showing image 1 of {imageCount}: {images[0]?.alt}
+					</p>
 				</div>
 			)}
 		</div>
@@ -304,6 +322,7 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 	}
 	.project-card__media[data-scrollable='true'] {
 		overflow-y: auto;
+		scroll-snap-type: y mandatory;
 		scrollbar-width: none;
 	}
 	.project-card__media[data-scrollable='true']:focus-visible {
@@ -327,6 +346,8 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 		min-height: 0;
 		overflow: hidden;
 		border-block-end: 2px solid var(--glass-border);
+		scroll-snap-align: start;
+		scroll-snap-stop: always;
 	}
 	.project-card__image-frame:last-child {
 		border-block-end: 0;

@@ -7,31 +7,73 @@ const initializeProjectGallery = (gallery) => {
 	const frames = Array.from(gallery.querySelectorAll('.project-card__image-frame'));
 	const previousButton = shell?.querySelector('[data-gallery-previous]');
 	const nextButton = shell?.querySelector('[data-gallery-next]');
+	const status = shell?.querySelector('[data-gallery-status]');
 	if (frames.length < 2 || !previousButton || !nextButton) return;
 
 	let activeIndex = 0;
 	let scrollFrame = null;
+	let programmaticTargetIndex = null;
+	let programmaticScrollTimer = null;
 
-	const updateControls = () => {
+	const updateGalleryState = (nextIndex, announce = true) => {
+		const indexChanged = nextIndex !== activeIndex;
+		activeIndex = nextIndex;
+		gallery.dataset.activeIndex = String(activeIndex);
+
+		frames.forEach((frame, index) => {
+			if (index === activeIndex) frame.setAttribute('aria-current', 'true');
+			else frame.removeAttribute('aria-current');
+		});
+
+		previousButton.disabled = activeIndex === 0;
+		nextButton.disabled = activeIndex === frames.length - 1;
+
+		if (announce && indexChanged && status) {
+			const description = frames[activeIndex].querySelector('img')?.alt ?? '';
+			status.textContent = `Showing image ${activeIndex + 1} of ${frames.length}: ${description}`;
+		}
+	};
+
+	const updateControls = (announce = true) => {
 		const galleryTop = gallery.scrollTop;
+		if (programmaticTargetIndex !== null) {
+			const targetDistance = Math.abs(
+				frames[programmaticTargetIndex].offsetTop - galleryTop,
+			);
+
+			if (targetDistance > 1) {
+				scrollFrame = null;
+				return;
+			}
+
+			programmaticTargetIndex = null;
+			clearTimeout(programmaticScrollTimer);
+			programmaticScrollTimer = null;
+		}
+
 		let closestDistance = Number.POSITIVE_INFINITY;
-		activeIndex = frames.reduce((closestIndex, frame, index) => {
+		const closestIndex = frames.reduce((currentClosestIndex, frame, index) => {
 			const frameDistance = Math.abs(frame.offsetTop - galleryTop);
-			if (frameDistance >= closestDistance) return closestIndex;
+			if (frameDistance >= closestDistance) return currentClosestIndex;
 
 			closestDistance = frameDistance;
 			return index;
 		}, 0);
 
-		previousButton.disabled = activeIndex === 0;
-		nextButton.disabled = activeIndex === frames.length - 1;
+		updateGalleryState(closestIndex, announce);
 		scrollFrame = null;
 	};
 
 	const moveTo = (nextIndex) => {
-		activeIndex = Math.min(Math.max(nextIndex, 0), frames.length - 1);
-		previousButton.disabled = activeIndex === 0;
-		nextButton.disabled = activeIndex === frames.length - 1;
+		const clampedIndex = Math.min(Math.max(nextIndex, 0), frames.length - 1);
+		updateGalleryState(clampedIndex);
+		programmaticTargetIndex = clampedIndex;
+		clearTimeout(programmaticScrollTimer);
+		programmaticScrollTimer = setTimeout(() => {
+			programmaticTargetIndex = null;
+			programmaticScrollTimer = null;
+			updateControls();
+		}, 1_000);
 		gallery.scrollTo({
 			top: frames[activeIndex].offsetTop,
 			behavior: reducedMotion.matches ? 'auto' : 'smooth',
@@ -102,7 +144,7 @@ const initializeProjectGallery = (gallery) => {
 		if (scrollFrame === null) scrollFrame = requestAnimationFrame(updateControls);
 	}, { passive: true });
 
-	updateControls();
+	updateControls(false);
 	initializeScrollHint();
 	gallery.dataset.projectGalleryReady = 'true';
 };

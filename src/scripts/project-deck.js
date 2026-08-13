@@ -90,12 +90,12 @@ const initializeProjectDeck = (deck) => {
 
 		if (event.key === 'ArrowLeft') {
 			event.preventDefault();
-			moveTo(activeIndex - 1);
+			moveTo(activeIndex - 1, true);
 		}
 
 		if (event.key === 'ArrowRight') {
 			event.preventDefault();
-			moveTo(activeIndex + 1);
+			moveTo(activeIndex + 1, true);
 		}
 	});
 

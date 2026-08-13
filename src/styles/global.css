@@ -6,7 +6,7 @@
 	--color-text: #ffffff;
 	--color-muted: rgba(255, 255, 255, 0.45);
 	--color-accent: #08665f;
-	--color-accent-text: #0d887f;
+	--color-accent-text: #10978d;
 	--glass-surface: rgba(255, 255, 255, 0.04);
 	--glass-surface-hover: rgba(255, 255, 255, 0.075);
 	--glass-border: rgba(255, 255, 255, 0.14);
@@ -160,6 +160,10 @@ ol {
 }
 
 @media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
 	body {
 		transition: none;
 	}

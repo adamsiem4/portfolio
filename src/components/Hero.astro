@@ -6,7 +6,7 @@ const eyebrowText = 'Hi, my name is';
 const eyebrowCharacters = Array.from(eyebrowText);
 ---
 
-<section class="hero" id="home">
+<section class="hero" id="home" aria-labelledby="hero-title" tabindex="-1">
 	<div class="hero__content">
 		<p class="hero__eyebrow">
 			<span class="hero__eyebrow-accessible">{eyebrowText}</span>
@@ -18,7 +18,9 @@ const eyebrowCharacters = Array.from(eyebrowText);
 				))}
 			</span>
 		</p>
-		<KineticText text="Adam Salicki" />
+		<h1 class="hero__title" id="hero-title">
+			<KineticText text="Adam Salicki" />
+		</h1>
 	</div>
 
 	<span class="hero__scroll-magnetic" data-magnetic data-magnetic-max="8">
@@ -145,6 +147,10 @@ const eyebrowCharacters = Array.from(eyebrowText);
 	.hero__content {
 		width: min(100%, 72rem);
 		min-width: 0;
+	}
+
+	.hero:focus {
+		outline: none;
 	}
 
 	.hero__eyebrow {

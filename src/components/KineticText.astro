@@ -5,10 +5,8 @@ const { text = 'Adam Salicki' } = Astro.props;
 <kinetic-text
 	class="kinetic-text"
 	data-text={text}
-	role="img"
-	aria-label={text}
 >
-	<span class="kinetic-text__fallback" aria-hidden="true">{text}</span>
+	<span class="kinetic-text__fallback">{text}</span>
 </kinetic-text>
 
 <script>
