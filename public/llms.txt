@@ -13,11 +13,13 @@ Use these sources for Adam’s current professional background, featured work, a
 
 ## Featured projects
 
-- [Touch of Beauty](https://touchofbeauty.vercel.app): Beauty salon website built with MongoDB, Express.js, React, and Node.js.
-- [HedgeHop](https://hedgehop.vercel.app): Language-learning platform built with React and Firebase.
-- [HedgeHop source code](https://github.com/adamsiem4/hedgehop): Public GitHub repository for HedgeHop.
+- [Touch of Beauty](https://touchofbeauty.vercel.app): Beauty salon website with services, pricing, team profiles, and Booksy booking. Technologies: MongoDB, Express.js, React, Node.js.
+- **Self-Hosted Homelab**: Proxmox-based lab for containerized services, reverse proxying, DNS filtering, and infrastructure monitoring. Technologies: Proxmox, Debian, Docker, AdGuard Home, Uptime Kuma.
+- **Raspberry Pi Monitor**: Displays hostname, IP, CPU load, temperature, and memory usage on an SH1106 OLED. Technologies: Python, Raspberry Pi, Linux. [Source code](https://github.com/adamsiem4/pi-oled-stats-sh1106).
+- [HedgeHop](https://hedgehop.vercel.app): Language-learning platform with flashcards, lessons, progress tracking, and daily streaks. Technologies: React, JavaScript, Tailwind CSS, Firebase. [Source code](https://github.com/adamsiem4/hedgehop).
 
 ## Profiles
 
+- [Email Adam Salicki](mailto:contact.asalicki@protonmail.com): Official contact address.
 - [Adam Salicki on GitHub](https://github.com/adamsiem4): Public code and repositories.
 - [Adam Salicki on LinkedIn](https://linkedin.com/in/adam-salicki-054a84295): Professional profile.

@@ -91,6 +91,9 @@ element box, composition, quality setting, or lazy-loading behavior.
 - Reduced-motion handling is functional, not cosmetic: loaders exit directly,
   galleries use immediate scrolling, heading substitution stops, and continuous
   canvas animation resolves to a static frame.
+- `bun run check` validates the hand-maintained sitemap, robots file, and LLM
+  index against `siteConfig` and the current project records. URL, profile,
+  contact, or project-content changes must update those public files together.
 
 ## Optional section integration
 
