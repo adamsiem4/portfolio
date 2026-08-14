@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 const openPortfolio = async (page: Page) => {
 	await page.goto('/');
-	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
+	await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
 	await expect(page.locator('html')).not.toHaveAttribute('data-page-loading', 'true');
 };
 
@@ -65,6 +65,8 @@ test('uses reduced-motion fallbacks for page and component animation', async ({ 
 	await openPortfolio(page);
 
 	const root = page.locator('html');
+	const activeSlide = page.locator('[data-project-slide][aria-current="true"]');
+	const gallery = activeSlide.locator('[data-project-gallery]');
 	await expect.poll(() => root.evaluate((element) => getComputedStyle(element).scrollBehavior)).toBe('auto');
 	await expect.poll(() => page.locator('.hero__scroll-icon').evaluate(
 		(element) => getComputedStyle(element).animationName,
@@ -72,15 +74,133 @@ test('uses reduced-motion fallbacks for page and component animation', async ({ 
 	await expect.poll(() => page.locator('[data-project-slide]').first().evaluate(
 		(element) => getComputedStyle(element).transitionDuration,
 	)).toBe('0s');
+	await expect.poll(() => activeSlide.locator('.project-card__media-track').evaluate(
+		(element) => getComputedStyle(element).animationName,
+	)).toBe('none');
+	await expect.poll(() => activeSlide.locator('.project-card__stack li').first().evaluate(
+		(element) => getComputedStyle(element, '::before').transitionDuration,
+	)).toBe('0s');
+	await expect.poll(() => page.locator('kinetic-text').evaluate((element) => {
+		const engine = (element as HTMLElement & {
+			engine?: { reducedMotion: boolean; running: boolean };
+		}).engine;
+		return { reducedMotion: engine?.reducedMotion, running: engine?.running };
+	})).toEqual({ reducedMotion: true, running: false });
+
+	const heading = page.locator('[data-scramble-heading]').first();
+	const canonicalHeading = await heading.getAttribute('data-scramble-text');
+	await page.waitForTimeout(120);
+	await expect(heading).toHaveText(canonicalHeading ?? '');
+
+	const galleryPosition = await gallery.evaluate((element) => {
+		const next = element.closest('.project-card__media-shell')
+			?.querySelector<HTMLButtonElement>('[data-gallery-next]');
+		next?.click();
+		const target = element.querySelectorAll<HTMLElement>('.project-card__image-frame')[1];
+		return {
+			activeIndex: element.dataset.activeIndex,
+			distance: Math.abs(element.scrollTop - target.offsetTop),
+			hasHint: element.hasAttribute('data-gallery-hinting'),
+		};
+	});
+	expect(galleryPosition.activeIndex).toBe('1');
+	expect(galleryPosition.distance).toBeLessThanOrEqual(1);
+	expect(galleryPosition.hasHint).toBe(false);
+
+	const privacyTrigger = page.getByRole('button', { name: 'Privacy and data notice' });
+	const privacyDialog = page.getByRole('dialog', { name: 'Privacy & data notice' });
+	await privacyTrigger.click();
+	await expect(privacyDialog).toBeVisible();
+	expect(await privacyDialog.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
+	await page.getByRole('button', { name: 'Close privacy notice' }).click();
+	await expect(privacyDialog).toBeHidden();
 
 	await page.locator('[data-theme-toggle]').click();
 	await expect(root).toHaveAttribute('data-theme', 'light');
+	await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(244, 243, 239)');
 	await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
 	await expect(page.locator('.theme-transition-cover')).toHaveCount(0);
+	await expect.poll(() => root.evaluate(
+		(element) => element.style.getPropertyValue('--theme-wave-x'),
+	)).toBe('');
+	await page.locator('[data-theme-toggle]').click();
+	await expect(root).toHaveAttribute('data-theme', 'dark');
+	await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(9, 11, 12)');
+	await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
 });
 
 test.describe('theme reveal', () => {
-	test('completes and cleans up the full-page transition', async ({ page }) => {
+	test('starts at the toggle, covers the viewport, and cleans up', async ({ page }) => {
+		await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
+		await openPortfolio(page);
+
+		const root = page.locator('html');
+		const toggle = page.locator('[data-theme-toggle]');
+		const bounds = await toggle.boundingBox();
+		expect(bounds).not.toBeNull();
+		await toggle.click();
+		await expect(root).toHaveAttribute('data-theme-transition', 'true');
+
+		const geometry = await root.evaluate((element) => ({
+			x: Number.parseFloat(element.style.getPropertyValue('--theme-wave-x')),
+			y: Number.parseFloat(element.style.getPropertyValue('--theme-wave-y')),
+			radius: Number.parseFloat(element.style.getPropertyValue('--theme-wave-radius')),
+			width: window.innerWidth,
+			height: window.innerHeight,
+		}));
+		if (bounds) {
+			const expectedX = bounds.x + bounds.width / 2;
+			const expectedY = bounds.y + bounds.height / 2;
+			const farthestCorner = Math.hypot(
+				Math.max(expectedX, geometry.width - expectedX),
+				Math.max(expectedY, geometry.height - expectedY),
+			);
+			expect(geometry.x).toBeCloseTo(expectedX, 0);
+			expect(geometry.y).toBeCloseTo(expectedY, 0);
+			expect(geometry.radius).toBeGreaterThan(farthestCorner);
+			expect(geometry.radius).toBeLessThanOrEqual(Math.ceil(farthestCorner) + 1);
+		}
+
+		await expect(root).toHaveAttribute('data-theme', 'light');
+		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
+		await expect(toggle).not.toHaveAttribute('aria-busy', 'true');
+		await expect(page.locator('.theme-transition-cover')).toHaveCount(0);
+		await expect.poll(() => root.evaluate((element) => [
+			element.style.getPropertyValue('--theme-wave-x'),
+			element.style.getPropertyValue('--theme-wave-y'),
+			element.style.getPropertyValue('--theme-wave-radius'),
+		])).toEqual(['', '', '']);
+
+		await toggle.click();
+		await expect(root).toHaveAttribute('data-theme-transition', 'true');
+		await expect(root).toHaveAttribute('data-theme', 'dark');
+		await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(9, 11, 12)');
+		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
+		await expect(toggle).toHaveAccessibleName('Switch to light mode');
+	});
+
+	test('uses and cleans up the Web Animations fallback', async ({ page }) => {
+		await page.addInitScript(() => {
+			Object.defineProperty(document, 'startViewTransition', {
+				configurable: true,
+				value: undefined,
+			});
+		});
+		await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
+		await openPortfolio(page);
+
+		const root = page.locator('html');
+		const cover = page.locator('.theme-transition-cover');
+		await page.locator('[data-theme-toggle]').click();
+		await expect(root).toHaveAttribute('data-theme-transition', 'true');
+		await expect(cover).toBeVisible();
+		await expect(cover).toHaveAttribute('data-theme', 'light');
+		await expect(root).toHaveAttribute('data-theme', 'light');
+		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
+		await expect(cover).toHaveCount(0);
+	});
+
+	test('finishes immediately when reduced motion is enabled mid-reveal', async ({ page }) => {
 		await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
 		await openPortfolio(page);
 
@@ -88,6 +208,7 @@ test.describe('theme reveal', () => {
 		const toggle = page.locator('[data-theme-toggle]');
 		await toggle.click();
 		await expect(root).toHaveAttribute('data-theme-transition', 'true');
+		await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
 		await expect(root).toHaveAttribute('data-theme', 'light');
 		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
 		await expect(toggle).not.toHaveAttribute('aria-busy', 'true');
