@@ -38,6 +38,9 @@ interface Props {
 	title: string;
 	eyebrow?: string;
 	description: string;
+	role: string;
+	challenge: string;
+	outcome: string;
 	liveUrl?: string;
 	source?: ProjectSource;
 	images?: ProjectImage[];
@@ -49,6 +52,9 @@ const {
 	title,
 	eyebrow = 'Project',
 	description,
+	role,
+	challenge,
+	outcome,
 	liveUrl,
 	source: sourceConfig,
 	images = [],
@@ -185,7 +191,22 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 		<div class="project-card__copy">
 			<p class="project-card__label">{eyebrow}</p>
 			<h3>{title}</h3>
-			<p class="project-card__description">{description}</p>
+			<p class="project-card__sr-only">{description}</p>
+
+			<dl class="project-card__impact" data-project-impact>
+				<div data-project-detail="role">
+					<dt>Role</dt>
+					<dd>{role}</dd>
+				</div>
+				<div data-project-detail="challenge">
+					<dt>Challenge</dt>
+					<dd>{challenge}</dd>
+				</div>
+				<div data-project-detail="outcome">
+					<dt>Outcome</dt>
+					<dd>{outcome}</dd>
+				</div>
+			</dl>
 
 			{technologies.length > 0 && (
 				<ul class="project-card__stack" aria-label={`${title} technology stack`}>
@@ -432,17 +453,38 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 		overflow-wrap: anywhere;
 		text-wrap: balance;
 	}
-	.project-card__description {
-		max-width: 32ch;
+	.project-card__impact {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+		gap: 0.45rem 1rem;
+		margin-block-start: 0.4rem;
+		padding-block-start: 0.6rem;
+		border-block-start: 1px solid var(--glass-border);
+	}
+	.project-card__impact div {
+		display: grid;
+		min-width: 0;
+		gap: 0.15rem;
+	}
+	.project-card__impact dt {
+		color: var(--color-accent-text);
+		font-size: 0.58rem;
+		font-weight: 700;
+		letter-spacing: 0.13em;
+		line-height: 1.2;
+		text-transform: uppercase;
+	}
+	.project-card__impact dd {
 		color: var(--color-muted);
-		font-size: clamp(0.9rem, 3vw, 1.05rem);
-		line-height: 1.45;
+		font-size: clamp(0.72rem, 2.4vw, 0.8rem);
+		line-height: 1.35;
+		overflow-wrap: anywhere;
 	}
 	.project-card__stack {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.4rem;
-		margin-block-start: 0.65rem;
+		margin-block-start: 0.5rem;
 	}
 	.project-card__stack li {
 		position: relative;
@@ -557,7 +599,8 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 		.project-card__details {
 			min-height: 0;
 			overflow: hidden;
-			padding: clamp(1.25rem, 2.5vw, 2rem);
+			gap: 0.85rem;
+			padding: 1.1rem 1.25rem;
 		}
 		.project-card__copy {
 			min-height: 0;
@@ -568,6 +611,13 @@ const getProjectImageSizes = ({ width, height }: ImageMetadata) => {
 		}
 		h3 {
 			font-size: clamp(2rem, 3.2vw, 2.75rem);
+		}
+		.project-card__impact dd {
+			font-size: 0.74rem;
+		}
+		.project-card__source,
+		.project-card__action {
+			width: 2.75rem;
 		}
 	}
 	.project-card__sr-only {

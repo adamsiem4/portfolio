@@ -54,10 +54,12 @@ of JavaScript execution and avoids a client-rendering boundary.
 ## Project and image pipeline
 
 `src/config/projects.js` imports local assets as Astro `ImageMetadata`. Each record
-is rendered by `Projects.astro`, passed to `ProjectCard.astro`, and emitted with
-intrinsic dimensions before `project-deck.js` adds interaction. Technology names
-are resolved against the Simple Icons map at build time; interface controls remain
-Lucide Astro components and add no icon runtime.
+keeps its summary, role, challenge, and outcome alongside its media and technology
+stack. `Projects.astro` passes that content to `ProjectCard.astro`, which renders the
+impact fields as a semantic definition list and emits images with intrinsic
+dimensions before `project-deck.js` adds interaction. Technology names are resolved
+against the Simple Icons map at build time; interface controls remain Lucide Astro
+components and add no icon runtime.
 
 The card media viewport is 16:9, but `object-fit: contain` means non-16:9 sources
 use only part of its width. Responsive image sizing therefore applies:

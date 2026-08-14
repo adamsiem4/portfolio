@@ -252,6 +252,39 @@ test('updates project deck state with keyboard, buttons, and pointer drag', asyn
 	await expect(deck).toHaveAttribute('data-active-index', '1');
 });
 
+test('shows role, challenge, and outcome details for every project', async ({ page }) => {
+	await openPortfolio(page);
+
+	const slides = page.locator('[data-project-slide]');
+	await expect(slides).toHaveCount(4);
+
+	for (const slide of await slides.all()) {
+		const impact = slide.locator('[data-project-impact]');
+		await expect(impact).toHaveCount(1);
+
+		for (const [key, label] of [
+			['role', 'Role'],
+			['challenge', 'Challenge'],
+			['outcome', 'Outcome'],
+		] as const) {
+			const detail = impact.locator(`[data-project-detail="${key}"]`);
+			await expect(detail.locator('dt')).toHaveText(label);
+			await expect(detail.locator('dd')).not.toHaveText(/^\s*$/);
+		}
+	}
+	for (const width of [1_200, 1_280]) {
+		await page.setViewportSize({ width, height: 720 });
+		const overflow = await slides.evaluateAll((elements) => elements.map((element) => {
+			const copy = element.querySelector<HTMLElement>('.project-card__copy');
+			return copy ? copy.scrollHeight - copy.clientHeight : Number.POSITIVE_INFINITY;
+		}));
+		expect(
+			Math.max(...overflow),
+			`Project copy overflow at ${width}px by slide: ${overflow.join(', ')}px`,
+		).toBeLessThanOrEqual(1);
+	}
+});
+
 test('updates gallery controls and announces the current image', async ({ page }) => {
 	await page.emulateMedia({ reducedMotion: 'no-preference' });
 	await openPortfolio(page);

@@ -8,15 +8,15 @@ Use these sources for Adam’s current professional background, featured work, a
 
 - [Portfolio home](https://adamsalicki.pages.dev/): Introduction and portfolio overview.
 - [About Adam Salicki](https://adamsalicki.pages.dev/#about): Education, career goals, technical experience, and cybersecurity interests.
-- [Featured projects](https://adamsalicki.pages.dev/#projects): Current project summaries and technology stacks.
+- [Featured projects](https://adamsalicki.pages.dev/#projects): Current project summaries, roles, challenges, outcomes, and technology stacks.
 - [Contact Adam Salicki](https://adamsalicki.pages.dev/#contact): Official contact information and social profiles.
 
 ## Featured projects
 
-- [Touch of Beauty](https://touchofbeauty.vercel.app): Beauty salon website with services, pricing, team profiles, and Booksy booking. Technologies: MongoDB, Express.js, React, Node.js.
-- **Self-Hosted Homelab**: Proxmox-based lab for containerized services, reverse proxying, DNS filtering, and infrastructure monitoring. Technologies: Proxmox, Debian, Docker, AdGuard Home, Uptime Kuma.
-- **Raspberry Pi Monitor**: Displays hostname, IP, CPU load, temperature, and memory usage on an SH1106 OLED. Technologies: Python, Raspberry Pi, Linux. [Source code](https://github.com/adamsiem4/pi-oled-stats-sh1106).
-- [HedgeHop](https://hedgehop.vercel.app): Language-learning platform with flashcards, lessons, progress tracking, and daily streaks. Technologies: React, JavaScript, Tailwind CSS, Firebase. [Source code](https://github.com/adamsiem4/hedgehop).
+- [Touch of Beauty](https://touchofbeauty.vercel.app): Beauty salon website with services, pricing, team profiles, and Booksy booking. Role: Full-stack development. Challenge: Keep salon content editable without disrupting the Booksy booking flow. Outcome: Shipped a live site with an authenticated admin panel. Technologies: MongoDB, Express.js, React, Node.js.
+- **Self-Hosted Homelab**: Proxmox-based lab for containerized services, reverse proxying, DNS filtering, and infrastructure monitoring. Role: Infrastructure design and operations. Challenge: Unify self-hosted routing, DNS filtering, and monitoring in one manageable lab. Outcome: Built a Proxmox and Debian lab running Docker, AdGuard Home, and Uptime Kuma. Technologies: Proxmox, Debian, Docker, AdGuard Home, Uptime Kuma.
+- **Raspberry Pi Monitor**: Displays hostname, IP, CPU load, temperature, and memory usage on an SH1106 OLED. Role: Python and hardware integration. Challenge: Fit readable live telemetry on a 1.3-inch SH1106 OLED without display artifacts. Outcome: Built a boot-started dashboard with off-hours OLED burn-in protection. Technologies: Python, Raspberry Pi, Linux. [Source code](https://github.com/adamsiem4/pi-oled-stats-sh1106).
+- [HedgeHop](https://hedgehop.vercel.app): Language-learning platform with flashcards, lessons, progress tracking, and daily streaks. Role: Frontend and Firebase development. Challenge: Retain learning progress for both guests and signed-in users. Outcome: Shipped a responsive Firebase app with lessons, streaks, and synced user data. Technologies: React, JavaScript, Tailwind CSS, Firebase. [Source code](https://github.com/adamsiem4/hedgehop).
 
 ## Profiles
 

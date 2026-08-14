@@ -54,6 +54,17 @@ expectText(llms, siteConfig.githubUrl, 'public/llms.txt', 'the configured GitHub
 expectText(llms, siteConfig.linkedinUrl, 'public/llms.txt', 'the configured LinkedIn URL');
 
 projects.forEach((project) => {
+	[
+		['role', project.role],
+		['challenge', project.challenge],
+		['outcome', project.outcome],
+	].forEach(([field, value]) => {
+		expect(
+			typeof value === 'string' && value.trim().length > 0,
+			`${project.title} is missing a ${field} value in src/config/projects.js`,
+		);
+	});
+
 	const projectLine = llms
 		.split(/\r?\n/)
 		.find((line) => line.includes(project.title));
@@ -61,6 +72,9 @@ projects.forEach((project) => {
 	if (!projectLine) return;
 
 	expectText(projectLine, project.description, 'public/llms.txt', `the ${project.title} description`);
+	expectText(projectLine, `Role: ${project.role}`, 'public/llms.txt', `the ${project.title} role`);
+	expectText(projectLine, `Challenge: ${project.challenge}`, 'public/llms.txt', `the ${project.title} challenge`);
+	expectText(projectLine, `Outcome: ${project.outcome}`, 'public/llms.txt', `the ${project.title} outcome`);
 
 	project.technologies.forEach((technology) => {
 		expectText(

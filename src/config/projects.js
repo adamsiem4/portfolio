@@ -14,6 +14,9 @@ export const projects = [
 		title: 'Touch of Beauty',
 		eyebrow: 'Live website',
 		description: 'Beauty salon website with services, pricing, team profiles, and Booksy booking.',
+		role: 'Full-stack development',
+		challenge: 'Keep salon content editable without disrupting the Booksy booking flow.',
+		outcome: 'Shipped a live site with an authenticated admin panel.',
 		technologies: ['MongoDB', 'Express.js', 'React', 'Node.js'],
 		liveUrl: 'https://touchofbeauty.vercel.app',
 		source: {
@@ -37,6 +40,9 @@ export const projects = [
 		title: 'Self-Hosted Homelab',
 		eyebrow: 'Infrastructure lab',
 		description: 'Proxmox-based lab for containerized services, reverse proxying, DNS filtering, and infrastructure monitoring.',
+		role: 'Infrastructure design and operations',
+		challenge: 'Unify self-hosted routing, DNS filtering, and monitoring in one manageable lab.',
+		outcome: 'Built a Proxmox and Debian lab running Docker, AdGuard Home, and Uptime Kuma.',
 		technologies: [
 			'Proxmox',
 			'Debian',
@@ -60,6 +66,9 @@ export const projects = [
 		title: 'Raspberry Pi Monitor',
 		eyebrow: 'Python script',
 		description: 'Displays hostname, IP, CPU load, temperature, and memory usage on an SH1106 OLED.',
+		role: 'Python and hardware integration',
+		challenge: 'Fit readable live telemetry on a 1.3-inch SH1106 OLED without display artifacts.',
+		outcome: 'Built a boot-started dashboard with off-hours OLED burn-in protection.',
 		technologies: ['Python', 'Raspberry Pi', 'Linux'],
 		source: {
 			provider: 'github',
@@ -82,6 +91,9 @@ export const projects = [
 		title: 'HedgeHop',
 		eyebrow: 'Live website',
 		description: 'Language-learning platform with flashcards, lessons, progress tracking, and daily streaks.',
+		role: 'Frontend and Firebase development',
+		challenge: 'Retain learning progress for both guests and signed-in users.',
+		outcome: 'Shipped a responsive Firebase app with lessons, streaks, and synced user data.',
 		technologies: ['React', 'JavaScript', 'Tailwind CSS', 'Firebase'],
 		liveUrl: 'https://hedgehop.vercel.app',
 		source: {
