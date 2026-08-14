@@ -1,5 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import {
+	PROJECT_LAYOUT,
+	getProjectDeckReserve,
+	getProjectImageSizes,
+	getProjectMaximumCardOffset,
+	getProjectMediaSlotWidth,
+} from '../src/utils/project-layout';
 
 const openPortfolio = async (page: Page) => {
 	await page.goto('/');
@@ -282,6 +289,106 @@ test('shows role, challenge, and outcome details for every project', async ({ pa
 			Math.max(...overflow),
 			`Project copy overflow at ${width}px by slide: ${overflow.join(', ')}px`,
 		).toBeLessThanOrEqual(1);
+	}
+});
+
+test('keeps deck spacing and responsive image sizes aligned with project count', async ({ page }) => {
+	await openPortfolio(page);
+
+	const deck = page.locator('[data-project-deck]');
+	const slides = deck.locator('[data-project-slide]');
+	const projectCount = await slides.count();
+	const deckReserve = getProjectDeckReserve(projectCount);
+	expect(
+		getProjectMaximumCardOffset(projectCount),
+		`The ${projectCount}-project card fan exceeds half of its ${deckReserve}px reserve; revalidate the reserve before changing the project count.`,
+	).toBeLessThanOrEqual(deckReserve / 2);
+	await expect(deck).toHaveAttribute('data-project-count', String(projectCount));
+	await expect(deck).toHaveAttribute('data-deck-reserve', String(deckReserve));
+	expect(await deck.evaluate(
+		(element) => getComputedStyle(element).getPropertyValue('--deck-reserve').trim(),
+	)).toBe(`${deckReserve}px`);
+
+	const imageMetadata = await page.locator('.project-card__image').evaluateAll((images) => (
+		images.map((image) => ({
+			width: Number(image.getAttribute('width')),
+			height: Number(image.getAttribute('height')),
+			sizes: image.getAttribute('sizes'),
+		}))
+	));
+	imageMetadata.forEach(({ width, height, sizes }) => {
+		expect(sizes).toBe(getProjectImageSizes({ width, height }, projectCount));
+	});
+	const moveToDeckEnd = async (controlSelector: string) => deck.evaluate(
+		(element, selector) => {
+			const control = element.querySelector<HTMLButtonElement>(selector);
+			let remainingMoves = element.querySelectorAll('[data-project-slide]').length;
+			while (control && !control.disabled && remainingMoves > 0) {
+				control.click();
+				remainingMoves -= 1;
+			}
+		},
+		controlSelector,
+	);
+	const getCardFanBounds = async () => slides.evaluateAll((elements) => {
+		const bounds = elements.map((element) => element.getBoundingClientRect());
+		return {
+			left: Math.min(...bounds.map((rect) => rect.left)),
+			right: Math.max(...bounds.map((rect) => rect.right)),
+			viewportWidth: document.documentElement.clientWidth,
+		};
+	});
+
+	for (const viewport of [
+		{ width: 320, height: 844 },
+		{ width: 767, height: 900 },
+		{ width: 768, height: 900 },
+		{ width: 1_199, height: 800 },
+		{ width: 1_200, height: 800 },
+		{ width: 1_215, height: 800 },
+		{ width: 1_216, height: 800 },
+		{ width: 1_440, height: 800 },
+	]) {
+		await page.setViewportSize(viewport);
+		await moveToDeckEnd('[data-project-previous]');
+		await expect(deck).toHaveAttribute('data-active-index', '0');
+		const startFanBounds = await getCardFanBounds();
+		expect(startFanBounds.left).toBeGreaterThanOrEqual(-1);
+		expect(startFanBounds.right).toBeLessThanOrEqual(startFanBounds.viewportWidth + 1);
+
+		await moveToDeckEnd('[data-project-next]');
+		await expect(deck).toHaveAttribute('data-active-index', String(projectCount - 1));
+		const endFanBounds = await getCardFanBounds();
+		expect(endFanBounds.left).toBeGreaterThanOrEqual(-1);
+		expect(endFanBounds.right).toBeLessThanOrEqual(endFanBounds.viewportWidth + 1);
+
+		const deckBounds = await deck.boundingBox();
+		const activeSlideBounds = await slides.nth(projectCount - 1).boundingBox();
+		const imageBounds = await slides.nth(projectCount - 1)
+			.locator('.project-card__image')
+			.first()
+			.boundingBox();
+		expect(deckBounds).not.toBeNull();
+		expect(activeSlideBounds).not.toBeNull();
+		expect(imageBounds).not.toBeNull();
+		if (!deckBounds || !activeSlideBounds || !imageBounds) continue;
+
+		expect(activeSlideBounds.width).toBeCloseTo(deckBounds.width - deckReserve, 0);
+
+		const isDesktop = viewport.width >= PROJECT_LAYOUT.desktopBreakpoint;
+		const expectedMediaWidth = getProjectMediaSlotWidth(
+			deckBounds.width,
+			projectCount,
+			isDesktop,
+		);
+		expect(imageBounds.width).toBeCloseTo(expectedMediaWidth, 0);
+
+		const expectedGutter = viewport.width >= PROJECT_LAYOUT.tabletBreakpoint
+			? PROJECT_LAYOUT.tabletPageGutter
+			: PROJECT_LAYOUT.mobilePageGutter;
+		expect(await page.locator('.projects').evaluate((element) => (
+			Number.parseFloat(getComputedStyle(element).paddingInlineStart)
+		))).toBe(expectedGutter);
 	}
 });
 
