@@ -105,6 +105,8 @@ const currentYear = new Date().getFullYear();
 	const pageStart = document.querySelector<HTMLElement>('#home');
 
 	backToTop?.addEventListener('click', () => {
+		// Let the fragment navigation scroll first, then place keyboard focus at the
+		// destination without triggering a second scroll.
 		requestAnimationFrame(() => pageStart?.focus({ preventScroll: true }));
 	});
 
@@ -117,6 +119,8 @@ const currentYear = new Date().getFullYear();
 
 	type PrivacyDialogState = 'closed' | 'opening' | 'open' | 'closing';
 
+	// Explicit states prevent re-entrant open/close requests from leaving the native
+	// dialog and its Web Animations out of sync.
 	let privacyDialogState: PrivacyDialogState = 'closed';
 	let activePrivacyAnimations: Animation[] = [];
 
@@ -142,6 +146,8 @@ const currentYear = new Date().getFullYear();
 		const dialogBounds = privacyDialog.getBoundingClientRect();
 		if (dialogBounds.width === 0 || dialogBounds.height === 0) return null;
 
+		// Translate and scale the full dialog back to the trigger pill. Reversing these
+		// values makes opening look like the pill expands into the modal.
 		const translateX = (
 			triggerBounds.left + (triggerBounds.width / 2)
 			- dialogBounds.left - (dialogBounds.width / 2)
@@ -166,6 +172,8 @@ const currentYear = new Date().getFullYear();
 		if (!privacyDialog?.open || privacyDialogState === 'closing') return;
 
 		if (privacyDialogState === 'opening') {
+			// A close request during opening reuses the current animation progress instead
+			// of snapping to a new closing animation.
 			privacyDialogState = 'closing';
 			const reversingAnimations = [...activePrivacyAnimations];
 			reversingAnimations.forEach((animation) => animation.reverse());
@@ -232,6 +240,8 @@ const currentYear = new Date().getFullYear();
 	const openPrivacyDialog = async () => {
 		if (!privacyDialog || privacyDialog.open || privacyDialogState !== 'closed') return;
 
+		// Measure before showModal moves the dialog into the top layer; the original
+		// trigger rectangle is the animation's visual starting point.
 		const triggerBounds = privacyTrigger?.getBoundingClientRect();
 		privacyDialogState = 'opening';
 		privacyTrigger?.setAttribute('aria-expanded', 'true');
@@ -314,6 +324,8 @@ const currentYear = new Date().getFullYear();
 		void closePrivacyDialog();
 	});
 
+	// The native close event is the final source of truth, including closes initiated
+	// outside these controls, so all state and focus cleanup lives here.
 	privacyDialog?.addEventListener('close', () => {
 		clearPrivacyAnimations();
 		privacyDialogState = 'closed';

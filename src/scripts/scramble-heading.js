@@ -1,6 +1,7 @@
 const SCRAMBLE_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&';
 const UPDATE_INTERVAL = 30;
 const REVEAL_STEP = 0.35;
+// Track one timer per heading without making this lookup map prolong the node's life.
 const headingTimers = new WeakMap();
 
 const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -9,6 +10,8 @@ const headings = document.querySelectorAll('[data-scramble-heading]');
 const getHeadingText = (heading) => heading.dataset.scrambleText ?? heading.textContent ?? '';
 
 const stopScramble = (heading) => {
+	// Always restore the canonical data value; reading the current text could retain
+	// random characters from an interrupted animation.
 	const timer = headingTimers.get(heading);
 
 	if (timer !== undefined) {
@@ -40,6 +43,7 @@ const scrambleHeading = (heading) => {
 			})
 			.join('');
 
+		// A sub-one step spaces each new character reveal across several shuffle ticks.
 		revealProgress += REVEAL_STEP;
 
 		if (revealProgress >= characters.length) stopScramble(heading);
@@ -49,6 +53,7 @@ const scrambleHeading = (heading) => {
 };
 
 if (headings.length > 0 && 'IntersectionObserver' in window) {
+	// Entering replays the effect; leaving stops work and restores readable text.
 	const observer = new IntersectionObserver((entries) => {
 		entries.forEach((entry) => {
 			if (entry.isIntersecting) scrambleHeading(entry.target);
@@ -68,5 +73,6 @@ const handleMotionPreferenceChange = () => {
 if ('addEventListener' in motionPreference) {
 	motionPreference.addEventListener('change', handleMotionPreferenceChange);
 } else {
+	// Older Safari exposes MediaQueryList.addListener instead of addEventListener.
 	motionPreference.addListener(handleMotionPreferenceChange);
 }

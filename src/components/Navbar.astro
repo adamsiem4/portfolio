@@ -105,6 +105,8 @@ const links = [
 	};
 
 	const themeDocument = document as ThemeDocument;
+	// External preference changes can arrive mid-transition. Keep only the latest
+	// requested theme and reconcile it after the active animation is cleaned up.
 	let themeTransitionRunning = false;
 	let queuedTheme: Theme | null = null;
 	let activeThemeAnimation: Animation | null = null;
@@ -161,6 +163,8 @@ const links = [
 		const bounds = themeToggle.getBoundingClientRect();
 		const originX = bounds.left + bounds.width / 2;
 		const originY = bounds.top + bounds.height / 2;
+		// The farthest-corner distance guarantees the circular wave covers the entire
+		// viewport regardless of where the toggle sits.
 		const radius = Math.ceil(Math.hypot(
 			Math.max(originX, window.innerWidth - originX),
 			Math.max(originY, window.innerHeight - originY),
@@ -169,6 +173,8 @@ const links = [
 		root.style.setProperty('--theme-wave-y', `${originY}px`);
 		root.style.setProperty('--theme-wave-radius', `${radius}px`);
 
+		// Use the browser's snapshot-based transition when available. The overlay path
+		// reproduces the same circular reveal with the Web Animations API elsewhere.
 		try {
 			if (themeDocument.startViewTransition) {
 				const transition = themeDocument.startViewTransition(() => {
@@ -208,6 +214,7 @@ const links = [
 				activeThemeAnimation = null;
 				setTheme(theme);
 				themeApplied = true;
+				// Let the newly themed page paint behind the opaque cover before fading it.
 				await new Promise<void>((resolve) => {
 					requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
 				});
@@ -244,6 +251,8 @@ const links = [
 			themeToggle.removeAttribute('aria-busy');
 			themeTransitionRunning = false;
 
+			// Apply a storage/system update received during the animation only after all
+			// transition artifacts have been removed.
 			const externalTheme = queuedTheme;
 			queuedTheme = null;
 			if (externalTheme && externalTheme !== getTheme()) {

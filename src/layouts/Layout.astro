@@ -90,6 +90,8 @@ const structuredData = {
 
     <script is:inline>
       (() => {
+        // Run in <head> before first paint so CSS sees the saved/system theme and
+        // loader state before any page content becomes visible.
         const root = document.documentElement;
         const storageKey = root.dataset.themeStorageKey || 'portfolio-theme';
         let storedTheme = null;
@@ -110,6 +112,9 @@ const structuredData = {
         root.dataset.themePreference = storedTheme ? 'user' : 'system';
         root.dataset.pageLoading = 'true';
 
+        // Browsers may restore the previous scroll position late during a reload.
+        // Repeating the reset across two paint frames wins that race without
+        // changing normal back/forward navigation behavior.
         const navigationEntry = performance.getEntriesByType('navigation')[0];
         if (navigationEntry?.type === 'reload') {
           const resetScroll = () => window.scrollTo(0, 0);
@@ -131,6 +136,8 @@ const structuredData = {
           }, { once: true });
         }
 
+        // Fail open if the loader script stalls: never leave the document inert,
+        // busy, or visually covered because an animation event did not arrive.
         window.setTimeout(() => {
           if (root.dataset.pageLoading !== 'true') return;
           delete root.dataset.pageLoading;

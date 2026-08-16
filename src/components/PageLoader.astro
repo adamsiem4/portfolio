@@ -18,6 +18,9 @@
 		const value = loader?.querySelector('[data-page-loader-value]');
 		const curtain = loader?.querySelector('.page-loader__curtain');
 		if (!loader || !value || root.dataset.pageLoading !== 'true') return;
+
+		// Keep hidden page controls out of keyboard and assistive-technology navigation
+		// until the loader has fully revealed the page.
 		const lockPageContent = () => {
 			Array.from(document.body.children).forEach((element) => {
 				if (element === loader || element.tagName === 'SCRIPT' || element.hasAttribute('inert')) return;
@@ -41,6 +44,8 @@
 
 		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 		const startedAt = performance.now();
+		// Progress eases toward 92 while resources load, then completes quickly once the
+		// load event arrives. This avoids both a fake 100% and a long final pause.
 		const minimumDuration = 650;
 		const waitingDuration = 900;
 		const completionDuration = 280;
@@ -78,6 +83,8 @@
 			loader.remove();
 		};
 
+		// Prefer the real transform completion, with a timeout fallback for interrupted
+		// transitions, background tabs, and engines that omit transitionend.
 		const exitLoader = () => {
 			if (isExiting || !loader.isConnected) return;
 			isExiting = true;

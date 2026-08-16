@@ -6,6 +6,8 @@ const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), ma
 const formatPosition = (position) => String(position).padStart(2, '0');
 
 const initializeProjectDeck = (deck) => {
+	// Keep setup idempotent so rerunning the initializer cannot duplicate listeners or
+	// live-region updates.
 	if (deck.dataset.projectDeckReady === 'true') return;
 
 	const slides = Array.from(deck.querySelectorAll('[data-project-slide]'));
@@ -24,10 +26,15 @@ const initializeProjectDeck = (deck) => {
 	let suppressClick = false;
 
 	const updateDeck = (nextIndex, announce = true) => {
+		// This is the deck's single state-commit point: visual position, interaction
+		// availability, controls, and accessibility state always change together.
 		activeIndex = clamp(nextIndex, 0, slides.length - 1);
 		deck.dataset.activeIndex = String(activeIndex);
 
 		slides.forEach((slide, index) => {
+			// Signed distance fans cards to either side of the active card. Cards farther
+			// away translate more, rotate up to a cap, and sit lower in the stack. Keep this
+			// curve aligned with getProjectMaximumCardOffset() and the deck reserve tests.
 			const offset = index - activeIndex;
 			const distanceFromActive = Math.abs(offset);
 			const direction = Math.sign(offset);
@@ -86,6 +93,8 @@ const initializeProjectDeck = (deck) => {
 	});
 
 	deck.addEventListener('keydown', (event) => {
+		// Do not turn arrow-key events from nested buttons or links into carousel
+		// navigation; handle them only on the deck or its non-control descendants.
 		if (event.defaultPrevented || event.target.closest('button, a')) return;
 
 		if (event.key === 'ArrowLeft') {
@@ -122,6 +131,8 @@ const initializeProjectDeck = (deck) => {
 		const deltaY = event.clientY - pointerState.startY;
 
 		if (pointerState.direction === null) {
+			// Wait for intent, then abandon vertical gestures so normal page scrolling is
+			// never captured by the horizontal carousel.
 			if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < DIRECTION_THRESHOLD) return;
 
 			if (Math.abs(deltaY) > Math.abs(deltaX)) {
@@ -137,6 +148,7 @@ const initializeProjectDeck = (deck) => {
 		event.preventDefault();
 		const isPastStart = activeIndex === 0 && deltaX > 0;
 		const isPastEnd = activeIndex === slides.length - 1 && deltaX < 0;
+		// Rubber-band resistance communicates that the user reached an endpoint.
 		const resistance = isPastStart || isPastEnd ? 0.28 : 1;
 		pointerState.dragX = clamp(deltaX * resistance, -MAX_DRAG_DISTANCE, MAX_DRAG_DISTANCE);
 		deck.style.setProperty('--deck-drag-x', `${pointerState.dragX}px`);
@@ -159,6 +171,8 @@ const initializeProjectDeck = (deck) => {
 		}
 
 		if (wasDragging) {
+			// A browser emits click after pointerup. Suppress that one click so a swipe
+			// ending over the card cannot open the active project's link.
 			suppressClick = true;
 			window.setTimeout(() => {
 				suppressClick = false;
@@ -175,6 +189,8 @@ const initializeProjectDeck = (deck) => {
 	}, true);
 	deck.addEventListener('dragstart', (event) => event.preventDefault());
 
+	// Astro renders a usable initial state; this pass normalizes it without causing
+	// a redundant screen-reader announcement.
 	updateDeck(activeIndex, false);
 	deck.dataset.projectDeckReady = 'true';
 };

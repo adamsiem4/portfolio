@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { projects } from '../src/config/projects.js';
 import { siteConfig } from '../src/config/site.js';
 
+// Treat the JavaScript configs as the source of truth for public files that cannot
+// import them at runtime. This turns hand-maintained metadata drift into a build error.
 const publicFile = (name) => new URL(`../public/${name}`, import.meta.url);
 const [sitemap, robots, llms] = await Promise.all([
 	readFile(publicFile('sitemap.xml'), 'utf8'),
@@ -9,6 +11,7 @@ const [sitemap, robots, llms] = await Promise.all([
 	readFile(publicFile('llms.txt'), 'utf8'),
 ]);
 
+// Collect every mismatch in one pass so maintainers can repair all drift together.
 const failures = [];
 const expect = (condition, message) => {
 	if (!condition) failures.push(message);
@@ -65,6 +68,8 @@ projects.forEach((project) => {
 		);
 	});
 
+	// Each project is intentionally a single llms.txt line, which lets this check bind
+	// its description, impact details, technologies, and links to the correct title.
 	const projectLine = llms
 		.split(/\r?\n/)
 		.find((line) => line.includes(project.title));

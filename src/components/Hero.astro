@@ -53,6 +53,8 @@ const eyebrowCharacters = Array.from(eyebrowText);
 		const offsets = letters.map(() => ({ current: 0, target: 0 }));
 		let animationFrame: number | null = null;
 
+		// Interpolate only while a letter is still moving; once every target is reached,
+		// stop the RAF loop so an idle hero consumes no animation work.
 		const render = () => {
 			let settled = true;
 
@@ -111,6 +113,8 @@ const eyebrowCharacters = Array.from(eyebrowText);
 
 			letters.forEach((letter, index) => {
 				const letterBounds = letter.getBoundingClientRect();
+				// getBoundingClientRect includes the current transform. Subtract it to keep
+				// distance calculations anchored to the letter's original layout position.
 				const letterCenter = letterBounds.left + letterBounds.width / 2 - offsets[index].current;
 				const distance = letterCenter - event.clientX;
 				const proximity = Math.max(0, 1 - Math.abs(distance) / influenceRadius);

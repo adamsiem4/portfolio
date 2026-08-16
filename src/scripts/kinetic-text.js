@@ -1,3 +1,5 @@
+// Effect controls: tiles sets grid density; offset is the base CSS-pixel displacement;
+// speed/spread control wave phase; chroma/shade control color and tile contrast.
 const DEFAULT_PARAMS = {
 	text: 'Adam Salicki',
 	paper: '#090b0c',
@@ -69,6 +71,8 @@ export class KineticText {
 		});
 		this.stage.appendChild(this.canvas);
 
+		// The effect renders in stages: mask stores text alpha, warp displaces mask
+		// tiles, tint colorizes that alpha, and canvas presents the final composite.
 		this.mask = document.createElement('canvas');
 		this.warp = document.createElement('canvas');
 		this.tint = document.createElement('canvas');
@@ -93,6 +97,8 @@ export class KineticText {
 		this.motionPreference.addEventListener?.('change', this.handleMotionPreference);
 
 		this.resizeObserver = new ResizeObserver(() => {
+			// ResizeObserver may fire several times during one layout. Coalesce those
+			// notifications so buffers are rebuilt at most once per paint frame.
 			if (this.resizeFrame) return;
 
 			this.resizeFrame = window.requestAnimationFrame(() => {
@@ -115,6 +121,7 @@ export class KineticText {
 		this.resize();
 		this.syncAnimation();
 
+		// Web fonts can change glyph metrics after the first mask was measured.
 		document.fonts?.ready.then(() => {
 			this.drawText();
 			if (!this.running) this.renderStatic();
@@ -132,6 +139,8 @@ export class KineticText {
 		const bounds = this.stage.getBoundingClientRect();
 		if (!bounds.width || !bounds.height) return;
 
+		// Limit DPR and grid density on smaller/coarse-pointer devices. This reduces
+		// per-frame pixel work while preserving text legibility and animation cadence.
 		const reducedQuality = bounds.width < MOBILE_BREAKPOINT || this.coarsePointer.matches;
 		const maximumDpr = reducedQuality ? MOBILE_MAX_DPR : 2;
 		const dpr = Math.min(window.devicePixelRatio || 1, maximumDpr);
@@ -223,6 +232,8 @@ export class KineticText {
 		context.clearRect(0, 0, this.width, this.height);
 
 		if (tileWidth > 0 && tileHeight > 0) {
+			// Limit tile work to approximate glyph bounds, padded by displacement so
+			// wave-shifted samples near the text edge are not clipped.
 			const columnStart = Math.max(0, Math.floor(this.box.x0 / tileWidth) - 1);
 			const columnEnd = Math.min(tilesX - 1, Math.ceil(this.box.x1 / tileWidth) + 1);
 			const rowStart = Math.max(0, Math.floor(this.box.y0 / tileHeight) - 1);
@@ -259,6 +270,8 @@ export class KineticText {
 					context.globalAlpha = shade > 0
 						? 1 - shade * 0.5 + Math.min(1, Math.abs(movement)) * shade * 0.5
 						: 1;
+					// Destination tiles stay fixed while their source rectangles sample a
+					// wave-shifted part of the text mask, producing the distortion.
 					context.drawImage(
 						this.mask,
 						sourceX,
@@ -286,6 +299,8 @@ export class KineticText {
 		this.ctx.fillRect(0, 0, this.width, this.height);
 
 		if (this.reducedQuality) {
+			// source-in uses the warped alpha as a stencil. Reduced quality performs
+			// only this ink pass and skips the optional chromatic offset composites.
 			this.warpContext.globalCompositeOperation = 'source-in';
 			this.warpContext.fillStyle = rgba(this.inkColor);
 			this.warpContext.fillRect(0, 0, this.width, this.height);
@@ -327,6 +342,8 @@ export class KineticText {
 	tick(timestamp) {
 		if (!this.running) return;
 
+		// Advance in 60-fps units, cap long suspension gaps, and carry the fractional
+		// elapsed remainder so later samples stay aligned to the frame interval.
 		const elapsed = timestamp - this.lastFrameTime;
 		if (this.lastFrameTime === 0 || elapsed >= FRAME_DURATION) {
 			const frameTime = this.lastFrameTime === 0
@@ -357,6 +374,8 @@ export class KineticText {
 	}
 
 	syncAnimation() {
+		// Continuous rendering is allowed only while motion is permitted, the page is
+		// visible, and enough of the stage intersects the viewport.
 		if (this.reducedMotion || this.pageHidden || !this.inView) {
 			this.stop();
 			if (this.reducedMotion) this.renderStatic();

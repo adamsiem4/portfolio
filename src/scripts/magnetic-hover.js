@@ -1,3 +1,5 @@
+// The wrapper remains stationary and owns pointer hit-testing; only its child target
+// moves. Measuring a transformed hit area would otherwise make the effect jitter.
 const clamp = (value, minimum, maximum) => (
 	Math.min(Math.max(value, minimum), maximum)
 );
@@ -9,6 +11,8 @@ export const initMagneticHover = (root) => {
 	const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 	const controllers = [];
 
+	// Data attributes let each component tune strength, travel, and responsive scope
+	// without creating another component-specific pointer controller.
 	root.querySelectorAll('[data-magnetic]').forEach((element) => {
 		const target = element.querySelector('[data-magnetic-target]');
 		if (!(target instanceof HTMLElement) || !(element instanceof HTMLElement)) return;
@@ -34,6 +38,8 @@ export const initMagneticHover = (root) => {
 		);
 
 		const render = () => {
+			// Exponential interpolation gives the target a soft spring-like approach while
+			// the settled threshold guarantees that the RAF loop eventually stops.
 			currentX += (targetX - currentX) * 0.18;
 			currentY += (targetY - currentY) * 0.18;
 
@@ -103,6 +109,8 @@ export const initMagneticHover = (root) => {
 
 		element.addEventListener('pointerleave', releaseAndReset);
 		element.addEventListener('pointerdown', () => {
+			// Stop accepting pointer updates while pressed and ease the target back toward
+			// its native position during activation.
 			isPressed = true;
 			reset();
 		});
@@ -115,6 +123,8 @@ export const initMagneticHover = (root) => {
 	});
 
 	const resetUnavailable = () => {
+		// Media-query capabilities can change while a control is displaced. Reset it
+		// immediately rather than leaving an inline transform behind.
 		controllers.forEach(({ isEnabled, reset }) => {
 			if (!isEnabled()) reset(true);
 		});

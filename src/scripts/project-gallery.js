@@ -1,6 +1,7 @@
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const initializeProjectGallery = (gallery) => {
+	// Keep setup idempotent so rerunning the initializer cannot duplicate listeners.
 	if (gallery.dataset.projectGalleryReady === 'true') return;
 
 	const shell = gallery.closest('.project-card__media-shell');
@@ -16,6 +17,8 @@ const initializeProjectGallery = (gallery) => {
 	let programmaticScrollTimer = null;
 
 	const updateGalleryState = (nextIndex, announce = true) => {
+		// Keep controls, aria-current, the data API, and the live region synchronized
+		// whether navigation came from a button or manual scrolling.
 		const indexChanged = nextIndex !== activeIndex;
 		activeIndex = nextIndex;
 		gallery.dataset.activeIndex = String(activeIndex);
@@ -37,6 +40,8 @@ const initializeProjectGallery = (gallery) => {
 	const updateControls = (announce = true) => {
 		const galleryTop = gallery.scrollTop;
 		if (programmaticTargetIndex !== null) {
+			// During smooth scrolling, intermediate frames can momentarily be closest.
+			// Hold the requested index until its frame actually reaches the snap point.
 			const targetDistance = Math.abs(
 				frames[programmaticTargetIndex].offsetTop - galleryTop,
 			);
@@ -70,6 +75,8 @@ const initializeProjectGallery = (gallery) => {
 		programmaticTargetIndex = clampedIndex;
 		clearTimeout(programmaticScrollTimer);
 		programmaticScrollTimer = setTimeout(() => {
+			// Timeout recovery handles interrupted smooth scrolls and browsers that settle
+			// a fraction outside the one-pixel completion tolerance.
 			programmaticTargetIndex = null;
 			programmaticScrollTimer = null;
 			updateControls();
@@ -81,6 +88,8 @@ const initializeProjectGallery = (gallery) => {
 	};
 
 	const initializeScrollHint = () => {
+		// The hint plays once per viewport visit, only after the gallery is substantially
+		// visible. Leaving almost completely re-arms it for a later visit.
 		if (reducedMotion.matches || !('IntersectionObserver' in window)) return;
 
 		const track = gallery.querySelector('.project-card__media-track');
@@ -141,6 +150,7 @@ const initializeProjectGallery = (gallery) => {
 	previousButton.addEventListener('click', () => moveTo(activeIndex - 1));
 	nextButton.addEventListener('click', () => moveTo(activeIndex + 1));
 	gallery.addEventListener('scroll', () => {
+		// Coalesce rapid scroll events into one layout measurement per paint frame.
 		if (scrollFrame === null) scrollFrame = requestAnimationFrame(updateControls);
 	}, { passive: true });
 
