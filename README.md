@@ -28,12 +28,14 @@ of JavaScript execution and avoids a client-rendering boundary.
 
 1. The inline bootstrap in `Layout.astro` resolves a stored theme, falling back to
    `prefers-color-scheme`, and writes `data-theme` before rendering can flash the
-   wrong palette. It also sets `data-page-loading` and temporarily switches scroll
-   restoration to manual when the navigation entry is a reload.
-2. `PageLoader.astro` marks the document busy and advances toward 92% while waiting
-   for `load`. After both `load` and the 650 ms minimum duration, it interpolates to
-   100%, runs the accent curtain, and removes itself. Transition listeners have
-   timeout fallbacks, and the layout has an independent six-second escape hatch.
+   wrong palette. On pages that opt into the loader, it also sets `data-page-loading`
+   and temporarily switches scroll restoration to manual on reload.
+2. The portfolio page's `PageLoader.astro` marks the document busy and advances
+   toward 92% while waiting for `load`. After both `load` and the 650 ms minimum
+   duration, it interpolates to 100%, runs the accent curtain, and removes itself.
+   The 404 page opts out so recovery content paints immediately. Transition
+   listeners have timeout fallbacks, and the layout has an independent six-second
+   escape hatch.
 3. Deferred component modules initialize against the complete DOM. The kinetic
    custom element replaces its visual fallback, while navigation, deck, gallery,
    heading, and footer controllers attach to existing elements.
@@ -47,7 +49,7 @@ of JavaScript execution and avoids a client-rendering boundary.
 | Project deck | Astro precomputes each card's translation, rotation, and stacking layer as CSS custom properties. The controller maintains one clamped active index and synchronizes `inert`, `aria-hidden`, `aria-current`, control disabled states, position text, and the live region in one update pass. |
 | Deck gestures | Pointer movement is direction-locked after a 7 px threshold. Horizontal drag is capped at 110 px, receives resistance at either boundary, and changes cards after 48 px. Pointer capture keeps the gesture coherent; the following click is suppressed so a completed swipe cannot activate a card link. |
 | Image gallery | Frames form a vertical scroll-snap track inside the fixed media viewport. Controls call `scrollTo()` using frame offsets, while passive scroll events schedule a single control-state calculation per animation frame. An observer threshold sequence arms the delayed scroll hint only when enough of the gallery is visible. |
-| Magnetic interaction | `magnetic-hover.js` treats `[data-magnetic]` as the boundary and `[data-magnetic-target]` as the transformed element. Strength, travel limit, and activation media query are declarative. Pointer coordinates update targets; rendering is coalesced through `requestAnimationFrame` and reset when capability or motion preferences change. |
+| Magnetic interaction | The layout mounts `MagneticHover.astro` once to initialize `magnetic-hover.js` independently of visible components. The repeat-safe controller treats `[data-magnetic]` as the boundary and `[data-magnetic-target]` as the transformed element. Strength, travel limit, and activation media query are declarative. Pointer coordinates update targets; rendering is coalesced through `requestAnimationFrame` and reset when capability or motion preferences change. |
 | Privacy dialog | A native modal `<dialog>` supplies focus containment and Escape semantics. Opening and closing are explicit states; a close requested during opening reverses the active animations. The morph transform is derived from the trigger and dialog rectangles, while reduced motion and animation failures fall back to immediate native operations. |
 | Scramble headings | A shared observer starts interval-driven substitution only while a heading intersects the viewport. Timers live in a `WeakMap`, so re-entry, exit, and runtime motion-preference changes can restore canonical text without retaining detached elements. |
 

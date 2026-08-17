@@ -4,18 +4,65 @@ const clamp = (value, minimum, maximum) => (
 	Math.min(Math.max(value, minimum), maximum)
 );
 
+const initializedElements = new WeakSet();
+const controllers = [];
+let sharedPreferences = null;
+let sharedListenersInitialized = false;
+
+const getSharedPreferences = () => {
+	sharedPreferences ??= {
+		finePointer: window.matchMedia('(hover: hover) and (pointer: fine)'),
+		reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)'),
+	};
+
+	return sharedPreferences;
+};
+
+const pruneDetachedControllers = () => {
+	for (let index = controllers.length - 1; index >= 0; index -= 1) {
+		if (!controllers[index].element.isConnected) controllers.splice(index, 1);
+	}
+};
+
+const resetUnavailable = () => {
+	pruneDetachedControllers();
+	// Media-query capabilities can change while a control is displaced. Reset it
+	// immediately rather than leaving an inline transform behind.
+	controllers.forEach(({ isEnabled, reset }) => {
+		if (!isEnabled()) reset(true);
+	});
+};
+
+const resetAll = () => {
+	pruneDetachedControllers();
+	controllers.forEach(({ reset }) => reset(true));
+};
+
+const initializeSharedListeners = () => {
+	if (sharedListenersInitialized) return;
+
+	const { finePointer, reducedMotion } = getSharedPreferences();
+	finePointer.addEventListener?.('change', resetUnavailable);
+	reducedMotion.addEventListener?.('change', resetUnavailable);
+	window.addEventListener('blur', resetAll);
+	sharedListenersInitialized = true;
+};
+
 export const initMagneticHover = (root) => {
 	if (!root) return;
 
-	const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-	const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-	const controllers = [];
+	pruneDetachedControllers();
+	initializeSharedListeners();
+	const { finePointer, reducedMotion } = getSharedPreferences();
 
 	// Data attributes let each component tune strength, travel, and responsive scope
 	// without creating another component-specific pointer controller.
 	root.querySelectorAll('[data-magnetic]').forEach((element) => {
+		if (initializedElements.has(element)) return;
+
 		const target = element.querySelector('[data-magnetic-target]');
 		if (!(target instanceof HTMLElement) || !(element instanceof HTMLElement)) return;
+		initializedElements.add(element);
 
 		const configuredOffset = Number.parseFloat(element.dataset.magneticMax || '');
 		const configuredStrength = Number.parseFloat(element.dataset.magneticStrength || '');
@@ -119,24 +166,7 @@ export const initMagneticHover = (root) => {
 		});
 		element.addEventListener('pointercancel', releaseAndReset);
 
-		controllers.push({ isEnabled, reset, responsiveQuery });
-	});
-
-	const resetUnavailable = () => {
-		// Media-query capabilities can change while a control is displaced. Reset it
-		// immediately rather than leaving an inline transform behind.
-		controllers.forEach(({ isEnabled, reset }) => {
-			if (!isEnabled()) reset(true);
-		});
-	};
-	const resetAll = () => {
-		controllers.forEach(({ reset }) => reset(true));
-	};
-
-	finePointer.addEventListener?.('change', resetUnavailable);
-	reducedMotion.addEventListener?.('change', resetUnavailable);
-	controllers.forEach(({ responsiveQuery }) => {
+		controllers.push({ element, isEnabled, reset });
 		responsiveQuery?.addEventListener?.('change', resetUnavailable);
 	});
-	window.addEventListener('blur', resetAll);
 };

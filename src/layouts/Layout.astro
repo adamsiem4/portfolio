@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { siteConfig } from '../config/site.js';
+import MagneticHover from '../components/MagneticHover.astro';
 import PageLoader from '../components/PageLoader.astro';
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
   description?: string;
   canonical?: string;
   robots?: string;
+  showPageLoader?: boolean;
 }
 
 const {
@@ -15,6 +17,7 @@ const {
   description = siteConfig.seoDescription,
   canonical = siteConfig.siteUrl,
   robots = siteConfig.robots,
+  showPageLoader = true,
 }: Props = Astro.props;
 
 const canonicalUrl = new URL(canonical, siteConfig.siteUrl).toString();
@@ -51,6 +54,7 @@ const structuredData = {
   data-theme="dark"
   data-theme-preference="system"
   data-theme-storage-key="portfolio-theme"
+  data-page-loader-enabled={showPageLoader ? 'true' : undefined}
 >
   <head>
     <meta charset="UTF-8" />
@@ -92,10 +96,11 @@ const structuredData = {
 
     <script is:inline>
       (() => {
-        // Run in <head> before first paint so CSS sees the saved/system theme and
-        // loader state before any page content becomes visible.
+        // Run in <head> before first paint so CSS sees the saved/system theme and,
+        // on pages that opt in, the loader state before content becomes visible.
         const root = document.documentElement;
         const storageKey = root.dataset.themeStorageKey || 'portfolio-theme';
+        const pageLoaderEnabled = root.dataset.pageLoaderEnabled === 'true';
         let storedTheme = null;
 
         try {
@@ -112,6 +117,11 @@ const structuredData = {
 
         root.dataset.theme = theme;
         root.dataset.themePreference = storedTheme ? 'user' : 'system';
+
+        // Error pages render immediately: do not create loading state, timers, or
+        // scroll-restoration work when the loader component is omitted.
+        if (!pageLoaderEnabled) return;
+
         root.dataset.pageLoading = 'true';
 
         // Browsers may restore the previous scroll position late during a reload.
@@ -163,7 +173,8 @@ const structuredData = {
   </head>
 
   <body>
-    <PageLoader />
+    <MagneticHover />
+    {showPageLoader && <PageLoader />}
     <slot />
   </body>
 </html>

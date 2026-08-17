@@ -1,6 +1,5 @@
 ---
 import { ArrowLeft } from '@lucide/astro';
-import Footer from '../components/Footer.astro';
 import Navbar from '../components/Navbar.astro';
 import Layout from '../layouts/Layout.astro';
 import { siteConfig } from '../config/site.js';
@@ -14,6 +13,7 @@ const description = 'The requested page could not be found. Return to Adam Salic
 	description={description}
 	canonical="/404"
 	robots="noindex, follow"
+	showPageLoader={false}
 >
 	<Navbar />
 	<main class="not-found" id="home" tabindex="-1" aria-labelledby="not-found-title">
@@ -42,14 +42,13 @@ const description = 'The requested page could not be found. Return to Adam Salic
 			</div>
 		</div>
 	</main>
-	<Footer />
 </Layout>
 
 <style>
 	.not-found {
 		position: relative;
-		min-height: calc(100vh - 4rem);
-		min-height: calc(100svh - 4rem);
+		min-height: 100vh;
+		min-height: 100dvh;
 		display: grid;
 		overflow: hidden;
 		padding: clamp(7rem, 18vh, 10rem) var(--page-gutter) clamp(3.5rem, 10vh, 6rem);

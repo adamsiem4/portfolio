@@ -59,7 +59,7 @@ test('persists the selected theme across reloads', async ({ page }) => {
 	await expect(root).toHaveAttribute('data-theme', 'light');
 	await expect(root).toHaveAttribute('data-theme-preference', 'user');
 	await expect(toggle).toHaveAccessibleName('Switch to dark mode');
-	await expect.poll(() => page.evaluate(() => localStorage.getItem('portfolio-theme'))).toBe('light');
+	expect(await page.evaluate(() => localStorage.getItem('portfolio-theme'))).toBe('light');
 
 	await page.reload();
 	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
@@ -464,7 +464,8 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 	const response = await page.goto('/404.html');
 
 	expect(response?.status()).toBe(200);
-	await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
+	expect(await page.locator('[data-page-loader]').count()).toBe(0);
+	expect(await page.locator('html').getAttribute('data-page-loading')).toBeNull();
 	await expect(page).toHaveTitle('Page not found | Adam Salicki');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('You’ve reached a dead end.');
 	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
@@ -472,6 +473,7 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 		'href',
 		'https://adamsalicki.pages.dev/404',
 	);
+	await expect(page.getByRole('contentinfo')).toHaveCount(0);
 	await expect(page.getByRole('link', { name: 'Back to portfolio' })).toHaveAttribute('href', '/');
 	await page.getByRole('button', { name: 'Toggle navigation' }).click();
 	await expect(page.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/#about');
@@ -488,6 +490,12 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 			await page.evaluate(() => document.documentElement.scrollWidth),
 			`404 page overflows horizontally at ${viewport.width}px`,
 		).toBeLessThanOrEqual(viewport.width);
+		expect(
+			await page.locator('.not-found').evaluate((element) => (
+				Math.round(element.getBoundingClientRect().bottom)
+			)),
+			`404 page does not fill the viewport at ${viewport.width}px`,
+		).toBeGreaterThanOrEqual(viewport.height);
 	}
 
 	const magneticWrapper = page.locator('.not-found__home-magnetic');
@@ -504,9 +512,16 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 		))).toBeGreaterThan(0);
 
 		await page.mouse.move(magneticBounds.x - 20, magneticBounds.y - 20);
-		await expect.poll(() => backToPortfolio.evaluate((element) => (
-			Number.parseFloat(element.style.transform.match(/translate3d\(([-\d.]+)px/)?.[1] ?? '0')
-		))).toBe(0);
+		await expect.poll(() => backToPortfolio.evaluate((element) => {
+			const transform = element.style.transform.match(
+				/translate3d\(([-\d.]+)px,\s*([-\d.]+)px/,
+			);
+			if (!transform) return 0;
+			return Math.hypot(
+				Number.parseFloat(transform[1]),
+				Number.parseFloat(transform[2]),
+			);
+		})).toBeLessThanOrEqual(0.1);
 	}
 
 	const results = await new AxeBuilder({ page })
