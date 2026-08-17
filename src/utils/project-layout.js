@@ -1,7 +1,10 @@
-interface ImageDimensions {
-	width: number;
-	height: number;
-}
+// @ts-check
+
+/**
+ * @typedef {object} ImageDimensions
+ * @property {number} width
+ * @property {number} height
+ */
 
 export const PROJECT_LAYOUT = Object.freeze({
 	contentMaxWidth: 1_152,
@@ -18,9 +21,11 @@ export const PROJECT_LAYOUT = Object.freeze({
 	deckReserveMaximum: 88,
 });
 
-const formatSize = (value: number) => Number(value.toFixed(4));
+/** @param {number} value */
+const formatSize = (value) => Number(value.toFixed(4));
 
-export const getProjectDeckReserve = (projectCount: number) => {
+/** @param {number} projectCount */
+export const getProjectDeckReserve = (projectCount) => {
 	const normalizedCount = Math.max(0, Math.floor(projectCount));
 
 	return Math.min(
@@ -30,16 +35,22 @@ export const getProjectDeckReserve = (projectCount: number) => {
 	);
 };
 
-export const getProjectMaximumCardOffset = (projectCount: number) => {
+/** @param {number} projectCount */
+export const getProjectMaximumCardOffset = (projectCount) => {
 	const normalizedCount = Math.max(0, Math.floor(projectCount));
 
 	return normalizedCount < 2 ? 0 : 12 + ((normalizedCount - 2) * 10);
 };
 
+/**
+ * @param {number} deckWidth
+ * @param {number} projectCount
+ * @param {boolean} isDesktop
+ */
 export const getProjectMediaSlotWidth = (
-	deckWidth: number,
-	projectCount: number,
-	isDesktop: boolean,
+	deckWidth,
+	projectCount,
+	isDesktop,
 ) => {
 	const cardContentWidth = Math.max(
 		0,
@@ -55,9 +66,13 @@ export const getProjectMediaSlotWidth = (
 	);
 };
 
+/**
+ * @param {ImageDimensions} dimensions
+ * @param {number} projectCount
+ */
 export const getProjectImageSizes = (
-	{ width, height }: ImageDimensions,
-	projectCount: number,
+	{ width, height },
+	projectCount,
 ) => {
 	const containScale = Math.min(1, (width * 9) / (height * 16));
 	const reserve = getProjectDeckReserve(projectCount);

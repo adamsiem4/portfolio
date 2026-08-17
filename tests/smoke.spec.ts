@@ -6,7 +6,7 @@ import {
 	getProjectImageSizes,
 	getProjectMaximumCardOffset,
 	getProjectMediaSlotWidth,
-} from '../src/utils/project-layout';
+} from '../src/utils/project-layout.js';
 
 const openPortfolio = async (page: Page) => {
 	await page.goto('/');
