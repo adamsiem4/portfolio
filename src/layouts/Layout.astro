@@ -7,12 +7,14 @@ interface Props {
   title?: string;
   description?: string;
   canonical?: string;
+  robots?: string;
 }
 
 const {
   title = siteConfig.seoTitle,
   description = siteConfig.seoDescription,
   canonical = siteConfig.siteUrl,
+  robots = siteConfig.robots,
 }: Props = Astro.props;
 
 const canonicalUrl = new URL(canonical, siteConfig.siteUrl).toString();
@@ -58,7 +60,7 @@ const structuredData = {
     />
     <meta name="description" content={description} />
     <meta name="keywords" content={siteConfig.seoKeywords.join(', ')} />
-    <meta name="robots" content={siteConfig.robots} />
+    <meta name="robots" content={robots} />
     <meta name="author" content={siteConfig.authorName} />
     <meta name="publisher" content={siteConfig.authorName} />
     <link rel="canonical" href={canonicalUrl} />

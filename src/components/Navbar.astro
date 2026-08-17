@@ -1,10 +1,11 @@
 ---
 import { Menu, Moon, Sun, X } from '@lucide/astro';
 
+const sectionPrefix = Astro.url.pathname === '/' ? '' : '/';
 const links = [
-	{ label: 'About', href: '#about' },
-	{ label: 'Projects', href: '#projects' },
-	{ label: 'Contact', href: '#contact' },
+	{ label: 'About', href: `${sectionPrefix}#about` },
+	{ label: 'Projects', href: `${sectionPrefix}#projects` },
+	{ label: 'Contact', href: `${sectionPrefix}#contact` },
 ];
 ---
 

@@ -458,6 +458,63 @@ test('back-to-top preserves the fragment and moves logical focus', async ({ page
 	await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
+test('renders an accessible custom 404 with working recovery links', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await page.setViewportSize({ width: 390, height: 844 });
+	const response = await page.goto('/404.html');
+
+	expect(response?.status()).toBe(200);
+	await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
+	await expect(page).toHaveTitle('Page not found | Adam Salicki');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('You’ve reached a dead end.');
+	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
+	await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+		'href',
+		'https://adamsalicki.pages.dev/404',
+	);
+	await expect(page.getByRole('link', { name: 'Back to portfolio' })).toHaveAttribute('href', '/');
+	await page.getByRole('button', { name: 'Toggle navigation' }).click();
+	await expect(page.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/#about');
+	await expect(page.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/#projects');
+	await expect(page.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/#contact');
+
+	for (const viewport of [
+		{ width: 320, height: 700 },
+		{ width: 390, height: 844 },
+		{ width: 1_440, height: 900 },
+	]) {
+		await page.setViewportSize(viewport);
+		expect(
+			await page.evaluate(() => document.documentElement.scrollWidth),
+			`404 page overflows horizontally at ${viewport.width}px`,
+		).toBeLessThanOrEqual(viewport.width);
+	}
+
+	const magneticWrapper = page.locator('.not-found__home-magnetic');
+	const backToPortfolio = page.getByRole('link', { name: 'Back to portfolio' });
+	const magneticBounds = await magneticWrapper.boundingBox();
+	expect(magneticBounds).not.toBeNull();
+	if (magneticBounds) {
+		await page.mouse.move(
+			magneticBounds.x + magneticBounds.width - 2,
+			magneticBounds.y + magneticBounds.height / 2,
+		);
+		await expect.poll(() => backToPortfolio.evaluate((element) => (
+			Number.parseFloat(element.style.transform.match(/translate3d\(([-\d.]+)px/)?.[1] ?? '0')
+		))).toBeGreaterThan(0);
+
+		await page.mouse.move(magneticBounds.x - 20, magneticBounds.y - 20);
+		await expect.poll(() => backToPortfolio.evaluate((element) => (
+			Number.parseFloat(element.style.transform.match(/translate3d\(([-\d.]+)px/)?.[1] ?? '0')
+		))).toBe(0);
+	}
+
+	const results = await new AxeBuilder({ page })
+		.withTags(['wcag2a', 'wcag2aa'])
+		.analyze();
+	expect(results.violations).toEqual([]);
+});
+
 test('has no automatically detectable WCAG A or AA violations', async ({ page }) => {
 	await openPortfolio(page);
 
