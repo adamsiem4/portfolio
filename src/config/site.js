@@ -1,3 +1,32 @@
+const inlineScriptHashes = [
+	'Ub0faIfh9pRr7IqFUxeHz+y5lk/hc3CR+8kSvXeKkpA=',
+	'Buluswg2h40UWBJJGuNJDJveceDUyunuXhvURs8pijQ=',
+	'qPT3eRiQqoNWC0JjPW4BGbhCZZcZLivixGFU2nkXyoM=',
+	'ajG7m1i7XCkHQ80goM3zz+oFVWmFfJF/SRQdm08L3Xc=',
+	'ynhqWi+XxpNyq9tBP3bdEO5ykQwRYjypCI//RJgjMFo=',
+	'dLeSH7fsNuMeIr4WP7feVKSCN24HZ/DXMkbaOs0G5/E=',
+	'SOKmBQhl9eb6BVQzekcMTdL39abNgFg68YCP4+ojh0Q=',
+	'PIFvBvNd/F4cbriYY4g7LZGAdVyavQx1/qCoymrsh2g=',
+	'xGG43co0rerqFPObHXYwvIZsjVSN8415HHAeZTER+fc=',
+];
+
+// Astro emits small module bundles inline and deliberately inlines component CSS.
+// The post-build check keeps these script hashes synchronized with generated HTML.
+const contentSecurityPolicy = [
+	"default-src 'self'",
+	"base-uri 'self'",
+	"object-src 'none'",
+	"frame-ancestors 'none'",
+	"form-action 'self'",
+	`script-src 'self' ${inlineScriptHashes.map((hash) => `'sha256-${hash}'`).join(' ')}`,
+	"script-src-attr 'none'",
+	"style-src 'self' 'unsafe-inline'",
+	"img-src 'self' data:",
+	"font-src 'self'",
+	"connect-src 'self'",
+	"manifest-src 'self'",
+].join('; ');
+
 export const siteConfig = {
 	name: 'ADAM SALICKI',
 	siteName: 'Adam Salicki Portfolio',
@@ -77,6 +106,14 @@ export const siteConfig = {
 				purpose: 'any',
 			},
 		],
+	},
+	responseHeaders: {
+		'Content-Security-Policy': contentSecurityPolicy,
+		'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
+		'X-Content-Type-Options': 'nosniff',
+		'Referrer-Policy': 'strict-origin-when-cross-origin',
+		'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+		'X-Frame-Options': 'DENY',
 	},
 	contactEmail: 'contact.asalicki@protonmail.com',
 	githubUrl: 'https://github.com/adamsiem4',

@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { siteConfig } from '../src/config/site.js';
 import {
 	PROJECT_LAYOUT,
 	getProjectDeckReserve,
@@ -13,6 +14,45 @@ const openPortfolio = async (page: Page) => {
 	await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
 	await expect(page.locator('html')).not.toHaveAttribute('data-page-loading', 'true');
 };
+
+test('production security headers preserve theme initialization and the page loader', async ({ page }) => {
+	const productionHeaders = Object.fromEntries(
+		Object.entries(siteConfig.responseHeaders)
+			.map(([name, value]) => [name.toLowerCase(), value]),
+	);
+	const cspViolations: string[] = [];
+
+	page.on('console', (message) => {
+		if (/content security policy|refused to/i.test(message.text())) {
+			cspViolations.push(message.text());
+		}
+	});
+	await page.route('**/*', async (route) => {
+		const response = await route.fetch();
+		const headers = response.headers();
+
+		if (headers['content-type']?.includes('text/html')) {
+			Object.assign(headers, productionHeaders);
+		}
+
+		await route.fulfill({ response, headers });
+	});
+	await page.addInitScript(() => localStorage.setItem('portfolio-theme', 'light'));
+
+	const response = await page.goto('/');
+	expect(response?.headers()['content-security-policy']).toBe(
+		siteConfig.responseHeaders['Content-Security-Policy'],
+	);
+	await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+	await page.locator('[data-theme-toggle]').click();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+	await page.goto('/404.html');
+	await expect(page.getByRole('heading', { name: 'You’ve reached a dead end.' })).toBeVisible();
+	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+	expect(cspViolations).toEqual([]);
+});
 
 test.describe('mobile navigation', () => {
 	test.use({

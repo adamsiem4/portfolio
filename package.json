@@ -8,8 +8,10 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "postbuild": "bun run check:built-security",
     "check": "astro-check && bun run check:public",
     "check:public": "bun scripts/check-public-files.mjs",
+    "check:built-security": "bun scripts/check-built-security.mjs",
     "test:smoke": "bun run build && playwright test --project=chromium",
     "test:smoke:all": "bun run build && playwright test",
     "preview": "astro preview",

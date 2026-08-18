@@ -104,6 +104,68 @@ expect(
 	`public/_headers must set X-Robots-Tag to the configured robots value: ${siteConfig.robots}`,
 );
 
+const expectedResponseHeaders = new Map([
+	['x-robots-tag', siteConfig.robots],
+	...Object.entries(siteConfig.responseHeaders)
+		.map(([name, value]) => [name.toLowerCase(), value]),
+]);
+expect(
+	globalHeaderRules[0]?.headers.size === expectedResponseHeaders.size,
+	'public/_headers must contain exactly the response headers configured in src/config/site.js',
+);
+expectedResponseHeaders.forEach((expectedValue, name) => {
+	const actualValues = globalHeaderRules[0]?.headers.get(name) ?? [];
+	expect(
+		actualValues.length === 1 && actualValues[0] === expectedValue,
+		`public/_headers must set ${name} to the configured value: ${expectedValue}`,
+	);
+});
+
+const contentSecurityPolicy = siteConfig.responseHeaders['Content-Security-Policy'];
+const requiredSecurityHeaders = [
+	'Content-Security-Policy',
+	'Strict-Transport-Security',
+	'X-Content-Type-Options',
+	'Referrer-Policy',
+	'Permissions-Policy',
+	'X-Frame-Options',
+];
+requiredSecurityHeaders.forEach((name) => {
+	expect(
+		typeof siteConfig.responseHeaders[name] === 'string'
+			&& siteConfig.responseHeaders[name].length > 0,
+		`src/config/site.js must define the required ${name} response header`,
+	);
+});
+expect(
+	!contentSecurityPolicy.match(/script-src[^;]*'unsafe-(?:inline|eval)'/),
+	"Content-Security-Policy script-src must not contain 'unsafe-inline' or 'unsafe-eval'",
+);
+expect(
+	contentSecurityPolicy.includes("frame-ancestors 'none'"),
+	"Content-Security-Policy must prevent framing with frame-ancestors 'none'",
+);
+expect(
+	siteConfig.responseHeaders['Strict-Transport-Security'].includes('includeSubDomains')
+		&& Number.parseInt(
+			siteConfig.responseHeaders['Strict-Transport-Security'].match(/max-age=(\d+)/)?.[1] ?? '0',
+			10,
+		) >= 31_536_000,
+	'Strict-Transport-Security must cover subdomains for at least one year',
+);
+expect(
+	siteConfig.responseHeaders['X-Content-Type-Options'] === 'nosniff',
+	'X-Content-Type-Options must be nosniff',
+);
+expect(
+	siteConfig.responseHeaders['X-Frame-Options'] === 'DENY',
+	'X-Frame-Options must deny framing for legacy clickjacking protection',
+);
+expect(
+	(headers ?? '').split(/\r?\n/).every((line) => line.length <= 2_000),
+	'public/_headers lines must stay within the Cloudflare Pages 2,000-character limit',
+);
+
 let manifest = null;
 if (manifestSource !== null) {
 	try {

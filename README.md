@@ -16,8 +16,10 @@ Astro emits static HTML and scoped CSS; interactive component scripts are bundle
 as native ES modules. There are no client framework components, `client:*`
 directives, or hydration runtime. Inline JavaScript is reserved for the theme
 bootstrap and page loader because both must run before deferred modules and before
-the first paint. All other behavior is layered onto server-rendered markup through
-stable `data-*` contracts.
+the first paint. The production Content Security Policy authorizes each generated
+inline script by its SHA-256 hash; the post-build check rejects missing or stale
+hashes. All other behavior is layered onto server-rendered markup through stable
+`data-*` contracts.
 
 The initial DOM already contains the correct first-project state, link targets,
 ARIA relationships, image dimensions, and fallback hero text. Browser modules
@@ -103,6 +105,8 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   headers, web manifest, favicon/social-image formats and dimensions, and LLM
   index against `siteConfig` and the current project records. Metadata, URL,
   profile, contact, asset, or project-content changes must update them together.
+- `bun run build` verifies that every generated inline script is authorized by the
+  configured Content Security Policy and that no stale script hashes remain.
 
 ## Optional section integration
 
