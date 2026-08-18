@@ -99,9 +99,10 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
 - Reduced-motion handling is functional, not cosmetic: loaders exit directly,
   galleries use immediate scrolling, heading substitution stops, and continuous
   canvas animation resolves to a static frame.
-- `bun run check` validates the hand-maintained sitemap, robots file, and LLM
-  index against `siteConfig` and the current project records. URL, profile,
-  contact, or project-content changes must update those public files together.
+- `bun run check` validates the hand-maintained sitemap, robots file, response
+  headers, web manifest, favicon/social-image formats and dimensions, and LLM
+  index against `siteConfig` and the current project records. Metadata, URL,
+  profile, contact, asset, or project-content changes must update them together.
 
 ## Optional section integration
 

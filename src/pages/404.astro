@@ -12,7 +12,7 @@ const description = 'The requested page could not be found. Return to Adam Salic
 	title={title}
 	description={description}
 	canonical="/404"
-	robots="noindex, follow"
+	robots={siteConfig.notFoundRobots}
 	showPageLoader={false}
 >
 	<Navbar />
