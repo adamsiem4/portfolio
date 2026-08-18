@@ -14,6 +14,7 @@
     "check:built-security": "bun scripts/check-built-security.mjs",
     "test:smoke": "bun run build && playwright test --project=chromium",
     "test:smoke:all": "bun run build && playwright test",
+	"validate:production": "bun scripts/validate-production-metadata.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },
