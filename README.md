@@ -111,6 +111,12 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   validator, and an independent social-card crawler, then checks the live social
   image, sitemap, robots file, and 404 directive. Run it after deployment; it stays
   outside normal builds so third-party availability cannot block local work.
+- `bun run check:links` checks configured live projects, public repositories,
+  social profiles, credential URLs, and the Cloudflare privacy policy. GitHub
+  Actions runs it every Monday at 07:23 UTC and on manual dispatch; it is not part
+  of `check`, `build`, or pull-request validation. Credential fields named
+  `credentialUrl` in `src/config/*.js` are discovered automatically, while the
+  dormant certifications section currently reports that none are configured.
 
 ## Optional section integration
 
