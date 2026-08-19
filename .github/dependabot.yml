@@ -1,0 +1,53 @@
+version: 2
+
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+      day: wednesday
+      time: '05:17'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      astro-framework:
+        patterns:
+          - astro
+          - '@astrojs/*'
+        update-types:
+          - minor
+          - patch
+      browser-testing:
+        patterns:
+          - '@playwright/test'
+          - '@axe-core/playwright'
+        update-types:
+          - minor
+          - patch
+      interface-libraries:
+        patterns:
+          - '@lucide/astro'
+          - simple-icons
+        update-types:
+          - minor
+          - patch
+      development-tooling:
+        patterns:
+          - '@types/*'
+          - typescript
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: wednesday
+      time: '05:47'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci(deps)

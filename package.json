@@ -2,8 +2,13 @@
   "name": "portfolioas",
   "type": "module",
   "version": "0.0.1",
+  "packageManager": "bun@1.3.14",
   "engines": {
     "node": ">=22.12.0"
+  },
+  "overrides": {
+    "js-yaml": "4.3.1",
+    "nanoid": "3.3.18"
   },
   "scripts": {
     "dev": "astro dev",
@@ -16,12 +21,13 @@
     "test:smoke:all": "bun run build && playwright test",
     "validate:production": "bun scripts/validate-production-metadata.mjs",
     "check:links": "bun scripts/check-external-links.mjs",
+    "audit:dependencies": "bun audit",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
     "@lucide/astro": "^1.28.0",
-    "astro": "7.2.1",
+    "astro": "7.2.4",
     "simple-icons": "13"
   },
   "devDependencies": {

@@ -118,6 +118,28 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   `credentialUrl` in `src/config/*.js` are discovered automatically, while the
   dormant certifications section currently reports that none are configured.
 
+## Dependency maintenance
+
+`packageManager` in `package.json` is the single reproducible Bun version pin;
+workflows that do not explicitly request another version inherit it. Dependabot
+checks Bun-managed packages and pinned GitHub Actions every Wednesday, grouping
+related minor and patch updates for Astro, browser testing, interface libraries,
+and development tooling while leaving major upgrades isolated for review.
+
+The dependency-maintenance workflow runs weekly, on manual dispatch, and whenever a
+pull request changes `package.json` or `bun.lock`. It runs `bun audit`, source and
+public-file checks, a production build, and independent Chromium, Firefox, WebKit,
+and Edge smoke jobs. Chromium, Firefox, and WebKit install the revisions required by
+the locked Playwright version, while the Edge job installs the current branded
+stable channel; browser binaries are not cached. Failed jobs retain their Playwright
+reports, traces, and screenshots for 14 days.
+
+Dependabot cannot update the Bun executable pin itself. Scheduled and manual runs
+therefore also build and check with the latest Bun release, publish a workflow
+warning when it differs from the pin, and leave the explicit pin change for a
+reviewed update. Run `bun run audit:dependencies` for the same vulnerability review
+locally.
+
 ## Optional section integration
 
 `src/components/Certs.astro` is a dormant section template. It remains outside the
