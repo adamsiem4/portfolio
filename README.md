@@ -118,6 +118,13 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   `credentialUrl` in `src/config/*.js` are discovered automatically, while the
   dormant certifications section currently reports that none are configured.
 
+## Continuous integration
+
+Every pull request and push to `main` installs the committed Bun lockfile without
+modification, runs the source and public-file checks, builds the production site,
+and executes the Chromium smoke suite. Failed browser runs retain the HTML report,
+traces, and screenshots as GitHub Actions artifacts for 14 days.
+
 ## Dependency maintenance
 
 `packageManager` in `package.json` is the single reproducible Bun version pin;
