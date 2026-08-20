@@ -9,11 +9,171 @@ import {
 	getProjectMediaSlotWidth,
 } from '../src/utils/project-layout.js';
 
-const openPortfolio = async (page: Page) => {
-	await page.goto('/');
+type RuntimeIssues = {
+	pageErrors: string[];
+	consoleErrors: string[];
+};
+
+type FragmentReference = {
+	error: string | null;
+	fragment: string | null;
+	href: string;
+	label: string;
+	targetDocument: string;
+};
+
+const runtimeIssuesByPage = new WeakMap<Page, RuntimeIssues>();
+
+test.beforeEach(({ context, page }) => {
+	const issues: RuntimeIssues = {
+		pageErrors: [],
+		consoleErrors: [],
+	};
+	const monitorPage = (monitoredPage: Page) => {
+		monitoredPage.on('pageerror', (error) => {
+			issues.pageErrors.push(error.stack ?? error.message);
+		});
+		monitoredPage.on('console', (message) => {
+			if (!['error', 'assert'].includes(message.type())) return;
+
+			const location = message.location();
+			const source = location.url
+				? ` (${location.url}:${location.lineNumber + 1}:${location.columnNumber + 1})`
+				: '';
+			issues.consoleErrors.push(`${message.type()}: ${message.text()}${source}`);
+		});
+	};
+
+	monitorPage(page);
+	context.on('page', monitorPage);
+	runtimeIssuesByPage.set(page, issues);
+});
+
+test.afterEach(({ page }) => {
+	const issues = runtimeIssuesByPage.get(page);
+	expect.soft(
+		issues?.pageErrors ?? [],
+		'The page emitted uncaught JavaScript errors.',
+	).toEqual([]);
+	expect.soft(
+		issues?.consoleErrors ?? [],
+		'The page emitted unexpected console errors.',
+	).toEqual([]);
+});
+
+const openPage = async (page: Page, path: string) => {
+	await page.goto(path);
 	await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
 	await expect(page.locator('html')).not.toHaveAttribute('data-page-loading', 'true');
 };
+
+const openPortfolio = (page: Page) => openPage(page, '/');
+
+const inspectImages = (page: Page) => page.locator('img').evaluateAll(async (elements) => {
+	const images = elements as HTMLImageElement[];
+
+	await Promise.all(images.map(async (image) => {
+		image.loading = 'eager';
+		try {
+			await image.decode();
+		} catch {
+			// The state below reports the failed URL with useful dimensions.
+		}
+	}));
+
+	return {
+		total: images.length,
+		broken: images
+			.filter((image) => !image.complete || image.naturalWidth === 0 || image.naturalHeight === 0)
+			.map((image) => ({
+				alt: image.alt,
+				complete: image.complete,
+				height: image.naturalHeight,
+				src: image.currentSrc || image.src,
+				width: image.naturalWidth,
+			})),
+	};
+});
+
+const inspectInternalFragments = (page: Page) => page.locator('a[href]').evaluateAll((elements) => {
+	const links = elements as HTMLAnchorElement[];
+	const currentUrl = new URL(window.location.href);
+	const references: FragmentReference[] = [];
+
+	for (const link of links) {
+		const href = link.getAttribute('href');
+		if (!href) continue;
+
+		let targetUrl: URL;
+		try {
+			targetUrl = new URL(href, currentUrl);
+		} catch {
+			continue;
+		}
+		if (
+			targetUrl.origin !== currentUrl.origin
+			|| targetUrl.hash.length <= 1
+		) continue;
+
+		const label = link.textContent?.trim().replace(/\s+/g, ' ') || '(unlabelled link)';
+		const targetDocument = `${targetUrl.pathname}${targetUrl.search}`;
+		let fragment: string | null = null;
+		try {
+			fragment = decodeURIComponent(targetUrl.hash.slice(1));
+		} catch {
+			references.push({
+				error: 'invalid fragment encoding',
+				fragment,
+				href,
+				label,
+				targetDocument,
+			});
+		}
+		if (fragment !== null) {
+			references.push({
+				error: null,
+				fragment,
+				href,
+				label,
+				targetDocument,
+			});
+		}
+	}
+
+	const targets = [
+		...Array.from(document.querySelectorAll<HTMLElement>('[id]'), (element) => element.id),
+		...Array.from(
+			document.querySelectorAll<HTMLAnchorElement>('a[name]'),
+			(anchor) => anchor.getAttribute('name') ?? '',
+		),
+	].filter(Boolean);
+
+	return {
+		document: `${currentUrl.pathname}${currentUrl.search}`,
+		references,
+		targets: [...new Set(targets)],
+	};
+});
+
+const inspectHorizontalOverflow = (page: Page) => page.evaluate(() => {
+	const root = document.documentElement;
+	const contentWidth = Math.max(root.scrollWidth, document.body?.scrollWidth ?? 0);
+
+	return {
+		contentWidth,
+		layoutWidth: root.clientWidth,
+		overflow: Math.max(0, contentWidth - root.clientWidth),
+	};
+});
+
+const pageHealthViewports = [
+	{ label: 'mobile', width: 390, height: 844 },
+	{ label: 'desktop', width: 1_440, height: 900 },
+] as const;
+
+const pageHealthThemes = ['dark', 'light'] as const;
+
+const pageHealthRoutes = ['/', '/404.html'] as const;
 
 test('production security headers preserve theme initialization and the page loader', async ({ page }) => {
 	const productionHeaders = Object.fromEntries(
@@ -105,6 +265,87 @@ test('persists the selected theme across reloads', async ({ page }) => {
 	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
 	await expect(root).toHaveAttribute('data-theme', 'light');
 	await expect(root).toHaveAttribute('data-theme-preference', 'user');
+});
+
+test.describe('page health', () => {
+	for (const viewport of pageHealthViewports) {
+		for (const theme of pageHealthThemes) {
+			test(`validates ${viewport.label} layout and assets in the ${theme} theme`, async ({ page }) => {
+				await page.setViewportSize({ width: viewport.width, height: viewport.height });
+				await page.addInitScript((selectedTheme) => {
+					localStorage.setItem('portfolio-theme', selectedTheme);
+				}, theme);
+
+				const brokenImages: Array<{
+					alt: string;
+					complete: boolean;
+					height: number;
+					path: string;
+					src: string;
+					width: number;
+				}> = [];
+				const documentTargets = new Map<string, Set<string>>();
+				const fragmentReferences: FragmentReference[] = [];
+				const overflowFailures: Array<{
+					contentWidth: number;
+					layoutWidth: number;
+					overflow: number;
+					path: string;
+				}> = [];
+				let totalImages = 0;
+
+				for (const path of pageHealthRoutes) {
+					await openPage(page, path);
+					await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+
+					const imageHealth = await inspectImages(page);
+					totalImages += imageHealth.total;
+					brokenImages.push(...imageHealth.broken.map((image) => ({ path, ...image })));
+
+					const fragmentHealth = await inspectInternalFragments(page);
+					documentTargets.set(fragmentHealth.document, new Set(fragmentHealth.targets));
+					fragmentReferences.push(...fragmentHealth.references);
+
+					const horizontalOverflow = await inspectHorizontalOverflow(page);
+					if (horizontalOverflow.overflow > 1) {
+						overflowFailures.push({ path, ...horizontalOverflow });
+					}
+				}
+
+				expect(totalImages, 'The portfolio health check did not find any images.').toBeGreaterThan(0);
+				expect(
+					brokenImages,
+					`Broken images at ${viewport.width}x${viewport.height} in the ${theme} theme.`,
+				).toEqual([]);
+
+				expect(
+					fragmentReferences.length,
+					'The portfolio health check did not find any internal fragment links.',
+				).toBeGreaterThan(0);
+				const missingFragments = fragmentReferences.flatMap((reference) => {
+					if (reference.error) {
+						return [`${reference.href} from "${reference.label}": ${reference.error}`];
+					}
+					const targets = documentTargets.get(reference.targetDocument);
+					if (!targets) {
+						return [`${reference.href} from "${reference.label}" targets an unaudited document`];
+					}
+					return reference.fragment && targets.has(reference.fragment)
+						? []
+						: [`${reference.href} from "${reference.label}"`];
+				});
+				expect(
+					[...new Set(missingFragments)],
+					'Internal links reference missing fragment targets.',
+				).toEqual([]);
+
+				expect(
+					overflowFailures,
+					`Horizontal document overflow at ${viewport.width}x${viewport.height} in the ${theme} theme.`,
+				).toEqual([]);
+			});
+		}
+	}
 });
 
 test('uses reduced-motion fallbacks for page and component animation', async ({ page }) => {

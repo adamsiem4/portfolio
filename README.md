@@ -107,6 +107,10 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   profile, contact, asset, or project-content changes must update them together.
 - `bun run build` verifies that every generated inline script is authorized by the
   configured Content Security Policy and that no stale script hashes remain.
+- Every smoke test fails on uncaught page exceptions and error-level console output.
+  Dedicated page-health cases also decode every rendered image, resolve internal
+  fragment links across both public pages, and reject horizontal document overflow
+  at 390×844 and 1440×900 in both dark and light themes.
 - `bun run validate:production` queries the deployed URL, the official Schema.org
   validator, and an independent social-card crawler, then checks the live social
   image, sitemap, robots file, and 404 directive. Run it after deployment; it stays
