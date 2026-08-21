@@ -240,6 +240,14 @@ test.describe('mobile navigation', () => {
 		await expect(themeToggle).toBeFocused();
 
 		await toggle.tap();
+		await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+		await expect(menu).toHaveAttribute('data-open', 'true');
+
+		await page.locator('#home').tap({ position: { x: 20, y: 300 } });
+		await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+		await expect(menu).toHaveAttribute('data-open', 'false');
+
+		await toggle.tap();
 		await page.getByRole('link', { name: 'Projects' }).tap();
 		await expect(menu).toHaveAttribute('data-open', 'false');
 		await expect(page).toHaveURL(/#projects$/);
