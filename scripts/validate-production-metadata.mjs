@@ -269,9 +269,13 @@ await runCheck('Production 404 robots directive', async () => {
 	const missingUrl = new URL('/__production-metadata-validator-not-found__', productionUrl);
 	const response = await request(missingUrl);
 	assert(response.status === 404, `returned HTTP ${response.status}`);
+	assert(
+		response.headers.get('x-robots-tag') === siteConfig.notFoundRobots,
+		`X-Robots-Tag is ${response.headers.get('x-robots-tag') ?? 'missing'}; expected ${siteConfig.notFoundRobots}`,
+	);
 	const metadata = getMetadata(await response.text());
 	expectMetadata(metadata, { robots: siteConfig.notFoundRobots });
-	return `unknown URLs return HTTP 404 with ${siteConfig.notFoundRobots}`;
+	return `unknown URLs return HTTP 404 with ${siteConfig.notFoundRobots} in both the response header and HTML meta`;
 });
 
 if (failures.length > 0) {

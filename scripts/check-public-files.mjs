@@ -66,13 +66,30 @@ const parseHeaderRules = (content) => {
 		if (!trimmed || trimmed.startsWith('#')) return;
 
 		if (!/^\s/.test(line)) {
-			currentRule = { path: trimmed, headers: new Map() };
+			currentRule = {
+				path: trimmed,
+				headers: new Map(),
+				detachedHeaders: [],
+				directives: [],
+			};
 			rules.push(currentRule);
 			return;
 		}
 
 		if (!currentRule) {
 			failures.push(`public/_headers line ${lineIndex + 1} defines a header before a path rule`);
+			return;
+		}
+
+		if (trimmed.startsWith('!')) {
+			const name = trimmed.slice(1).trim().toLowerCase();
+			if (!/^[!#$%&'*+.^_`|~\da-z-]+$/i.test(name)) {
+				failures.push(`public/_headers line ${lineIndex + 1} has an invalid detached header: ${trimmed}`);
+				return;
+			}
+
+			currentRule.detachedHeaders.push(name);
+			currentRule.directives.push({ type: 'detach', name });
 			return;
 		}
 
@@ -87,38 +104,73 @@ const parseHeaderRules = (content) => {
 		const values = currentRule.headers.get(name) ?? [];
 		values.push(value);
 		currentRule.headers.set(name, values);
+		currentRule.directives.push({ type: 'header', name, value });
 	});
 
 	return rules;
 };
 
 const headerRules = parseHeaderRules(headers ?? '');
-const globalHeaderRules = headerRules.filter((rule) => rule.path === '/*');
-expect(
-	globalHeaderRules.length === 1,
-	'public/_headers must contain exactly one /* rule',
-);
-const robotsHeaderValues = globalHeaderRules[0]?.headers.get('x-robots-tag') ?? [];
-expect(
-	robotsHeaderValues.length === 1 && robotsHeaderValues[0] === siteConfig.robots,
-	`public/_headers must set X-Robots-Tag to the configured robots value: ${siteConfig.robots}`,
-);
-
-const expectedResponseHeaders = new Map([
-	['x-robots-tag', siteConfig.robots],
-	...Object.entries(siteConfig.responseHeaders)
-		.map(([name, value]) => [name.toLowerCase(), value]),
+const expectedHeaderRules = new Map([
+	['/*', {
+		detachedHeaders: [],
+		headers: new Map([
+			['x-robots-tag', siteConfig.notFoundRobots],
+			...Object.entries(siteConfig.responseHeaders)
+				.map(([name, value]) => [name.toLowerCase(), value]),
+		]),
+	}],
+	['/', {
+		detachedHeaders: ['x-robots-tag'],
+		headers: new Map([['x-robots-tag', siteConfig.robots]]),
+	}],
+	['/404.html', {
+		detachedHeaders: ['x-robots-tag'],
+		headers: new Map([['x-robots-tag', siteConfig.notFoundRobots]]),
+	}],
 ]);
+
 expect(
-	globalHeaderRules[0]?.headers.size === expectedResponseHeaders.size,
-	'public/_headers must contain exactly the response headers configured in src/config/site.js',
+	headerRules.length === expectedHeaderRules.size,
+	`public/_headers must contain exactly ${expectedHeaderRules.size} configured path rules`,
 );
-expectedResponseHeaders.forEach((expectedValue, name) => {
-	const actualValues = globalHeaderRules[0]?.headers.get(name) ?? [];
+expectedHeaderRules.forEach((expectedRule, path) => {
+	const matchingRules = headerRules.filter((rule) => rule.path === path);
 	expect(
-		actualValues.length === 1 && actualValues[0] === expectedValue,
-		`public/_headers must set ${name} to the configured value: ${expectedValue}`,
+		matchingRules.length === 1,
+		`public/_headers must contain exactly one ${path} rule`,
 	);
+	const actualRule = matchingRules[0];
+	if (!actualRule) return;
+
+	expect(
+		isDeepStrictEqual(actualRule.detachedHeaders, expectedRule.detachedHeaders),
+		`public/_headers ${path} rule must detach exactly [${expectedRule.detachedHeaders.join(', ')}]`,
+	);
+	expect(
+		actualRule.headers.size === expectedRule.headers.size,
+		`public/_headers ${path} rule must contain exactly ${expectedRule.headers.size} configured headers`,
+	);
+	expectedRule.headers.forEach((expectedValue, name) => {
+		const actualValues = actualRule.headers.get(name) ?? [];
+		expect(
+			actualValues.length === 1 && actualValues[0] === expectedValue,
+			`public/_headers ${path} rule must set ${name} to the configured value: ${expectedValue}`,
+		);
+	});
+
+	expectedRule.detachedHeaders.forEach((name) => {
+		const detachIndex = actualRule.directives.findIndex(
+			(directive) => directive.type === 'detach' && directive.name === name,
+		);
+		const attachIndex = actualRule.directives.findIndex(
+			(directive) => directive.type === 'header' && directive.name === name,
+		);
+		expect(
+			detachIndex >= 0 && detachIndex < attachIndex,
+			`public/_headers ${path} rule must detach ${name} before setting its replacement`,
+		);
+	});
 });
 
 const contentSecurityPolicy = siteConfig.responseHeaders['Content-Security-Policy'];
