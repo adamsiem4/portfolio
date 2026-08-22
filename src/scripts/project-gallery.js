@@ -89,15 +89,19 @@ const initializeProjectGallery = (gallery) => {
 
 	const initializeScrollHint = () => {
 		// The hint plays once per viewport visit, only after the gallery is substantially
-		// visible. Leaving almost completely re-arms it for a later visit.
+		// visible and its project card is active. Leaving almost completely re-arms it.
 		if (reducedMotion.matches || !('IntersectionObserver' in window)) return;
 
 		const track = gallery.querySelector('.project-card__media-track');
 		if (!track) return;
+		const projectSlide = gallery.closest('[data-project-slide]');
 		let isArmed = true;
 		let isHinting = false;
 		let hintDelay = null;
 		let visibleRatio = 0;
+		const isProjectActive = () => (
+			!projectSlide || projectSlide.dataset.active === 'true'
+		);
 
 		const clearHintDelay = () => {
 			if (hintDelay === null) return;
@@ -113,6 +117,39 @@ const initializeProjectGallery = (gallery) => {
 		track.addEventListener('animationend', clearHint);
 		track.addEventListener('animationcancel', clearHint);
 
+		const syncHint = () => {
+			if (!isProjectActive()) {
+				clearHintDelay();
+				if (isHinting) clearHint();
+				return;
+			}
+
+			if (
+				visibleRatio < 0.45
+				|| !isArmed
+				|| isHinting
+				|| reducedMotion.matches
+			) {
+				if (visibleRatio < 0.45) clearHintDelay();
+				return;
+			}
+
+			if (hintDelay !== null) return;
+			hintDelay = setTimeout(() => {
+				hintDelay = null;
+				if (
+					visibleRatio < 0.45
+					|| !isProjectActive()
+					|| !isArmed
+					|| reducedMotion.matches
+				) return;
+
+				isArmed = false;
+				isHinting = true;
+				gallery.dataset.galleryHinting = 'true';
+			}, 700);
+		};
+
 		const observer = new IntersectionObserver(([entry]) => {
 			visibleRatio = entry.intersectionRatio;
 
@@ -123,28 +160,16 @@ const initializeProjectGallery = (gallery) => {
 				return;
 			}
 
-			if (
-				entry.intersectionRatio < 0.45
-				|| !isArmed
-				|| isHinting
-				|| reducedMotion.matches
-			) {
-				if (entry.intersectionRatio < 0.45) clearHintDelay();
-				return;
-			}
-
-			if (hintDelay !== null) return;
-			hintDelay = setTimeout(() => {
-				hintDelay = null;
-				if (visibleRatio < 0.45 || !isArmed || reducedMotion.matches) return;
-
-				isArmed = false;
-				isHinting = true;
-				gallery.dataset.galleryHinting = 'true';
-			}, 700);
+			syncHint();
 		}, { threshold: [0, 0.1, 0.45] });
 
 		observer.observe(gallery);
+		if (projectSlide) {
+			new MutationObserver(syncHint).observe(projectSlide, {
+				attributes: true,
+				attributeFilter: ['data-active'],
+			});
+		}
 	};
 
 	previousButton.addEventListener('click', () => moveTo(activeIndex - 1));

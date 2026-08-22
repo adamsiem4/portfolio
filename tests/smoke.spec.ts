@@ -711,6 +711,54 @@ test('updates gallery controls and announces the current image', async ({ page }
 	await expect(previous).toBeDisabled();
 });
 
+test('defers gallery scroll hints until their project card is active', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await page.setViewportSize({ width: 390, height: 844 });
+	await openPortfolio(page);
+
+	const deck = page.locator('[data-project-deck]');
+	const slides = deck.locator('[data-project-slide]');
+	const firstGallery = slides.nth(0).locator('[data-project-gallery]');
+	const laterGallery = slides.nth(1).locator('[data-project-gallery]');
+
+	await page.locator('[data-project-gallery]').evaluateAll((elements) => {
+		elements.forEach((element) => {
+			const gallery = element as HTMLElement;
+			gallery.dataset.testGalleryHintStarts = '0';
+			gallery.dataset.testGalleryHintState = 'idle';
+
+			new MutationObserver(() => {
+				if (gallery.dataset.galleryHinting === 'true') {
+					gallery.dataset.testGalleryHintStarts = String(
+						Number(gallery.dataset.testGalleryHintStarts ?? 0) + 1,
+					);
+					gallery.dataset.testGalleryHintState = 'running';
+					return;
+				}
+
+				if (Number(gallery.dataset.testGalleryHintStarts ?? 0) > 0) {
+					gallery.dataset.testGalleryHintState = 'ended';
+				}
+			}).observe(gallery, {
+				attributes: true,
+				attributeFilter: ['data-gallery-hinting'],
+			});
+		});
+	});
+
+	await firstGallery.scrollIntoViewIfNeeded();
+	await expect(firstGallery).toHaveAttribute('data-test-gallery-hint-state', 'ended');
+	await expect(slides.nth(1)).toHaveAttribute('data-active', 'false');
+	await expect(laterGallery).toHaveAttribute('data-test-gallery-hint-starts', '0');
+
+	await deck.locator('[data-project-next]').click();
+	await expect(deck).toHaveAttribute('data-active-index', '1');
+	await expect(slides.nth(1)).toHaveAttribute('data-active', 'true');
+	await laterGallery.scrollIntoViewIfNeeded();
+	await expect(laterGallery).toHaveAttribute('data-test-gallery-hint-state', 'ended');
+	await expect(laterGallery).toHaveAttribute('data-test-gallery-hint-starts', '1');
+});
+
 test('traps dialog focus and returns it to the privacy trigger', async ({ page }) => {
 	await openPortfolio(page);
 
