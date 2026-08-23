@@ -17,6 +17,7 @@
     "check": "astro-check && bun run check:public",
     "check:public": "bun scripts/check-public-files.mjs",
     "check:built-security": "bun scripts/check-built-security.mjs",
+    "sync:csp": "astro build && bun scripts/check-built-security.mjs --write",
     "test:smoke": "bun run build && playwright test --project=chromium",
     "test:smoke:all": "bun run build && playwright test",
     "validate:production": "bun scripts/validate-production-metadata.mjs",
@@ -28,7 +29,7 @@
   "dependencies": {
     "@lucide/astro": "1.28.0",
     "astro": "7.2.4",
-    "simple-icons": "13"
+    "simple-icons": "13.21.0"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
