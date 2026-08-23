@@ -29,7 +29,7 @@
   "dependencies": {
     "@lucide/astro": "1.28.0",
     "astro": "7.2.4",
-    "simple-icons": "13.21.0"
+    "simple-icons": "16.28.0"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
