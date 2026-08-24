@@ -72,7 +72,7 @@ use only part of its width. Responsive image sizing therefore applies:
 containScale = min(1, sourceWidth * 9 / (sourceHeight * 16))
 ```
 
-`project-layout.ts` applies that scale to a conservative card-slot estimate. It
+`project-layout.js` applies that scale to a conservative card-slot estimate. It
 derives the deck reserve from the project count, subtracts the shared page gutters
 and card borders, and applies the desktop media track's `17 / 24` share. The
 generated `sizes` value has mobile, tablet, fluid desktop, and 72 rem-capped desktop
@@ -92,7 +92,7 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   module executes. Adding client-side page transitions requires restoring an
   Astro navigation lifecycle hook or an equivalent teardown/reinitialization path.
 - `Projects.astro` and `ProjectCard.astro` share the project-count geometry in
-  `project-layout.ts`. The browser suite verifies the reserve, generated `sizes`,
+  `project-layout.js`. The browser suite verifies the reserve, generated `sizes`,
   gutters, and rendered media-element width across mobile, tablet, and desktop
   breakpoints.
 - Theme-aware canvas output depends on the `site-theme-change` event and the shared
