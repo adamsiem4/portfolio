@@ -17,29 +17,24 @@ const description = 'The requested page could not be found. Return to Adam Salic
 >
 	<Navbar />
 	<main class="not-found" id="home" tabindex="-1" aria-labelledby="not-found-title">
-		<div class="not-found__panel">
+		<div class="not-found__content">
 			<p class="not-found__code" aria-hidden="true">404</p>
-
-			<div class="not-found__content">
-				<p class="not-found__eyebrow">Route not found</p>
-				<h1 id="not-found-title">You’ve reached a dead end.</h1>
-				<p class="not-found__description">
-					The page may have moved, or the address may be incorrect. The portfolio is still
-					waiting at the starting point.
-				</p>
-
-				<span
-					class="not-found__home-magnetic"
-					data-magnetic
-					data-magnetic-max="6"
-					data-magnetic-strength="0.16"
-				>
-					<a class="not-found__home-link" href="/" data-magnetic-target>
-						<ArrowLeft size={20} stroke-width={1.8} aria-hidden="true" />
-						Back to portfolio
-					</a>
-				</span>
-			</div>
+			<h1 id="not-found-title">You’ve reached a dead end.</h1>
+			<p class="not-found__description">
+				The page may have moved, or the address may be incorrect. The portfolio is still
+				waiting at the starting point.
+			</p>
+			<span
+				class="not-found__home-magnetic"
+				data-magnetic
+				data-magnetic-max="6"
+				data-magnetic-strength="0.16"
+			>
+				<a class="not-found__home-link" href="/" data-magnetic-target>
+					<ArrowLeft size={20} stroke-width={1.8} aria-hidden="true" />
+					Back to portfolio
+				</a>
+			</span>
 		</div>
 	</main>
 </Layout>
@@ -74,56 +69,29 @@ const description = 'The requested page could not be found. Return to Adam Salic
 		transform: translate3d(-42%, 24%, 0);
 	}
 
-	.not-found__panel {
-		display: grid;
-		width: min(100%, 72rem);
-		overflow: hidden;
-		border: 1px solid var(--glass-border);
-		border-radius: 1.5rem;
-		background:
-			linear-gradient(145deg, var(--glass-gradient-start), transparent 58%),
-			var(--glass-surface);
-		box-shadow:
-			inset 0 1px 0 var(--glass-highlight),
-			0 2rem 6rem var(--glass-shadow);
-		isolation: isolate;
-	}
-
 	.not-found__code {
-		display: grid;
-		min-height: 13rem;
-		place-items: center;
-		overflow: hidden;
-		padding: 1.25rem;
-		border-block-end: 1px solid var(--glass-border);
-		color: color-mix(in srgb, var(--color-text) 7%, transparent);
+		color: var(--color-text);
 		font-family: "Open Sans", sans-serif;
-		font-size: clamp(8rem, 40vw, 10rem);
+		font-size: clamp(10rem, 33vw, 26rem);
 		font-variant-numeric: tabular-nums;
 		font-weight: 800;
 		letter-spacing: -0.055em;
-		line-height: 0.8;
+		line-height: 0.72;
 		white-space: nowrap;
 	}
 
 	.not-found__content {
 		display: grid;
-		align-content: center;
+		min-width: 0;
+		width: min(100%, 64rem);
+		justify-items: center;
 		gap: 1rem;
-		padding: clamp(1.5rem, 7vw, 3.5rem);
-	}
-
-	.not-found__eyebrow {
-		color: var(--color-accent-text);
-		font-size: 0.72rem;
-		font-weight: 700;
-		letter-spacing: 0.16em;
-		text-transform: uppercase;
+		text-align: center;
 	}
 
 	.not-found h1 {
-		max-width: 10ch;
-		font-size: clamp(2.75rem, 12vw, 5.75rem);
+		max-width: 12ch;
+		font-size: clamp(2.5rem, 8vw, 5rem);
 		font-weight: 800;
 		letter-spacing: -0.055em;
 		line-height: 0.9;
@@ -131,7 +99,7 @@ const description = 'The requested page could not be found. Return to Adam Salic
 	}
 
 	.not-found__description {
-		max-width: 39rem;
+		max-width: 36rem;
 		color: var(--color-muted);
 		font-size: clamp(0.95rem, 2.7vw, 1.05rem);
 		line-height: 1.7;
@@ -172,16 +140,8 @@ const description = 'The requested page could not be found. Return to Adam Salic
 	}
 
 	@media (min-width: 48rem) {
-		.not-found__panel {
-			grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-		}
-
 		.not-found__code {
-			min-height: 30rem;
-			padding: 2rem;
-			border-block-end: 0;
-			border-inline-end: 1px solid var(--glass-border);
-			font-size: clamp(9rem, 17vw, 15rem);
+			margin-block-end: 1.5rem;
 		}
 	}
 

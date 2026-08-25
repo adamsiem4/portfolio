@@ -805,6 +805,8 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 	expect(await page.locator('html').getAttribute('data-page-loading')).toBeNull();
 	await expect(page).toHaveTitle('Page not found | Adam Salicki');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('You’ve reached a dead end.');
+	await expect(page.locator('.not-found__panel')).toHaveCount(0);
+	await expect(page.getByText('Route not found')).toHaveCount(0);
 	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
 	await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
 		'href',
@@ -812,10 +814,6 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 	);
 	await expect(page.getByRole('contentinfo')).toHaveCount(0);
 	await expect(page.getByRole('link', { name: 'Back to portfolio' })).toHaveAttribute('href', '/');
-	await page.getByRole('button', { name: 'Toggle navigation' }).click();
-	await expect(page.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/#about');
-	await expect(page.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/#projects');
-	await expect(page.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/#contact');
 
 	for (const viewport of [
 		{ width: 320, height: 700 },
@@ -823,6 +821,18 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 		{ width: 1_440, height: 900 },
 	]) {
 		await page.setViewportSize(viewport);
+		expect(
+			await page.locator('.not-found__content').evaluate((element) => {
+				const contentBounds = element.getBoundingClientRect();
+				const sectionBounds = element.closest('.not-found')?.getBoundingClientRect();
+				if (!sectionBounds) return Number.POSITIVE_INFINITY;
+				return Math.abs(
+					contentBounds.x + contentBounds.width / 2
+					- (sectionBounds.x + sectionBounds.width / 2)
+				);
+			}),
+			`404 content is not horizontally centered at ${viewport.width}px`,
+		).toBeLessThanOrEqual(1);
 		expect(
 			await page.evaluate(() => document.documentElement.scrollWidth),
 			`404 page overflows horizontally at ${viewport.width}px`,
@@ -834,6 +844,23 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 			`404 page does not fill the viewport at ${viewport.width}px`,
 		).toBeGreaterThanOrEqual(viewport.height);
 	}
+
+	expect(await page.locator('.not-found__code').evaluate((element) => (
+		Number.parseFloat(getComputedStyle(element).fontSize)
+	))).toBeGreaterThanOrEqual(320);
+	expect(await page.locator('.not-found__content').evaluate((element) => {
+		const codeBounds = element.querySelector('.not-found__code')?.getBoundingClientRect();
+		const headingBounds = element.querySelector('h1')?.getBoundingClientRect();
+		if (!codeBounds || !headingBounds) return Number.NEGATIVE_INFINITY;
+		return headingBounds.top - codeBounds.bottom;
+	})).toBeGreaterThanOrEqual(40);
+
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.getByRole('button', { name: 'Toggle navigation' }).click();
+	await expect(page.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/#about');
+	await expect(page.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/#projects');
+	await expect(page.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/#contact');
+	await page.getByRole('button', { name: 'Toggle navigation' }).click();
 
 	const magneticWrapper = page.locator('.not-found__home-magnetic');
 	const backToPortfolio = page.getByRole('link', { name: 'Back to portfolio' });
