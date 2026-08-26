@@ -1,11 +1,48 @@
 ---
+import { Image } from 'astro:assets';
+import githubFoundationsBadge from '../assets/github-foundations.png';
 import ScrambleHeading from './ScrambleHeading.astro';
 ---
 
 <section class="certs" id="certs" aria-labelledby="certs-title">
 	<div class="certs__inner">
-		<ScrambleHeading id="certs-title" text="Certs" />
-		<div class="certs__card" aria-hidden="true"></div>
+		<header>
+			<ScrambleHeading id="certs-title" text="Certs" />
+		</header>
+
+		<article class="cert-card">
+			<div class="cert-card__badge" aria-hidden="true">
+				<Image
+					class="cert-card__badge-icon"
+					src={githubFoundationsBadge}
+					alt=""
+					width={224}
+					height={224}
+					quality="high"
+				/>
+			</div>
+
+			<div class="cert-card__details">
+				<p class="cert-card__label">Certification</p>
+				<h3>GitHub Foundations</h3>
+				<p class="cert-card__summary">&lt;tmp&gt;</p>
+
+				<dl class="cert-card__meta">
+					<div>
+						<dt>Issuer</dt>
+						<dd>&lt;tmp&gt;</dd>
+					</div>
+					<div>
+						<dt>Issued</dt>
+						<dd>&lt;tmp&gt;</dd>
+					</div>
+					<div>
+						<dt>Credential</dt>
+						<dd>&lt;tmp&gt;</dd>
+					</div>
+				</dl>
+			</div>
+		</article>
 	</div>
 </section>
 
@@ -27,14 +64,89 @@ import ScrambleHeading from './ScrambleHeading.astro';
 		gap: clamp(2.5rem, 8vw, 5rem);
 	}
 
-	.certs__card {
-		min-height: clamp(20rem, 72vw, 28rem);
+	.cert-card {
+		display: grid;
+		overflow: hidden;
 		border: 1px solid var(--glass-border);
 		border-radius: 1.5rem;
 		background:
-			linear-gradient(145deg, var(--glass-gradient-start), transparent 62%),
-			var(--glass-surface);
+			linear-gradient(var(--glass-surface), var(--glass-surface)),
+			var(--color-background);
 		box-shadow: inset 0 1px 0 var(--glass-highlight);
+	}
+
+	.cert-card__badge {
+		display: grid;
+		min-height: 16rem;
+		place-items: center;
+		padding: 2rem;
+		border-block-end: 1px solid var(--glass-border);
+		background: var(--glass-surface);
+	}
+
+	.cert-card__badge-icon {
+		display: block;
+		width: min(76%, 14rem);
+		height: auto;
+		filter: drop-shadow(0 1.25rem 2rem var(--glass-glow));
+	}
+
+	.cert-card__details {
+		display: grid;
+		align-content: start;
+		gap: 0.4rem;
+		padding: clamp(1.25rem, 4vw, 2rem);
+	}
+
+	.cert-card__label,
+	.cert-card__meta dt {
+		color: var(--color-accent-text);
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
+	}
+
+	h3 {
+		font-size: clamp(2rem, 8vw, 3.5rem);
+		font-weight: 800;
+		line-height: 0.95;
+		letter-spacing: -0.045em;
+		overflow-wrap: anywhere;
+		text-wrap: balance;
+	}
+
+	.cert-card__summary,
+	.cert-card__meta dd {
+		color: var(--color-muted);
+		line-height: 1.5;
+	}
+
+	.cert-card__summary {
+		margin-block-start: 0.6rem;
+	}
+
+	.cert-card__meta {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+		gap: 0.75rem 1rem;
+		margin-block-start: 1rem;
+		padding-block-start: 1rem;
+		border-block-start: 1px solid var(--glass-border);
+	}
+
+	.cert-card__meta div {
+		display: grid;
+		gap: 0.2rem;
+	}
+
+	.cert-card__meta dt {
+		font-size: 0.58rem;
+		letter-spacing: 0.13em;
+	}
+
+	.cert-card__meta dd {
+		font-size: 0.8rem;
 	}
 
 	@media (min-width: 48rem) {
@@ -43,8 +155,14 @@ import ScrambleHeading from './ScrambleHeading.astro';
 			align-items: start;
 		}
 
-		.certs__card {
-			min-height: clamp(22rem, 38vw, 28rem);
+		.cert-card {
+			grid-template-columns: minmax(14rem, 0.85fr) minmax(0, 1.15fr);
+		}
+
+		.cert-card__badge {
+			min-height: 100%;
+			border-block-end: 0;
+			border-inline-end: 1px solid var(--glass-border);
 		}
 	}
 </style>
