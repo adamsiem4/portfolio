@@ -132,7 +132,7 @@ const getInitialSlideStyle = (index: number) => {
 		min-height: 100vh;
 		min-height: 100svh;
 		display: grid;
-		align-items: center;
+		align-items: start;
 		overflow: clip;
 		padding: clamp(5rem, 8vw, 6rem) var(--page-gutter);
 		border-block-start: 1px solid var(--glass-border);
@@ -290,6 +290,10 @@ const getInitialSlideStyle = (index: number) => {
 	}
 
 	@media (min-width: 48rem) {
+		.projects {
+			align-items: center;
+		}
+
 		.projects__controls {
 			margin-block-start: 1rem;
 		}

@@ -81,8 +81,8 @@ import ScrambleHeading from './ScrambleHeading.astro';
 			const bounds = tiltArea.getBoundingClientRect();
 			if (!bounds.width || !bounds.height) return;
 
-			rotateX = ((event.clientY - bounds.top) / bounds.height - 0.5) * -16;
-			rotateY = ((event.clientX - bounds.left) / bounds.width - 0.5) * 16;
+			rotateX = ((event.clientY - bounds.top) / bounds.height - 0.5) * -20;
+			rotateY = ((event.clientX - bounds.left) / bounds.width - 0.5) * 20;
 			if (animationFrame === null) animationFrame = requestAnimationFrame(render);
 		});
 
@@ -98,7 +98,7 @@ import ScrambleHeading from './ScrambleHeading.astro';
 		min-height: 100vh;
 		min-height: 100svh;
 		display: grid;
-		align-items: center;
+		align-items: start;
 		padding: clamp(5rem, 10vw, 7rem) var(--page-gutter);
 		border-block-start: 1px solid var(--glass-border);
 		scroll-margin-top: 5rem;
@@ -205,7 +205,7 @@ import ScrambleHeading from './ScrambleHeading.astro';
 
 		.cert-card__badge:hover .cert-card__badge-icon {
 			transform:
-				translate3d(0, -0.4rem, 0)
+				translate3d(0, 0, 0)
 				rotateX(var(--cert-tilt-x, 0deg))
 				rotateY(var(--cert-tilt-y, 0deg))
 				scale(1.035);
@@ -215,6 +215,10 @@ import ScrambleHeading from './ScrambleHeading.astro';
 	}
 
 	@media (min-width: 48rem) {
+		.certs {
+			align-items: center;
+		}
+
 		.cert-card {
 			grid-template-columns: minmax(14rem, 0.85fr) minmax(0, 1.15fr);
 		}
