@@ -11,9 +11,10 @@ import ScrambleHeading from './ScrambleHeading.astro';
 		</header>
 
 		<article class="cert-card">
-			<div class="cert-card__badge" aria-hidden="true">
+			<div class="cert-card__badge" aria-hidden="true" data-cert-badge-tilt>
 				<Image
 					class="cert-card__badge-icon"
+					data-cert-badge-tilt-target
 					src={githubFoundationsBadge}
 					alt=""
 					width={224}
@@ -45,6 +46,52 @@ import ScrambleHeading from './ScrambleHeading.astro';
 		</article>
 	</div>
 </section>
+
+<script>
+	const tiltArea = document.querySelector<HTMLElement>('[data-cert-badge-tilt]');
+	const tiltTarget = tiltArea?.querySelector<HTMLElement>('[data-cert-badge-tilt-target]');
+	const canTilt = window.matchMedia(
+		'(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)',
+	);
+
+	if (tiltArea && tiltTarget) {
+		let animationFrame: number | null = null;
+		let rotateX = 0;
+		let rotateY = 0;
+
+		const reset = () => {
+			if (animationFrame !== null) cancelAnimationFrame(animationFrame);
+			animationFrame = null;
+			tiltTarget.style.removeProperty('--cert-tilt-x');
+			tiltTarget.style.removeProperty('--cert-tilt-y');
+		};
+
+		const render = () => {
+			tiltTarget.style.setProperty('--cert-tilt-x', `${rotateX.toFixed(2)}deg`);
+			tiltTarget.style.setProperty('--cert-tilt-y', `${rotateY.toFixed(2)}deg`);
+			animationFrame = null;
+		};
+
+		tiltArea.addEventListener('pointermove', (event) => {
+			if (event.pointerType !== 'mouse' || !canTilt.matches) {
+				reset();
+				return;
+			}
+
+			const bounds = tiltArea.getBoundingClientRect();
+			if (!bounds.width || !bounds.height) return;
+
+			rotateX = ((event.clientY - bounds.top) / bounds.height - 0.5) * -16;
+			rotateY = ((event.clientX - bounds.left) / bounds.width - 0.5) * 16;
+			if (animationFrame === null) animationFrame = requestAnimationFrame(render);
+		});
+
+		tiltArea.addEventListener('pointerleave', reset);
+		tiltArea.addEventListener('pointercancel', reset);
+		canTilt.addEventListener?.('change', reset);
+		window.addEventListener('blur', reset);
+	}
+</script>
 
 <style>
 	.certs {
@@ -136,6 +183,35 @@ import ScrambleHeading from './ScrambleHeading.astro';
 
 	.cert-card__meta dd {
 		font-size: 0.8rem;
+	}
+
+	@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+		.cert-card__badge {
+			perspective: 44rem;
+		}
+
+		.cert-card__badge-icon {
+			transform:
+				translate3d(0, 0, 0)
+				rotateX(var(--cert-tilt-x, 0deg))
+				rotateY(var(--cert-tilt-y, 0deg))
+				scale(1);
+			transform-origin: center;
+			transform-style: preserve-3d;
+			transition:
+				transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+				filter 220ms ease;
+		}
+
+		.cert-card__badge:hover .cert-card__badge-icon {
+			transform:
+				translate3d(0, -0.4rem, 0)
+				rotateX(var(--cert-tilt-x, 0deg))
+				rotateY(var(--cert-tilt-y, 0deg))
+				scale(1.035);
+			filter: drop-shadow(0 1.6rem 2.5rem var(--glass-glow));
+			will-change: transform;
+		}
 	}
 
 	@media (min-width: 48rem) {

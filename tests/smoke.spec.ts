@@ -425,6 +425,44 @@ test('uses reduced-motion fallbacks for page and component animation', async ({ 
 	await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
 });
 
+test('tilts the certification badge toward the pointer and resets it', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await page.setViewportSize({ width: 1440, height: 1000 });
+	await openPortfolio(page);
+
+	const tiltArea = page.locator('[data-cert-badge-tilt]');
+	const tiltTarget = page.locator('[data-cert-badge-tilt-target]');
+	await tiltArea.scrollIntoViewIfNeeded();
+	const bounds = await tiltArea.boundingBox();
+	expect(bounds).not.toBeNull();
+	if (!bounds) return;
+
+	const tiltMagnitude = () => tiltTarget.evaluate((element) => (
+		Math.abs(Number.parseFloat(element.style.getPropertyValue('--cert-tilt-x')) || 0)
+		+ Math.abs(Number.parseFloat(element.style.getPropertyValue('--cert-tilt-y')) || 0)
+	));
+
+	await page.mouse.move(
+		bounds.x + bounds.width * 0.75,
+		bounds.y + bounds.height * 0.25,
+	);
+	await expect.poll(tiltMagnitude).toBeGreaterThan(6);
+	await expect.poll(() => tiltTarget.evaluate(
+		(element) => getComputedStyle(element).transform,
+	)).toMatch(/^matrix3d\(/);
+
+	await page.mouse.move(bounds.x - 20, bounds.y - 20);
+	await expect.poll(tiltMagnitude).toBe(0);
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await page.mouse.move(
+		bounds.x + bounds.width * 0.75,
+		bounds.y + bounds.height * 0.25,
+	);
+	await expect.poll(tiltMagnitude).toBe(0);
+	await expect(tiltTarget).toHaveCSS('transform', 'none');
+});
+
 test.describe('theme reveal', () => {
 	test('starts at the toggle, covers the viewport, and cleans up', async ({ page }) => {
 		await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
