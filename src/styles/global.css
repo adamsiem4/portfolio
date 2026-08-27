@@ -7,17 +7,17 @@
 	--color-muted: rgba(255, 255, 255, 0.45);
 	--color-accent: #08665f;
 	--color-accent-text: #10978d;
-	--glass-surface: rgba(255, 255, 255, 0.04);
-	--glass-surface-hover: rgba(255, 255, 255, 0.075);
+	--glass-surface: rgba(255, 255, 255, 0.012);
+	--glass-surface-hover: rgba(255, 255, 255, 0.035);
 	--glass-border: rgba(255, 255, 255, 0.14);
 	--glass-border-hover: rgba(255, 255, 255, 0.35);
 	--glass-highlight: rgba(255, 255, 255, 0.2);
 	--glass-highlight-hover: rgba(255, 255, 255, 0.4);
 	--glass-shadow: rgba(0, 0, 0, 0.24);
-	--glass-glow: rgba(255, 255, 255, 0.12);
-	--glass-gradient-start: rgba(255, 255, 255, 0.055);
-	--glass-button-gradient-end: rgba(255, 255, 255, 0.015);
-	--glass-menu-gradient-end: rgba(255, 255, 255, 0.018);
+	--glass-glow: rgba(255, 255, 255, 0.06);
+	--glass-gradient-start: rgba(255, 255, 255, 0.02);
+	--glass-button-gradient-end: rgba(255, 255, 255, 0.005);
+	--glass-menu-gradient-end: rgba(255, 255, 255, 0.007);
 	--glass-inset-bottom: rgba(255, 255, 255, 0.05);
 	--page-gutter: 1.25rem;
 }
@@ -28,17 +28,17 @@
 	--color-text: #111415;
 	--color-muted: rgba(17, 20, 21, 0.6);
 	--color-accent-text: var(--color-accent);
-	--glass-surface: rgba(255, 255, 255, 0.28);
-	--glass-surface-hover: rgba(255, 255, 255, 0.38);
+	--glass-surface: rgba(255, 255, 255, 0.07);
+	--glass-surface-hover: rgba(255, 255, 255, 0.14);
 	--glass-border: rgba(17, 20, 21, 0.11);
 	--glass-border-hover: rgba(17, 20, 21, 0.2);
 	--glass-highlight: rgba(255, 255, 255, 0.72);
 	--glass-highlight-hover: rgba(255, 255, 255, 0.9);
 	--glass-shadow: rgba(17, 20, 21, 0.11);
-	--glass-glow: rgba(255, 255, 255, 0.34);
-	--glass-gradient-start: rgba(255, 255, 255, 0.2);
-	--glass-button-gradient-end: rgba(255, 255, 255, 0.04);
-	--glass-menu-gradient-end: rgba(255, 255, 255, 0.08);
+	--glass-glow: rgba(255, 255, 255, 0.14);
+	--glass-gradient-start: rgba(255, 255, 255, 0.065);
+	--glass-button-gradient-end: rgba(255, 255, 255, 0.012);
+	--glass-menu-gradient-end: rgba(255, 255, 255, 0.022);
 	--glass-inset-bottom: rgba(17, 20, 21, 0.06);
 }
 
