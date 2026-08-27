@@ -7,7 +7,7 @@
       "dependencies": {
         "@lucide/astro": "1.28.0",
         "astro": "7.2.4",
-        "simple-icons": "13.21.0",
+        "simple-icons": "16.28.0",
       },
       "devDependencies": {
         "@astrojs/check": "0.9.10",
@@ -611,7 +611,7 @@
 
     "shiki": ["shiki@4.4.1", "", { "dependencies": { "@shikijs/core": "4.4.1", "@shikijs/engine-javascript": "4.4.1", "@shikijs/engine-oniguruma": "4.4.1", "@shikijs/langs": "4.4.1", "@shikijs/themes": "4.4.1", "@shikijs/types": "4.4.1", "@shikijs/vscode-textmate": "^10.0.2", "@types/hast": "^3.0.5" } }, "sha512-rFP+iYKzjLEIqiMiKANhARqiAbk4deDhWnBtnUO/K0D0dPxMGDH4N0FVfBY/VeI+lPrV4wNGCHQZp7EOr7NNBw=="],
 
-    "simple-icons": ["simple-icons@13.21.0", "", {}, "sha512-LI5pVJPBv6oc79OMsffwb6kEqnmB8P1Cjg1crNUlhsxPETQ5UzbCKQdxU+7MW6+DD1qfPkla/vSKlLD4IfyXpQ=="],
+    "simple-icons": ["simple-icons@16.28.0", "", {}, "sha512-sQPR5AtK/ijRjou7zw7mlLp08oB6FH7i0lOy5XJ2zp9mJs/yejgiOn7KvQoe2q4YJIx6VmgUSW5AOefebPt5kg=="],
 
     "sisteransi": ["sisteransi@1.0.5", "", {}, "sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg=="],
 
