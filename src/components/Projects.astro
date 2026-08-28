@@ -31,7 +31,7 @@ const getInitialSlideStyle = (index: number) => {
 			data-deck-reserve={deckReserve}
 			role="region"
 			aria-roledescription="carousel"
-			aria-label="Featured projects"
+			aria-label={`Featured projects, ${projectCount} projects. Use the left and right controls or arrow keys.`}
 			tabindex="0"
 			style={`--project-count: ${projectCount}; --deck-reserve: ${deckReserve}px;`}
 		>

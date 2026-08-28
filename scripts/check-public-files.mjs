@@ -128,6 +128,10 @@ const expectedHeaderRules = new Map([
 		detachedHeaders: ['x-robots-tag'],
 		headers: new Map([['x-robots-tag', siteConfig.notFoundRobots]]),
 	}],
+	['/_astro/*', {
+		detachedHeaders: [],
+		headers: new Map([['cache-control', siteConfig.assetCacheControl]]),
+	}],
 ]);
 
 expect(

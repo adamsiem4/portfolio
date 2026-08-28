@@ -3,12 +3,12 @@ const inlineScriptHashes = [
 	'Buluswg2h40UWBJJGuNJDJveceDUyunuXhvURs8pijQ=',
 	'qPT3eRiQqoNWC0JjPW4BGbhCZZcZLivixGFU2nkXyoM=',
 	'ajG7m1i7XCkHQ80goM3zz+oFVWmFfJF/SRQdm08L3Xc=',
-	'ynhqWi+XxpNyq9tBP3bdEO5ykQwRYjypCI//RJgjMFo=',
 	'mFFWrmsJRs1Zpfn637hUDtaHT+LTzil6MITl3lQwlg8=',
 	'SOKmBQhl9eb6BVQzekcMTdL39abNgFg68YCP4+ojh0Q=',
 	'PIFvBvNd/F4cbriYY4g7LZGAdVyavQx1/qCoymrsh2g=',
 	'xGG43co0rerqFPObHXYwvIZsjVSN8415HHAeZTER+fc=',
 	'OQHz1ylvrUdcdm36z8jwL3hz20O5S6w91ytjky4pOd4=',
+	'hmkvYczI5yh8/hVvIu4TOoODfXUmP0cyS9IBMlxqRNw=',
 ];
 
 // Astro emits small module bundles inline and deliberately inlines component CSS.
@@ -116,6 +116,7 @@ export const siteConfig = {
 		'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
 		'X-Frame-Options': 'DENY',
 	},
+	assetCacheControl: 'public, max-age=31536000, immutable',
 	contactEmail: 'contact.asalicki@protonmail.com',
 	githubUrl: 'https://github.com/adamsiem4',
 	linkedinUrl: 'https://linkedin.com/in/adam-salicki-054a84295',

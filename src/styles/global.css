@@ -4,7 +4,7 @@
 	--color-background-light: #f4f3ef;
 	--color-background: var(--color-background-dark);
 	--color-text: #ffffff;
-	--color-muted: rgba(255, 255, 255, 0.45);
+	--color-muted: rgba(255, 255, 255, 0.59);
 	--color-accent: #08665f;
 	--color-accent-text: #10978d;
 	--glass-surface: rgba(255, 255, 255, 0.012);
@@ -26,7 +26,7 @@
 	color-scheme: light;
 	--color-background: var(--color-background-light);
 	--color-text: #111415;
-	--color-muted: rgba(17, 20, 21, 0.6);
+	--color-muted: rgba(17, 20, 21, 0.72);
 	--color-accent-text: var(--color-accent);
 	--glass-surface: rgba(255, 255, 255, 0.07);
 	--glass-surface-hover: rgba(255, 255, 255, 0.14);
@@ -67,6 +67,27 @@ body {
 	background-color: var(--color-background);
 	color: var(--color-text);
 	transition: background-color 220ms ease, color 220ms ease;
+}
+
+.skip-link {
+	position: fixed;
+	z-index: 11;
+	inset-block-start: 0.75rem;
+	inset-inline-start: 0.75rem;
+	padding: 0.6rem 1rem;
+	border: 1px solid var(--glass-border);
+	border-radius: 0.75rem;
+	background-color: var(--color-background);
+	color: var(--color-text);
+	font-family: "Open Sans", sans-serif;
+	font-size: 0.9rem;
+	transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+	outline: 2px solid var(--color-accent-text);
+	outline-offset: 3px;
+	transform: translateY(0);
 }
 
 ::view-transition-image-pair(root) {

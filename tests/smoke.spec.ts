@@ -797,6 +797,23 @@ test('defers gallery scroll hints until their project card is active', async ({ 
 	await expect(laterGallery).toHaveAttribute('data-test-gallery-hint-starts', '1');
 });
 
+test('shows a card focus ring when the gallery scroll region takes keyboard focus', async ({ page }) => {
+	await openPortfolio(page);
+
+	const activeCard = page.locator('[data-project-slide][data-active="true"] .project-card');
+	await expect(activeCard).toHaveCSS('outline-style', 'none');
+
+	const focusedGallery = page.locator('[data-project-gallery]:focus');
+
+	for (let press = 0; press < 24 && await focusedGallery.count() === 0; press += 1) {
+		await page.keyboard.press('Tab');
+	}
+
+	await expect(focusedGallery).toHaveCount(1);
+	await expect(activeCard).toHaveCSS('outline-style', 'solid');
+	await expect(activeCard).toHaveCSS('outline-width', '2px');
+});
+
 test('traps dialog focus and returns it to the privacy trigger', async ({ page }) => {
 	await openPortfolio(page);
 
@@ -927,7 +944,7 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 	}
 
 	const results = await new AxeBuilder({ page })
-		.withTags(['wcag2a', 'wcag2aa'])
+		.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
 		.analyze();
 	expect(results.violations).toEqual([]);
 });
@@ -936,7 +953,7 @@ test('has no automatically detectable WCAG A or AA violations', async ({ page })
 	await openPortfolio(page);
 
 	const results = await new AxeBuilder({ page })
-		.withTags(['wcag2a', 'wcag2aa'])
+		.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
 		.analyze();
 
 	expect(results.violations).toEqual([]);

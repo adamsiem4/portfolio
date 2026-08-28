@@ -133,7 +133,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 								layout="full-width"
 								widths={projectImageWidths.filter((width) => width <= image.src.width)}
 								sizes={getProjectImageSizes(image.src, projectCount)}
-								quality="high"
+								quality={70}
 							/>
 						</div>
 					))}
@@ -233,9 +233,6 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 						{sourceConfig.private ? (
 							<span
 								class="project-card__source project-card__source--disabled"
-								role="link"
-								aria-disabled="true"
-								aria-label={`Private ${source.name} source repository`}
 								title={`Private ${source.name} repository`}
 								data-magnetic-target
 							>
@@ -247,6 +244,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 								>
 									<path d={source.icon.path} />
 								</svg>
+								<span class="project-card__sr-only">Private {source.name} source repository</span>
 							</span>
 						) : (
 							<a
@@ -305,7 +303,8 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 			var(--color-background);
 		box-shadow: inset 0 1px 0 var(--glass-highlight);
 	}
-	.project-card:has(.project-card__primary-link:focus-visible) {
+	.project-card:has(.project-card__primary-link:focus-visible),
+	.project-card:has(.project-card__media[data-scrollable='true']:focus-visible) {
 		outline: 2px solid var(--color-text);
 		outline-offset: 4px;
 	}
@@ -338,10 +337,6 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 		overflow-y: auto;
 		scroll-snap-type: y mandatory;
 		scrollbar-width: none;
-	}
-	.project-card__media[data-scrollable='true']:focus-visible {
-		outline: 2px solid var(--color-text);
-		outline-offset: -4px;
 	}
 	.project-card__media::-webkit-scrollbar {
 		display: none;
