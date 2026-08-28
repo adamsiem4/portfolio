@@ -14,7 +14,7 @@
 	--glass-highlight: rgba(255, 255, 255, 0.2);
 	--glass-highlight-hover: rgba(255, 255, 255, 0.4);
 	--glass-shadow: rgba(0, 0, 0, 0.24);
-	--glass-glow: rgba(255, 255, 255, 0.06);
+	--glass-glow: rgba(255, 255, 255, 0.07);
 	--glass-gradient-start: rgba(255, 255, 255, 0.02);
 	--glass-button-gradient-end: rgba(255, 255, 255, 0.005);
 	--glass-menu-gradient-end: rgba(255, 255, 255, 0.007);
@@ -35,7 +35,7 @@
 	--glass-highlight: rgba(255, 255, 255, 0.72);
 	--glass-highlight-hover: rgba(255, 255, 255, 0.9);
 	--glass-shadow: rgba(17, 20, 21, 0.11);
-	--glass-glow: rgba(255, 255, 255, 0.14);
+	--glass-glow: rgba(255, 255, 255, 0.16);
 	--glass-gradient-start: rgba(255, 255, 255, 0.065);
 	--glass-button-gradient-end: rgba(255, 255, 255, 0.012);
 	--glass-menu-gradient-end: rgba(255, 255, 255, 0.022);

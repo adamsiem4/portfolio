@@ -41,32 +41,16 @@ const description = 'The requested page could not be found. Return to Adam Salic
 
 <style>
 	.not-found {
-		position: relative;
 		min-height: 100vh;
 		min-height: 100dvh;
 		display: grid;
 		overflow: hidden;
 		padding: clamp(7rem, 18vh, 10rem) var(--page-gutter) clamp(3.5rem, 10vh, 6rem);
 		place-items: center;
-		isolation: isolate;
 	}
 
 	.not-found:focus {
 		outline: 0;
-	}
-
-	.not-found::before {
-		position: absolute;
-		z-index: -1;
-		width: min(72vw, 42rem);
-		aspect-ratio: 1;
-		border-radius: 50%;
-		background: color-mix(in srgb, var(--color-accent) 18%, transparent);
-		content: '';
-		filter: blur(8rem);
-		opacity: 0.6;
-		pointer-events: none;
-		transform: translate3d(-42%, 24%, 0);
 	}
 
 	.not-found__code {
