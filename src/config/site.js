@@ -2,13 +2,11 @@ const inlineScriptHashes = [
 	'Ub0faIfh9pRr7IqFUxeHz+y5lk/hc3CR+8kSvXeKkpA=',
 	'Buluswg2h40UWBJJGuNJDJveceDUyunuXhvURs8pijQ=',
 	'qPT3eRiQqoNWC0JjPW4BGbhCZZcZLivixGFU2nkXyoM=',
-	'ajG7m1i7XCkHQ80goM3zz+oFVWmFfJF/SRQdm08L3Xc=',
 	'mFFWrmsJRs1Zpfn637hUDtaHT+LTzil6MITl3lQwlg8=',
-	'SOKmBQhl9eb6BVQzekcMTdL39abNgFg68YCP4+ojh0Q=',
-	'PIFvBvNd/F4cbriYY4g7LZGAdVyavQx1/qCoymrsh2g=',
-	'xGG43co0rerqFPObHXYwvIZsjVSN8415HHAeZTER+fc=',
-	'OQHz1ylvrUdcdm36z8jwL3hz20O5S6w91ytjky4pOd4=',
-	'hmkvYczI5yh8/hVvIu4TOoODfXUmP0cyS9IBMlxqRNw=',
+	'EYJ77fv1/vz8AdR1zKuBySacBW+F9fd02OoyRjZqKHI=',
+	'HbBZTmHVxrtnGM9TFlR7S5l7LNgXFvVRu1REh134024=',
+	'qnmwh3QNpoo6Q4yXtXCHCMspah3HXPTSC69nXbSzVWw=',
+	'ew3q54vqWuPMxtagj7czCSe7MzD00jssfU5Wm2z/lYQ=',
 ];
 
 // Astro emits small module bundles inline and deliberately inlines component CSS.

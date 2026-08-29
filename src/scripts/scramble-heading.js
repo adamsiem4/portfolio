@@ -52,7 +52,7 @@ const scrambleHeading = (heading) => {
 	headingTimers.set(heading, timer);
 };
 
-if (headings.length > 0 && 'IntersectionObserver' in window) {
+if (headings.length > 0) {
 	// Entering replays the effect; leaving stops work and restores readable text.
 	const observer = new IntersectionObserver((entries) => {
 		entries.forEach((entry) => {
@@ -70,9 +70,4 @@ const handleMotionPreferenceChange = () => {
 	headings.forEach((heading) => stopScramble(heading));
 };
 
-if ('addEventListener' in motionPreference) {
-	motionPreference.addEventListener('change', handleMotionPreferenceChange);
-} else {
-	// Older Safari exposes MediaQueryList.addListener instead of addEventListener.
-	motionPreference.addListener(handleMotionPreferenceChange);
-}
+motionPreference.addEventListener?.('change', handleMotionPreferenceChange);

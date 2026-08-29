@@ -11,12 +11,12 @@
 	<div class="page-loader__curtain" aria-hidden="true"></div>
 </div>
 
-<script is:inline>
+<script>
 	(() => {
 		const root = document.documentElement;
-		const loader = document.querySelector('[data-page-loader]');
-		const value = loader?.querySelector('[data-page-loader-value]');
-		const curtain = loader?.querySelector('.page-loader__curtain');
+		const loader = document.querySelector<HTMLElement>('[data-page-loader]');
+		const value = loader?.querySelector<HTMLElement>('[data-page-loader-value]');
+		const curtain = loader?.querySelector<HTMLElement>('.page-loader__curtain');
 		if (!loader || !value || root.dataset.pageLoading !== 'true') return;
 
 		// Keep hidden page controls out of keyboard and assistive-technology navigation
@@ -51,7 +51,7 @@
 		const completionDuration = 160;
 		const waitingLimit = 92;
 		let pageLoaded = document.readyState === 'complete';
-		let completionStartedAt = null;
+		let completionStartedAt: number | null = null;
 		let completionStartedFrom = 0;
 		let displayedValue = -1;
 		let hasFinished = false;
@@ -65,7 +65,7 @@
 
 		if (!pageLoaded) window.addEventListener('load', markPageLoaded, { once: true });
 
-		const setProgress = (progress) => {
+		const setProgress = (progress: number) => {
 			const normalizedProgress = Math.min(Math.max(progress, 0), 100);
 			const nextValue = Math.floor(normalizedProgress);
 			if (nextValue !== displayedValue) {
@@ -89,7 +89,7 @@
 			if (isExiting || !loader.isConnected) return;
 			isExiting = true;
 
-			const handleTransitionEnd = (event) => {
+			const handleTransitionEnd = (event: TransitionEvent) => {
 				if (event.target !== loader || event.propertyName !== 'transform') return;
 				loader.removeEventListener('transitionend', handleTransitionEnd);
 				removeLoader();
@@ -106,7 +106,7 @@
 				return;
 			}
 
-			const handleCurtainTransition = (event) => {
+			const handleCurtainTransition = (event: TransitionEvent) => {
 				if (event.target !== curtain || event.propertyName !== 'transform') return;
 				curtain.removeEventListener('transitionend', handleCurtainTransition);
 				window.setTimeout(exitLoader, 60);
@@ -138,9 +138,9 @@
 			return;
 		}
 
-		const easeOutCubic = (progress) => 1 - ((1 - progress) ** 3);
+		const easeOutCubic = (progress: number) => 1 - ((1 - progress) ** 3);
 
-		const updateLoader = (now) => {
+		const updateLoader = (now: number) => {
 			if (!loader.isConnected || hasFinished) return;
 
 			const elapsed = now - startedAt;

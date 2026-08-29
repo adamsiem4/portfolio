@@ -1,0 +1,10 @@
+<script>
+	import { initPointerEffects } from '../scripts/pointer-effects.js';
+
+	const initialize = () => initPointerEffects(document);
+
+	// Processed Astro scripts run after the document is parsed. The page-load hook
+	// keeps the same initializer ready for a future ClientRouter.
+	initialize();
+	document.addEventListener('astro:page-load', initialize);
+</script>

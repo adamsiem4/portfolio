@@ -58,6 +58,7 @@ export class KineticText {
 		this.pageHidden = document.hidden;
 		this.reducedQuality = false;
 		this.box = { x0: 0, y0: 0, x1: 0, y1: 0 };
+		this.paperDirty = true;
 		this.coarsePointer = window.matchMedia('(pointer: coarse)');
 
 		this.canvas = document.createElement('canvas');
@@ -133,6 +134,7 @@ export class KineticText {
 		this.inkColor = parseHex(this.params.ink, [255, 255, 255]);
 		this.accentColor = parseHex(this.params.accent, [8, 102, 95]);
 		this.inverseAccentColor = this.accentColor.map((channel) => 255 - channel);
+		this.paperDirty = true;
 	}
 
 	resize() {
@@ -162,6 +164,7 @@ export class KineticText {
 			canvas.width = this.width;
 			canvas.height = this.height;
 		}
+		this.paperDirty = true;
 
 		this.drawText();
 		this.renderStatic();
@@ -195,6 +198,67 @@ export class KineticText {
 
 		context.fillText(text, this.width / 2, this.height / 2);
 		this.measureInkBounds(metrics.width, fontSize);
+		this.updateGeometry();
+	}
+
+	updateGeometry() {
+		const { tiles, offset, spread, chroma } = this.params;
+		const isMobile = this.width / this.dpr < MOBILE_BREAKPOINT;
+		const motionScale = isMobile ? 0.5 : 1;
+		const activeSpread = spread * motionScale;
+		const activeTiles = this.reducedQuality ? Math.min(tiles, MOBILE_MAX_TILES) : tiles;
+		const tilesX = Math.max(2, Math.round(activeTiles));
+		const tilesY = Math.max(2, Math.round(tilesX * (this.height / this.width)));
+		const tileWidth = Math.floor(this.width / tilesX);
+		const tileHeight = Math.floor(this.height / tilesY);
+		const displacement = offset * motionScale * this.dpr;
+		let columnStart = 0;
+		let columnEnd = tilesX - 1;
+		let rowStart = 0;
+		let rowEnd = tilesY - 1;
+		let clearBox = { x: 0, y: 0, w: this.width, h: this.height };
+		let compositeBox = clearBox;
+
+		if (tileWidth > 0 && tileHeight > 0) {
+			columnStart = Math.max(0, Math.floor(this.box.x0 / tileWidth) - 1);
+			columnEnd = Math.min(tilesX - 1, Math.ceil(this.box.x1 / tileWidth) + 1);
+			rowStart = Math.max(0, Math.floor(this.box.y0 / tileHeight) - 1);
+			rowEnd = Math.min(tilesY - 1, Math.ceil(this.box.y1 / tileHeight) + 1);
+
+			const x = columnStart * tileWidth;
+			const y = rowStart * tileHeight;
+			const right = columnEnd === tilesX - 1
+				? this.width
+				: (columnEnd + 1) * tileWidth;
+			const bottom = rowEnd === tilesY - 1
+				? this.height
+				: (rowEnd + 1) * tileHeight;
+			clearBox = { x, y, w: right - x, h: bottom - y };
+
+			const shift = Math.round(chroma * 5 * this.dpr) + 1;
+			const compositeX = Math.max(0, clearBox.x - shift);
+			compositeBox = {
+				x: compositeX,
+				y: clearBox.y,
+				w: Math.min(this.width, clearBox.x + clearBox.w + shift) - compositeX,
+				h: clearBox.h,
+			};
+		}
+
+		this.geometry = {
+			tilesX,
+			tilesY,
+			tileWidth,
+			tileHeight,
+			activeSpread,
+			displacement,
+			columnStart,
+			columnEnd,
+			rowStart,
+			rowEnd,
+			clearBox,
+			compositeBox,
+		};
 	}
 
 	measureInkBounds(measuredWidth, fontSize) {
@@ -216,28 +280,26 @@ export class KineticText {
 		if (!this.width || !this.height) return;
 
 		const context = this.warpContext;
-		const { tiles, offset, speed, spread, shade } = this.params;
-		const isMobile = this.width / this.dpr < MOBILE_BREAKPOINT;
-		const motionScale = isMobile ? 0.5 : 1;
-		const activeSpread = spread * motionScale;
-		const activeTiles = this.reducedQuality ? Math.min(tiles, MOBILE_MAX_TILES) : tiles;
-		const tilesX = Math.max(2, Math.round(activeTiles));
-		const tilesY = Math.max(2, Math.round(tilesX * (this.height / this.width)));
-		const tileWidth = Math.floor(this.width / tilesX);
-		const tileHeight = Math.floor(this.height / tilesY);
-		const displacement = offset * motionScale * this.dpr;
+		const { speed, shade } = this.params;
+		const {
+			tilesX,
+			tilesY,
+			tileWidth,
+			tileHeight,
+			activeSpread,
+			displacement,
+			columnStart,
+			columnEnd,
+			rowStart,
+			rowEnd,
+			clearBox,
+		} = this.geometry;
 
 		context.globalCompositeOperation = 'source-over';
 		context.globalAlpha = 1;
-		context.clearRect(0, 0, this.width, this.height);
+		context.clearRect(clearBox.x, clearBox.y, clearBox.w, clearBox.h);
 
 		if (tileWidth > 0 && tileHeight > 0) {
-			// Limit tile work to approximate glyph bounds, padded by displacement so
-			// wave-shifted samples near the text edge are not clipped.
-			const columnStart = Math.max(0, Math.floor(this.box.x0 / tileWidth) - 1);
-			const columnEnd = Math.min(tilesX - 1, Math.ceil(this.box.x1 / tileWidth) + 1);
-			const rowStart = Math.max(0, Math.floor(this.box.y0 / tileHeight) - 1);
-			const rowEnd = Math.min(tilesY - 1, Math.ceil(this.box.y1 / tileHeight) + 1);
 			const time = this.frame * speed;
 
 			for (let row = rowStart; row <= rowEnd; row += 1) {
@@ -293,19 +355,26 @@ export class KineticText {
 
 	compositeFrame() {
 		const { chroma } = this.params;
+		const { clearBox, compositeBox: cb } = this.geometry;
 		this.ctx.globalCompositeOperation = 'source-over';
 		this.ctx.globalAlpha = 1;
 		this.ctx.fillStyle = rgba(this.paperColor);
-		this.ctx.fillRect(0, 0, this.width, this.height);
+
+		if (this.paperDirty) {
+			this.ctx.fillRect(0, 0, this.width, this.height);
+			this.paperDirty = false;
+		} else {
+			this.ctx.fillRect(cb.x, cb.y, cb.w, cb.h);
+		}
 
 		if (this.reducedQuality) {
 			// source-in uses the warped alpha as a stencil. Reduced quality performs
 			// only this ink pass and skips the optional chromatic offset composites.
 			this.warpContext.globalCompositeOperation = 'source-in';
 			this.warpContext.fillStyle = rgba(this.inkColor);
-			this.warpContext.fillRect(0, 0, this.width, this.height);
+			this.warpContext.fillRect(clearBox.x, clearBox.y, clearBox.w, clearBox.h);
 			this.warpContext.globalCompositeOperation = 'source-over';
-			this.ctx.drawImage(this.warp, 0, 0);
+			this.ctx.drawImage(this.warp, cb.x, cb.y, cb.w, cb.h, cb.x, cb.y, cb.w, cb.h);
 			return;
 		}
 
@@ -320,17 +389,23 @@ export class KineticText {
 
 	compositeTint(color, offsetX, alpha) {
 		const context = this.tintContext;
+		const { compositeBox: cb } = this.geometry;
 		context.globalCompositeOperation = 'source-over';
 		context.globalAlpha = 1;
-		context.clearRect(0, 0, this.width, this.height);
-		context.drawImage(this.warp, 0, 0);
+		context.clearRect(cb.x, cb.y, cb.w, cb.h);
+		context.drawImage(this.warp, cb.x, cb.y, cb.w, cb.h, cb.x, cb.y, cb.w, cb.h);
 		context.globalCompositeOperation = 'source-in';
 		context.fillStyle = rgba(color);
-		context.fillRect(0, 0, this.width, this.height);
+		context.fillRect(cb.x, cb.y, cb.w, cb.h);
 		context.globalCompositeOperation = 'source-over';
 
 		this.ctx.globalAlpha = alpha;
+		this.ctx.save();
+		this.ctx.beginPath();
+		this.ctx.rect(cb.x + offsetX, cb.y, cb.w, cb.h);
+		this.ctx.clip();
 		this.ctx.drawImage(this.tint, offsetX, 0);
+		this.ctx.restore();
 		this.ctx.globalAlpha = 1;
 	}
 

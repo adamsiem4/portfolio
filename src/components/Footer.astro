@@ -8,7 +8,7 @@ const currentYear = new Date().getFullYear();
 <footer class="site-footer">
 	<div class="site-footer__inner">
 		<p class="site-footer__copyright">
-			© <span data-current-year>{currentYear}</span> {siteConfig.name}
+			© <span>{currentYear}</span> {siteConfig.name}
 		</p>
 
 		<div class="site-footer__actions">
@@ -97,9 +97,6 @@ const currentYear = new Date().getFullYear();
 </footer>
 
 <script>
-	document.querySelectorAll<HTMLElement>('[data-current-year]').forEach((year) => {
-		year.textContent = String(new Date().getFullYear());
-	});
 
 	const backToTop = document.querySelector<HTMLAnchorElement>('[data-back-to-top]');
 	const pageStart = document.querySelector<HTMLElement>('#home');

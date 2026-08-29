@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import { siteConfig } from '../config/site.js';
-import MagneticHover from '../components/MagneticHover.astro';
+import PointerEffects from '../components/PointerEffects.astro';
 import PageLoader from '../components/PageLoader.astro';
 
 interface Props {
@@ -178,7 +178,7 @@ const structuredData = {
 
   <body>
     <a class="skip-link" href="#home">Skip to content</a>
-    <MagneticHover />
+    <PointerEffects />
     {showPageLoader && <PageLoader />}
     <slot />
   </body>

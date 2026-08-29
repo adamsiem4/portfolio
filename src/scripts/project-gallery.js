@@ -90,7 +90,7 @@ const initializeProjectGallery = (gallery) => {
 	const initializeScrollHint = () => {
 		// The hint plays once per viewport visit, only after the gallery is substantially
 		// visible and its project card is active. Leaving almost completely re-arms it.
-		if (reducedMotion.matches || !('IntersectionObserver' in window)) return;
+		if (reducedMotion.matches) return;
 
 		const track = gallery.querySelector('.project-card__media-track');
 		if (!track) return;
