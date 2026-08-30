@@ -1,5 +1,6 @@
 ---
 import ScrambleHeading from './ScrambleHeading.astro';
+import { Content as AboutCopy } from '../content/about.md';
 ---
 
 <section class="about" id="about" aria-labelledby="about-title">
@@ -9,19 +10,7 @@ import ScrambleHeading from './ScrambleHeading.astro';
 		</header>
 
 		<div class="about__copy">
-			<p>
-				<strong>Computer science graduate</strong> based in Poland, currently pursuing a
-				<strong> master’s degree in cybersecurity</strong>. I build React web applications and
-				have hands-on experience with security monitoring, systems administration, and
-				homelab infrastructure using Wazuh, Windows Server, Microsoft Exchange, Proxmox,
-				and Debian.
-			</p>
-
-			<p>
-				I’m seeking an <strong>entry-level cybersecurity role or internship</strong> where I can
-				apply this technical foundation, contribute to practical security work, and continue
-				growing as a cybersecurity professional.
-			</p>
+			<AboutCopy />
 		</div>
 	</div>
 </section>
@@ -50,17 +39,17 @@ import ScrambleHeading from './ScrambleHeading.astro';
 		gap: clamp(1.5rem, 4vw, 2.25rem);
 	}
 
-	.about__copy p {
+	.about__copy :global(p) {
 		font-size: clamp(1.2rem, 4.5vw, 1.75rem);
 		line-height: 1.4;
 		letter-spacing: -0.02em;
 	}
 
-	.about__copy p + p {
+	.about__copy :global(p + p) {
 		color: var(--color-muted);
 	}
 
-	.about__copy strong {
+	.about__copy :global(strong) {
 		color: var(--color-text);
 		font-weight: 800;
 	}
@@ -75,7 +64,7 @@ import ScrambleHeading from './ScrambleHeading.astro';
 			align-items: start;
 		}
 
-		.about__copy p {
+		.about__copy :global(p) {
 			font-size: clamp(1.25rem, 2.25vw, 1.75rem);
 		}
 	}
