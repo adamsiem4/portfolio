@@ -27,7 +27,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@lucide/astro": "1.28.0",
+    "@lucide/astro": "1.37.0",
     "astro": "7.2.4",
     "simple-icons": "13.21.0"
   },
