@@ -236,6 +236,14 @@ const structuredData = {
   </head>
 
   <body>
+    {/* ponytail: SVG displacement = the refraction Apple's glass has and backdrop-filter alone can't do. */}
+    <svg class="glass-filter" aria-hidden="true" focusable="false" width="0" height="0">
+      <filter id="liquid-glass" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.006 0.009" numOctaves="2" seed="7" result="noise" />
+        <feGaussianBlur in="noise" stdDeviation="2.2" result="softNoise" />
+        <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="26" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
     <a class="skip-link" href="#home">
       {localeAuto ? (
         <>

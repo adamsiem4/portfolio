@@ -15,10 +15,12 @@
 	--glass-highlight-hover: rgba(255, 255, 255, 0.4);
 	--glass-shadow: rgba(0, 0, 0, 0.24);
 	--glass-glow: rgba(255, 255, 255, 0.07);
-	--glass-gradient-start: rgba(255, 255, 255, 0.02);
-	--glass-button-gradient-end: rgba(255, 255, 255, 0.005);
-	--glass-menu-gradient-end: rgba(255, 255, 255, 0.007);
 	--glass-inset-bottom: rgba(255, 255, 255, 0.05);
+	/* ponytail: blur+saturate = UIBlurEffect; #liquid-glass adds the refraction on top. */
+	--glass-material: rgba(255, 255, 255, 0.07);
+	--glass-material-hover: rgba(255, 255, 255, 0.13);
+	--glass-material-opaque: #171a1b;
+	--glass-backdrop: blur(6px) saturate(180%) brightness(1.25);
 	--page-gutter: 1.25rem;
 }
 
@@ -36,10 +38,16 @@
 	--glass-highlight-hover: rgba(255, 255, 255, 0.9);
 	--glass-shadow: rgba(17, 20, 21, 0.11);
 	--glass-glow: rgba(255, 255, 255, 0.16);
-	--glass-gradient-start: rgba(255, 255, 255, 0.065);
-	--glass-button-gradient-end: rgba(255, 255, 255, 0.012);
-	--glass-menu-gradient-end: rgba(255, 255, 255, 0.022);
 	--glass-inset-bottom: rgba(17, 20, 21, 0.06);
+	--glass-material: rgba(255, 255, 255, 0.3);
+	--glass-material-hover: rgba(255, 255, 255, 0.48);
+	--glass-material-opaque: #fbfaf7;
+	--glass-backdrop: blur(6px) saturate(180%) brightness(1.03);
+}
+
+.glass-filter {
+	position: absolute;
+	pointer-events: none;
 }
 
 *,
