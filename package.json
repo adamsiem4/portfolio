@@ -30,7 +30,7 @@
     "@lucide/astro": "1.42.0",
     "astro": "7.3.2",
     "playwright-core": "^1.63.0",
-    "simple-icons": "^13"
+    "simple-icons": "^16"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
