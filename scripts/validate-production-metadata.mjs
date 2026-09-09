@@ -157,7 +157,7 @@ await runCheck('Rendered JSON-LD', async () => {
 	assert(website?.url === siteConfig.siteUrl, 'WebSite URL does not match siteConfig');
 	assert(website?.inLanguage === siteConfig.language, 'WebSite language does not match siteConfig');
 	assert(person?.name === siteConfig.authorName, 'Person name does not match siteConfig');
-	assert(person?.email === siteConfig.contactEmail, 'Person email does not match siteConfig');
+	assert(person?.email === siteConfig.contactEmail.pl, 'Person email does not match the Polish siteConfig contact');
 	assert(
 		JSON.stringify(person?.sameAs) === JSON.stringify([
 			siteConfig.githubUrl,
@@ -236,11 +236,13 @@ await runCheck('Sitemap', async () => {
 		'does not use the sitemap protocol namespace',
 	);
 	const locations = [...source.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+	const expectedLocations = [productionUrl, new URL('/en/', productionUrl).toString()];
 	assert(
-		locations.length === 1 && locations[0] === productionUrl,
-		`contains [${locations.join(', ')}]; expected only ${productionUrl}`,
+		locations.length === expectedLocations.length
+			&& expectedLocations.every((url, index) => locations[index] === url),
+		`contains [${locations.join(', ')}]; expected [${expectedLocations.join(', ')}]`,
 	);
-	return `HTTP 200 XML contains the canonical production URL`;
+	return 'HTTP 200 XML contains the canonical Polish and English URLs';
 });
 
 await runCheck('Robots directives', async () => {

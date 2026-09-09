@@ -3,6 +3,7 @@ import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import { ArrowUpRight, ChevronDown, ChevronUp } from '@lucide/astro';
 import { getProjectImageSizes } from '../utils/project-layout.js';
+import { useTranslations } from '../i18n/ui.js';
 import {
 	siAdguard,
 	siDebian,
@@ -49,10 +50,12 @@ interface Props {
 	projectCount: number;
 }
 
+const t = useTranslations(Astro.url);
+
 const {
 	slug,
 	title,
-	eyebrow = 'Project',
+	eyebrow = t('card.eyebrow'),
 	description,
 	role,
 	challenge,
@@ -100,9 +103,9 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 			href={liveUrl}
 			target="_blank"
 			rel="noopener noreferrer"
-			aria-label={`Open ${title} live website in a new tab`}
+			aria-label={t('card.openLive', { title })}
 		>
-			<span class="project-card__sr-only">View live project</span>
+			<span class="project-card__sr-only">{t('card.viewLive')}</span>
 		</a>
 	)}
 
@@ -112,10 +115,11 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 				class="project-card__media"
 				id={galleryId}
 				data-project-gallery={imageCount > 1 ? '' : undefined}
+				data-gallery-status-template={t('card.galleryStatus')}
 				data-scrollable={imageCount > 1 ? 'true' : 'false'}
 				role={imageCount > 1 ? 'region' : undefined}
 				aria-label={imageCount > 1
-					? `${title} image gallery, ${imageCount} images. Use the up and down controls or scroll vertically.`
+					? t('card.galleryLabel', { title, total: imageCount })
 					: undefined}
 				aria-describedby={imageCount > 1 ? galleryStatusId : undefined}
 				tabindex={imageCount > 1 ? 0 : undefined}
@@ -144,12 +148,12 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 				<div
 					class="project-card__gallery-controls"
 					role="group"
-					aria-label={`${title} image navigation`}
+					aria-label={t('card.galleryControls', { title })}
 				>
 					<button
 						class="project-card__gallery-control"
 						type="button"
-						aria-label={`Show previous ${title} image`}
+						aria-label={t('card.galleryPrevious', { title })}
 						aria-controls={galleryId}
 						data-gallery-previous
 						disabled
@@ -160,7 +164,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 					<button
 						class="project-card__gallery-control"
 						type="button"
-						aria-label={`Show next ${title} image`}
+						aria-label={t('card.galleryNext', { title })}
 						aria-controls={galleryId}
 						data-gallery-next
 					>
@@ -173,7 +177,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 						data-gallery-status
 						aria-live="polite"
 					>
-						Showing image 1 of {imageCount}: {images[0]?.alt}
+						{t('card.galleryStatus', { index: 1, total: imageCount, description: images[0]?.alt })}
 					</p>
 				</div>
 			)}
@@ -188,21 +192,21 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 
 			<dl class="project-card__impact" data-project-impact>
 				<div data-project-detail="role">
-					<dt>Role</dt>
+					<dt>{t('card.role')}</dt>
 					<dd>{role}</dd>
 				</div>
 				<div data-project-detail="challenge">
-					<dt>Challenge</dt>
+					<dt>{t('card.challenge')}</dt>
 					<dd>{challenge}</dd>
 				</div>
 				<div data-project-detail="outcome">
-					<dt>Outcome</dt>
+					<dt>{t('card.outcome')}</dt>
 					<dd>{outcome}</dd>
 				</div>
 			</dl>
 
 			{technologies.length > 0 && (
-				<ul class="project-card__stack" aria-label={`${title} technology stack`}>
+				<ul class="project-card__stack" aria-label={t('card.stack', { title })}>
 					{technologies.map((technology) => {
 						const icon = technologyIcons.get(technology);
 
@@ -233,7 +237,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 						{sourceConfig.private ? (
 							<span
 								class="project-card__source project-card__source--disabled"
-								title={`Private ${source.name} repository`}
+								title={t('card.privateRepo', { provider: source.name })}
 								data-magnetic-target
 							>
 								<svg
@@ -244,7 +248,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 								>
 									<path d={source.icon.path} />
 								</svg>
-								<span class="project-card__sr-only">Private {source.name} source repository</span>
+								<span class="project-card__sr-only">{t('card.privateRepoText', { provider: source.name })}</span>
 							</span>
 						) : (
 							<a
@@ -252,8 +256,8 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 								href={sourceConfig.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								aria-label={`Open ${source.name} source repository in a new tab`}
-								title={`${source.name} repository`}
+								aria-label={t('card.openRepo', { provider: source.name })}
+								title={t('card.repoTitle', { provider: source.name })}
 								data-magnetic-target
 							>
 								<svg
@@ -276,8 +280,8 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 							href={liveUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							aria-label={`Open ${title} live website in a new tab`}
-							title="Open live website"
+							aria-label={t('card.openLive', { title })}
+							title={t('card.openLiveTitle')}
 							data-magnetic-target
 						>
 							<ArrowUpRight size={24} stroke-width={1.6} />

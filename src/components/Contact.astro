@@ -2,8 +2,12 @@
 import { Mail } from '@lucide/astro';
 import { siGithub, siLinkedin } from 'simple-icons';
 import { siteConfig } from '../config/site.js';
+import { getLocale, useTranslations } from '../i18n/ui.js';
 
-const emailHref = `mailto:${siteConfig.contactEmail}`;
+const t = useTranslations(Astro.url);
+
+const email = siteConfig.contactEmail[getLocale(Astro.url)];
+const emailHref = `mailto:${email}`;
 
 const socialLinks = [
 	{
@@ -21,8 +25,8 @@ const socialLinks = [
 
 <section class="contact" id="contact" aria-labelledby="contact-title">
 	<div class="contact__inner">
-		<p class="contact__eyebrow">Contact information</p>
-		<h2 id="contact-title">Get in touch</h2>
+		<p class="contact__eyebrow">{t('contact.eyebrow')}</p>
+		<h2 id="contact-title">{t('contact.title')}</h2>
 		<hr class="contact__divider" />
 
 		<div class="contact__information">
@@ -31,13 +35,13 @@ const socialLinks = [
 					<a
 						class="contact__email"
 						href={emailHref}
-						aria-label={`Email ${siteConfig.contactEmail}`}
+						aria-label={t('contact.email', { email })}
 						data-magnetic-target
 					>
 						<span class="contact__email-icon" aria-hidden="true">
 							<Mail size={24} stroke-width={1.8} />
 						</span>
-						<span class="contact__email-address">{siteConfig.contactEmail}</span>
+						<span class="contact__email-address">{email}</span>
 					</a>
 				</span>
 
@@ -100,7 +104,7 @@ const socialLinks = [
 	h2 {
 		font-size: clamp(4rem, 17vw, 10rem);
 		font-weight: 800;
-		line-height: 0.88;
+		line-height: 1.05;
 		letter-spacing: -0.05em;
 	}
 

@@ -4,6 +4,11 @@ import { projects } from '../config/projects.js';
 import { getProjectDeckReserve } from '../utils/project-layout.js';
 import ProjectCard from './ProjectCard.astro';
 import ScrambleHeading from './ScrambleHeading.astro';
+import { getLocale, useTranslations, localizeProjects } from '../i18n/ui.js';
+
+const locale = getLocale(Astro.url);
+const t = useTranslations(locale);
+const localizedProjects = localizeProjects(projects, locale);
 
 const projectCount = projects.length;
 const deckReserve = getProjectDeckReserve(projectCount);
@@ -20,31 +25,32 @@ const getInitialSlideStyle = (index: number) => {
 <section class="projects" id="projects" aria-labelledby="projects-title">
 	<div class="projects__inner">
 		<header class="projects__heading">
-			<ScrambleHeading id="projects-title" text="Projects" />
+			<ScrambleHeading id="projects-title" text={t('projects.title')} />
 		</header>
 
 		<div
 			class="projects__deck"
 			data-project-deck
+			data-project-status-template={t('projects.status')}
 			data-active-index="0"
 			data-project-count={projectCount}
 			data-deck-reserve={deckReserve}
 			role="region"
-			aria-roledescription="carousel"
-			aria-label={`Featured projects, ${projectCount} projects. Use the left and right controls or arrow keys.`}
+			aria-roledescription={t('projects.carousel')}
+			aria-label={t('projects.deckLabel', { total: projectCount })}
 			tabindex="0"
 			style={`--project-count: ${projectCount}; --deck-reserve: ${deckReserve}px;`}
 		>
 			<ol class="projects__stack">
-				{projects.map((project, index) => (
+				{localizedProjects.map((project, index) => (
 					<li
 						class="projects__slide"
 						data-project-slide
 						data-project-title={project.title}
 						data-active={index === 0 ? 'true' : 'false'}
 						aria-current={index === 0 ? 'true' : undefined}
-						aria-roledescription="slide"
-						aria-label={`${index + 1} of ${projectCount}: ${project.title}`}
+						aria-roledescription={t('projects.slide')}
+						aria-label={t('projects.slideLabel', { index: index + 1, total: projectCount, title: project.title })}
 						style={getInitialSlideStyle(index)}
 					>
 						<div
@@ -61,7 +67,7 @@ const getInitialSlideStyle = (index: number) => {
 							type="button"
 							data-project-activate
 							data-project-index={index}
-							aria-label={`Show ${project.title}`}
+							aria-label={t('projects.activate', { title: project.title })}
 							aria-hidden={index === 0 ? 'true' : 'false'}
 							tabindex={index === 0 ? -1 : 0}
 						></button>
@@ -70,7 +76,7 @@ const getInitialSlideStyle = (index: number) => {
 			</ol>
 
 			{projectCount > 1 && (
-				<div class="projects__controls" role="group" aria-label="Project navigation">
+				<div class="projects__controls" role="group" aria-label={t('projects.controls')}>
 					<span
 						class="projects__control-magnetic"
 						data-magnetic
@@ -82,7 +88,7 @@ const getInitialSlideStyle = (index: number) => {
 							type="button"
 							data-project-previous
 							data-magnetic-target
-							aria-label="Show previous project"
+							aria-label={t('projects.previous')}
 							disabled
 						>
 							<ChevronLeft size={20} stroke-width={1.7} aria-hidden="true" />
@@ -104,7 +110,7 @@ const getInitialSlideStyle = (index: number) => {
 							type="button"
 							data-project-next
 							data-magnetic-target
-							aria-label="Show next project"
+							aria-label={t('projects.next')}
 						>
 							<ChevronRight size={20} stroke-width={1.7} aria-hidden="true" />
 						</button>
@@ -113,10 +119,10 @@ const getInitialSlideStyle = (index: number) => {
 			)}
 
 			<p class="projects__sr-only" data-project-status aria-live="polite">
-				Showing project 1 of {projectCount}: {projects[0]?.title}
+				{t('projects.status', { index: 1, total: projectCount, title: localizedProjects[0]?.title })}
 			</p>
 			<p class="projects__sr-only">
-				Use the left and right arrow keys, navigation buttons, or a horizontal swipe to change projects.
+				{t('projects.instructions')}
 			</p>
 		</div>
 	</div>

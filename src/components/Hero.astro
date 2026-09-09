@@ -1,8 +1,10 @@
 ---
 import { ChevronDown } from '@lucide/astro';
 import KineticText from './KineticText.astro';
+import { useTranslations } from '../i18n/ui.js';
 
-const eyebrowText = 'Hi, my name is';
+const t = useTranslations(Astro.url);
+const eyebrowText = t('hero.eyebrow');
 const eyebrowCharacters = Array.from(eyebrowText);
 ---
 
@@ -27,7 +29,7 @@ const eyebrowCharacters = Array.from(eyebrowText);
 		<a
 			class="hero__scroll-link"
 			href="#about"
-			aria-label="Scroll to About"
+			aria-label={t('hero.scroll')}
 			data-magnetic-target
 		>
 			<span class="hero__scroll-icon" aria-hidden="true">

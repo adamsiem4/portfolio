@@ -7,8 +7,6 @@ const headingTimers = new WeakMap();
 const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 const headings = document.querySelectorAll('[data-scramble-heading]');
 
-const getHeadingText = (heading) => heading.dataset.scrambleText ?? heading.textContent ?? '';
-
 const stopScramble = (heading) => {
 	// Always restore the canonical data value; reading the current text could retain
 	// random characters from an interrupted animation.
@@ -19,7 +17,9 @@ const stopScramble = (heading) => {
 		headingTimers.delete(heading);
 	}
 
-	heading.textContent = getHeadingText(heading);
+	heading.querySelectorAll('[data-scramble-character]').forEach((character) => {
+		character.firstElementChild.textContent = character.dataset.scrambleCharacter;
+	});
 };
 
 const getRandomCharacter = () => (
@@ -31,17 +31,15 @@ const scrambleHeading = (heading) => {
 
 	if (motionPreference.matches) return;
 
-	const text = getHeadingText(heading);
-	const characters = Array.from(text);
+	const characters = Array.from(heading.querySelectorAll('[data-scramble-character]'));
 	let revealProgress = 0;
 
 	const timer = window.setInterval(() => {
-		heading.textContent = characters
-			.map((character, index) => {
-				if (/\s/.test(character)) return character;
-				return index < revealProgress ? character : getRandomCharacter();
-			})
-			.join('');
+		characters.forEach((character, index) => {
+			character.firstElementChild.textContent = index < revealProgress
+				? character.dataset.scrambleCharacter
+				: getRandomCharacter();
+		});
 
 		// A sub-one step spaces each new character reveal across several shuffle ticks.
 		revealProgress += REVEAL_STEP;

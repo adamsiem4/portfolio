@@ -13,6 +13,7 @@ export default defineConfig({
 	],
 	use: {
 		baseURL,
+		locale: 'pl-PL',
 		contextOptions: {
 			reducedMotion: 'reduce',
 		},

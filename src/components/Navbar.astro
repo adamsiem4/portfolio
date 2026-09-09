@@ -1,24 +1,33 @@
 ---
 import { Menu, Moon, Sun, X } from '@lucide/astro';
+import { getLocale, localeMeta, useTranslations } from '../i18n/ui.js';
 
-const sectionPrefix = Astro.url.pathname === '/' ? '' : '/';
+const locale = getLocale(Astro.url);
+const t = useTranslations(locale);
+const { localeAuto = false } = Astro.props;
+const en = useTranslations('en');
+const home = localeMeta[locale].home;
+const sectionPrefix = Astro.url.pathname === home ? '' : home;
 const links = [
-	{ label: 'About', href: `${sectionPrefix}#about` },
-	{ label: 'Projects', href: `${sectionPrefix}#projects` },
-	{ label: 'Certs', href: `${sectionPrefix}#certs` },
-	{ label: 'Contact', href: `${sectionPrefix}#contact` },
+	{ label: t('nav.about'), english: en('nav.about'), href: `${sectionPrefix}#about` },
+	{ label: t('nav.projects'), english: en('nav.projects'), href: `${sectionPrefix}#projects` },
+	{ label: t('nav.contact'), english: en('nav.contact'), href: `${sectionPrefix}#contact` },
 ];
 ---
 
 <header class="site-header" data-navbar>
-	<nav class="navbar" aria-label="Primary navigation">
+	<nav class="navbar" aria-label={t('nav.primary')} data-english-label={localeAuto ? en('nav.primary') : undefined}>
 		<div class="nav-actions">
 			<span class="nav-magnetic" data-magnetic data-magnetic-max="8">
 				<button
 					class="glass-button mode-toggle"
 					type="button"
-					aria-label="Switch to light mode"
-					title="Switch to light mode"
+					aria-label={t('theme.light')}
+					title={t('theme.light')}
+					data-theme-label-light={t('theme.light')}
+					data-theme-label-dark={t('theme.dark')}
+					data-english-theme-light={localeAuto ? en('theme.light') : undefined}
+					data-english-theme-dark={localeAuto ? en('theme.dark') : undefined}
 					data-theme-toggle
 					data-magnetic-target
 				>
@@ -47,7 +56,7 @@ const links = [
 					data-menu-toggle
 					data-magnetic-target
 				>
-					<span class="sr-only">Toggle navigation</span>
+					<span class="sr-only" data-english-text={localeAuto ? en('nav.menu') : undefined}>{t('nav.menu')}</span>
 					<span class="menu-toggle__icon" aria-hidden="true">
 						<span class="menu-toggle__glyph menu-toggle__glyph--menu">
 							<Menu size={20} stroke-width={1.8} />
@@ -74,8 +83,8 @@ const links = [
 				data-open="false"
 				data-magnetic-target
 			>
-				{links.map(({ label, href }) => (
-					<li><a href={href} aria-label={label}>{label}</a></li>
+				{links.map(({ label, english, href }) => (
+					<li><a href={href} data-english-text={localeAuto ? english : undefined}>{label}</a></li>
 				))}
 			</ul>
 		</div>
@@ -92,6 +101,20 @@ const links = [
 	const themeStorageKey = root.dataset.themeStorageKey || 'portfolio-theme';
 	const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
 	const colorPreference = window.matchMedia('(prefers-color-scheme: light)');
+
+	// The single static 404 chooses its language in the head, before these controls initialize.
+	if (root.dataset.localeAuto === 'true' && root.lang === 'en') {
+		navbar?.querySelectorAll<HTMLElement>('[data-english-text]').forEach((element) => {
+			element.textContent = element.dataset.englishText ?? '';
+			if (element instanceof HTMLAnchorElement) element.pathname = '/en/';
+		});
+		const navigation = navbar?.querySelector<HTMLElement>('[data-english-label]');
+		if (navigation?.dataset.englishLabel) navigation.setAttribute('aria-label', navigation.dataset.englishLabel);
+		if (themeToggle) {
+			themeToggle.dataset.themeLabelLight = themeToggle.dataset.englishThemeLight;
+			themeToggle.dataset.themeLabelDark = themeToggle.dataset.englishThemeDark;
+		}
+	}
 
 	type Theme = 'dark' | 'light';
 	type ThemeViewTransition = {
@@ -119,8 +142,10 @@ const links = [
 		value === 'light' || value === 'dark' ? value : null;
 
 	const updateThemeControl = (theme: Theme) => {
-		const nextTheme = theme === 'dark' ? 'light' : 'dark';
-		const label = `Switch to ${nextTheme} mode`;
+		const label = theme === 'dark'
+			? themeToggle?.dataset.themeLabelLight
+			: themeToggle?.dataset.themeLabelDark;
+		if (!label) return;
 		themeToggle?.setAttribute('aria-label', label);
 		themeToggle?.setAttribute('title', label);
 	};

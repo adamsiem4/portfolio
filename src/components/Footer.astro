@@ -1,6 +1,10 @@
 ---
 import { CircleArrowUp, Info, X } from '@lucide/astro';
 import { siteConfig } from '../config/site.js';
+import { getLocale, localeMeta, useTranslations } from '../i18n/ui.js';
+
+const locale = getLocale(Astro.url);
+const t = useTranslations(locale);
 
 const currentYear = new Date().getFullYear();
 ---
@@ -12,6 +16,26 @@ const currentYear = new Date().getFullYear();
 		</p>
 
 		<div class="site-footer__actions">
+			<div class="site-footer__language" role="group" aria-label={t('footer.language')}>
+				{(['pl', 'en'] as const).map((code) => (
+					<span
+						class="site-footer__magnetic"
+						data-magnetic
+						data-magnetic-max="6"
+						data-magnetic-strength="0.16"
+					>
+					<a
+						class="site-footer__language-link"
+						href={`${localeMeta[code].home}?lang=${code}`}
+						hreflang={localeMeta[code].htmlLang}
+						lang={localeMeta[code].htmlLang}
+						aria-current={code === locale ? 'true' : undefined}
+						aria-label={t(code === 'pl' ? 'footer.switchPl' : 'footer.switchEn')}
+						data-magnetic-target
+					>{localeMeta[code].short}</a>
+					</span>
+				))}
+			</div>
 			<span
 				class="site-footer__magnetic"
 				data-magnetic
@@ -21,8 +45,8 @@ const currentYear = new Date().getFullYear();
 				<button
 					class="site-footer__privacy-button"
 					type="button"
-					aria-label="Privacy and data notice"
-					title="Privacy and data notice"
+					aria-label={t('footer.privacy')}
+					title={t('footer.privacy')}
 					aria-haspopup="dialog"
 					aria-expanded="false"
 					aria-controls="privacy-notice"
@@ -45,7 +69,7 @@ const currentYear = new Date().getFullYear();
 					data-back-to-top
 					data-magnetic-target
 				>
-					Back to top
+					{t('footer.top')}
 					<CircleArrowUp size={18} stroke-width={1.8} />
 				</a>
 			</span>
@@ -65,12 +89,12 @@ const currentYear = new Date().getFullYear();
 					<Info size={20} stroke-width={1.8} />
 				</span>
 				<h2 id="privacy-notice-title" tabindex="-1" data-privacy-title>
-					{siteConfig.privacyNotice.title}
+					{t('privacy.title')}
 				</h2>
 				<button
 					class="privacy-dialog__close"
 					type="button"
-					aria-label="Close privacy notice"
+					aria-label={t('footer.privacyClose')}
 					data-privacy-close
 				>
 					<X size={19} stroke-width={1.8} aria-hidden="true" />
@@ -78,18 +102,18 @@ const currentYear = new Date().getFullYear();
 			</header>
 
 			<div class="privacy-dialog__body" id="privacy-notice-description">
-				<p>{siteConfig.privacyNotice.summary}</p>
-				<p>{siteConfig.privacyNotice.preference}</p>
-				<p>{siteConfig.privacyNotice.hosting}</p>
-				<p>{siteConfig.privacyNotice.contact}</p>
+				<p>{t('privacy.summary')}</p>
+				<p>{t('privacy.preference')}</p>
+				<p>{t('privacy.hosting')}</p>
+				<p>{t('privacy.contact')}</p>
 				<a
 					class="privacy-dialog__provider-link"
 					href={siteConfig.privacyNotice.providerUrl}
-					aria-label="Read Cloudflare Privacy Policy"
+					aria-label={t('footer.providerLabel')}
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					Cloudflare Privacy Policy
+					{t('footer.provider')}
 				</a>
 			</div>
 		</div>
@@ -510,7 +534,66 @@ const currentYear = new Date().getFullYear();
 		text-underline-offset: 0.2em;
 	}
 
+	.site-footer__language {
+		display: inline-flex;
+		gap: 0.2rem;
+	}
+
+	.site-footer__language-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 2.25rem;
+		min-height: 2.25rem;
+		padding: 0.45rem 0.55rem;
+		border: 1px solid var(--glass-border);
+		border-radius: 999px;
+		background: var(--glass-surface);
+		color: var(--color-muted);
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		transform: translate3d(0, 0, 0);
+		will-change: transform;
+		transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+	}
+
+	.site-footer__language .site-footer__magnetic:hover .site-footer__language-link {
+		background: var(--glass-surface-hover);
+		border-color: var(--glass-border-hover);
+		color: var(--color-text);
+	}
+
+	.site-footer__language-link[aria-current='true'],
+	.site-footer__language .site-footer__magnetic:hover .site-footer__language-link[aria-current='true'] {
+		border-color: var(--color-accent);
+		background: var(--color-accent);
+		color: #ffffff;
+	}
+
+	.site-footer__language .site-footer__magnetic:hover .site-footer__language-link[aria-current='true'] {
+		background: color-mix(in srgb, var(--color-accent), #000000 15%);
+	}
+
+	.site-footer__language-link:active {
+		box-shadow: inset 0 0 0 2px currentColor;
+	}
+
+	.site-footer__language-link:focus-visible {
+		outline: 2px solid var(--color-accent-text);
+		outline-offset: 3px;
+	}
+
+	@media (max-width: 30rem) {
+		.site-footer__inner {
+			flex-wrap: wrap;
+			justify-content: center;
+			row-gap: 0.5rem;
+		}
+	}
+
 	@media (prefers-reduced-motion: reduce) {
+		.site-footer__language-link,
 		.site-footer__privacy-button,
 		.site-footer__top-link {
 			transition: none;

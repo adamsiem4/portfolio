@@ -14,9 +14,9 @@ A minimal, mobile-first portfolio for web, infrastructure, and hardware projects
 
 Astro emits static HTML and scoped CSS; interactive component scripts are bundled
 as native ES modules. There are no client framework components, `client:*`
-directives, or hydration runtime. Inline JavaScript is reserved for the theme
-bootstrap and page loader because both must run before deferred modules and before
-the first paint. The production Content Security Policy authorizes each generated
+directives, or hydration runtime. Inline JavaScript is reserved for the language,
+theme, and page-loader bootstrap because it must run before deferred modules and
+before the first paint. The production Content Security Policy authorizes each generated
 inline script by its SHA-256 hash; the post-build check rejects missing or stale
 hashes. All other behavior is layered onto server-rendered markup through stable
 `data-*` contracts.
@@ -26,12 +26,35 @@ ARIA relationships, image dimensions, and fallback hero text. Browser modules
 enhance that state rather than constructing the page. This keeps layout independent
 of JavaScript execution and avoids a client-rendering boundary.
 
+## Languages and editable copy
+
+Polish is canonical at `/`; English is prerendered at `/en/`. The head bootstrap
+redirects only `/`, using the saved `portfolio-lang` preference or the browser's
+primary language (Polish for `pl*`, English otherwise). Explicit `/en/` visits do
+not overwrite that preference. Footer links persist an explicit `?lang=pl|en`
+choice and remove that parameter while retaining other query parameters and fragments.
+Without storage, the explicit choice still wins for that visit; without JavaScript,
+the links still navigate to the selected prerendered page.
+
+Edit shared translations and Polish project overrides in `src/i18n/ui.js`, Polish
+canonical metadata and privacy copy in `src/config/site.js`, and the About paragraphs
+in `src/content/about.pl.md` or `src/content/about.en.md`. Project records remain
+English in `src/config/projects.js` to match `public/llms.txt`; new projects also
+need Polish copy and image descriptions. Client announcements use translated DOM
+templates rather than a client-side dictionary.
+The locale-specific email addresses live in `siteConfig.contactEmail.pl` and
+`siteConfig.contactEmail.en`; visible links and structured metadata use the same address.
+
+A single `404.html` selects its visible copy, title, navigation, and accessible
+controls from the same preference. Use `bun run preview` to verify unknown paths
+return HTTP 404; Vite preview uses a homepage fallback for unknown paths.
+
 ## Boot sequence
 
-1. The inline bootstrap in `Layout.astro` resolves a stored theme, falling back to
-   `prefers-color-scheme`, and writes `data-theme` before rendering can flash the
-   wrong palette. On pages that opt into the loader, it also sets `data-page-loading`
-   and temporarily switches scroll restoration to manual on reload.
+1. The inline bootstrap in `Layout.astro` resolves the language first, then a stored
+   theme, falling back to `prefers-color-scheme`. It writes `data-theme` before
+   rendering can flash the wrong palette. On pages that opt into the loader, it
+   also sets `data-page-loading` and temporarily switches scroll restoration to manual on reload.
 2. The portfolio page's `PageLoader.astro` marks the document busy and advances
    toward 92% while waiting for `load`. After both `load` and the 650 ms minimum
    duration, it interpolates to 100%, runs the accent curtain, and removes itself.
@@ -53,7 +76,7 @@ of JavaScript execution and avoids a client-rendering boundary.
 | Image gallery | Frames form a vertical scroll-snap track inside the fixed media viewport. Controls call `scrollTo()` using frame offsets, while passive scroll events schedule a single control-state calculation per animation frame. An observer threshold sequence arms the delayed scroll hint only when enough of the gallery is visible. |
 | Magnetic interaction | The layout mounts `MagneticHover.astro` once to initialize `magnetic-hover.js` independently of visible components. The repeat-safe controller treats `[data-magnetic]` as the boundary and `[data-magnetic-target]` as the transformed element. Strength, travel limit, and activation media query are declarative. Pointer coordinates update targets; rendering is coalesced through `requestAnimationFrame` and reset when capability or motion preferences change. |
 | Privacy dialog | A native modal `<dialog>` supplies focus containment and Escape semantics. Opening and closing are explicit states; a close requested during opening reverses the active animations. The morph transform is derived from the trigger and dialog rectangles, while reduced motion and animation failures fall back to immediate native operations. |
-| Scramble headings | A shared observer starts interval-driven substitution only while a heading intersects the viewport. Timers live in a `WeakMap`, so re-entry, exit, and runtime motion-preference changes can restore canonical text without retaining detached elements. |
+| Scramble headings | Canonical glyphs reserve each character's width and word wrapping; absolutely positioned random glyphs never resize the heading or move the section during scroll replays. A shared observer starts substitution on entry. Timers live in a `WeakMap`; exit and reduced-motion changes restore canonical text. |
 
 ## Project and image pipeline
 
@@ -101,7 +124,7 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
 - Reduced-motion handling is functional, not cosmetic: loaders exit directly,
   galleries use immediate scrolling, heading substitution stops, and continuous
   canvas animation resolves to a static frame.
-- `bun run check` validates the hand-maintained sitemap, robots file, response
+- `bun run check:public` validates the hand-maintained sitemap, robots file, response
   headers, web manifest, favicon/social-image formats and dimensions, and LLM
   index against `siteConfig` and the current project records. Metadata, URL,
   profile, contact, asset, or project-content changes must update them together.
@@ -109,7 +132,7 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   configured Content Security Policy and that no stale script hashes remain.
 - Every smoke test fails on uncaught page exceptions and error-level console output.
   Dedicated page-health cases also decode every rendered image, resolve internal
-  fragment links across both public pages, and reject horizontal document overflow
+  fragment links across both home routes and the 404 page, and reject horizontal document overflow
   at 390×844 and 1440×900 in both dark and light themes.
 - `bun run validate:production` queries the deployed URL, the official Schema.org
   validator, and an independent social-card crawler, then checks the live social
@@ -155,9 +178,8 @@ locally.
 
 `src/components/Certs.astro` is a dormant section template. It remains outside the
 current page render graph, so Astro does not emit its markup or scoped CSS in the
-published page. To expose it later, import and render `Certs` between `Projects`
-and `Contact` in `src/pages/index.astro`, then add
-`{ label: 'Certs', href: '#certs' }` between the matching entries in the navbar's
-link configuration. The component already owns the `#certs` fragment target and
-its accessible heading relationship; no client-side controller or hydration is
-required.
+published pages. To expose it later, import and render `Certs` between `Projects`
+and `Contact` in both `src/pages/index.astro` and `src/pages/en/index.astro`, restore
+its localized navbar entry, and add Polish/English certification copy. Preserve the
+existing `#certs` target and restore the badge interaction regression test when the
+section is enabled. Certification claims require authoritative records.

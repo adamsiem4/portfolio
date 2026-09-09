@@ -73,7 +73,10 @@ const initializeProjectDeck = (deck) => {
 
 		if (announce && status) {
 			const title = slides[activeIndex].dataset.projectTitle ?? '';
-			status.textContent = `Showing project ${activeIndex + 1} of ${slides.length}: ${title}`;
+			status.textContent = (deck.dataset.projectStatusTemplate ?? '')
+				.replace('{index}', String(activeIndex + 1))
+				.replace('{total}', String(slides.length))
+				.replace('{title}', title);
 		}
 	};
 

@@ -8,7 +8,13 @@ const { id, text } = Astro.props;
 	data-scramble-heading
 	data-scramble-text={text}
 >
-	{text}
+	{text.split(/(\s+)/).map((word) => (
+		/\s/.test(word) ? word : (
+			<span class="scramble-word" aria-hidden="true">{Array.from(word).map((character) => (
+				<span class="scramble-character" data-scramble-character={character}><span class="scramble-glyph">{character}</span></span>
+			))}</span>
+		)
+	))}
 </h2>
 
 <script>
@@ -21,5 +27,28 @@ const { id, text } = Astro.props;
 		font-weight: 800;
 		line-height: 0.88;
 		letter-spacing: -0.055em;
+		overflow-x: clip;
+	}
+
+	.scramble-word {
+		display: inline-block;
+		white-space: nowrap;
+	}
+
+	.scramble-character {
+		position: relative;
+		display: inline-block;
+	}
+
+	/* Canonical glyphs reserve the layout; random glyphs never resize the heading. */
+	.scramble-character::before {
+		content: attr(data-scramble-character);
+		visibility: hidden;
+	}
+
+	.scramble-glyph {
+		position: absolute;
+		inset: 0;
+		text-align: center;
 	}
 </style>

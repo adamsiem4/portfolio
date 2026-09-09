@@ -1,12 +1,17 @@
 ---
 import ScrambleHeading from './ScrambleHeading.astro';
-import { Content as AboutCopy } from '../content/about.md';
+import { Content as AboutPl } from '../content/about.pl.md';
+import { Content as AboutEn } from '../content/about.en.md';
+import { getLocale, useTranslations } from '../i18n/ui.js';
+
+const t = useTranslations(Astro.url);
+const AboutCopy = getLocale(Astro.url) === 'en' ? AboutEn : AboutPl;
 ---
 
 <section class="about" id="about" aria-labelledby="about-title">
 	<div class="about__inner">
 		<header class="about__heading">
-			<ScrambleHeading id="about-title" text="About me" />
+			<ScrambleHeading id="about-title" text={t('about.title')} />
 		</header>
 
 		<div class="about__copy">

@@ -7,6 +7,7 @@ Use these sources for Adam’s current professional background, featured work, a
 ## Portfolio
 
 - [Portfolio home](https://adamsalicki.pages.dev/): Introduction and portfolio overview.
+- [English portfolio](https://adamsalicki.pages.dev/en/): Same portfolio in English.
 - [About Adam Salicki](https://adamsalicki.pages.dev/#about): Education, career goals, technical experience, and cybersecurity interests.
 - [Featured projects](https://adamsalicki.pages.dev/#projects): Current project summaries, roles, challenges, outcomes, and technology stacks.
 - [Contact Adam Salicki](https://adamsalicki.pages.dev/#contact): Official contact information and social profiles.

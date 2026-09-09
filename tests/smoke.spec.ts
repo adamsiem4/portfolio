@@ -173,7 +173,7 @@ const pageHealthViewports = [
 
 const pageHealthThemes = ['dark', 'light'] as const;
 
-const pageHealthRoutes = ['/', '/404.html'] as const;
+const pageHealthRoutes = ['/', '/en/', '/404.html'] as const;
 
 test('production security headers preserve theme initialization and the page loader', async ({ page }) => {
 	const productionHeaders = Object.fromEntries(
@@ -208,7 +208,7 @@ test('production security headers preserve theme initialization and the page loa
 	await page.locator('[data-theme-toggle]').click();
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 	await page.goto('/404.html');
-	await expect(page.getByRole('heading', { name: 'You’ve reached a dead end.' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Trafiłeś w ślepą uliczkę.' })).toBeVisible();
 	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 	expect(cspViolations).toEqual([]);
@@ -248,7 +248,7 @@ test.describe('mobile navigation', () => {
 		await expect(menu).toHaveAttribute('data-open', 'false');
 
 		await toggle.tap();
-		await page.getByRole('link', { name: 'Projects' }).tap();
+		await page.getByRole('link', { name: 'Projekty' }).tap();
 		await expect(menu).toHaveAttribute('data-open', 'false');
 		await expect(page).toHaveURL(/#projects$/);
 	});
@@ -266,7 +266,7 @@ test('persists the selected theme across reloads', async ({ page }) => {
 	await toggle.click();
 	await expect(root).toHaveAttribute('data-theme', 'light');
 	await expect(root).toHaveAttribute('data-theme-preference', 'user');
-	await expect(toggle).toHaveAccessibleName('Switch to dark mode');
+	await expect(toggle).toHaveAccessibleName('Przełącz na tryb ciemny');
 	expect(await page.evaluate(() => localStorage.getItem('portfolio-theme'))).toBe('light');
 
 	await page.reload();
@@ -403,12 +403,12 @@ test('uses reduced-motion fallbacks for page and component animation', async ({ 
 	expect(galleryPosition.distance).toBeLessThanOrEqual(1);
 	expect(galleryPosition.hasHint).toBe(false);
 
-	const privacyTrigger = page.getByRole('button', { name: 'Privacy and data notice' });
-	const privacyDialog = page.getByRole('dialog', { name: 'Privacy & data notice' });
+	const privacyTrigger = page.getByRole('button', { name: 'Informacja o prywatności i danych' });
+	const privacyDialog = page.getByRole('dialog', { name: 'Prywatność i dane' });
 	await privacyTrigger.click();
 	await expect(privacyDialog).toBeVisible();
 	expect(await privacyDialog.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
-	await page.getByRole('button', { name: 'Close privacy notice' }).click();
+	await page.getByRole('button', { name: 'Zamknij informację o prywatności' }).click();
 	await expect(privacyDialog).toBeHidden();
 
 	await page.locator('[data-theme-toggle]').click();
@@ -423,44 +423,6 @@ test('uses reduced-motion fallbacks for page and component animation', async ({ 
 	await expect(root).toHaveAttribute('data-theme', 'dark');
 	await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(9, 11, 12)');
 	await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
-});
-
-test('tilts the certification badge toward the pointer and resets it', async ({ page }) => {
-	await page.emulateMedia({ reducedMotion: 'no-preference' });
-	await page.setViewportSize({ width: 1440, height: 1000 });
-	await openPortfolio(page);
-
-	const tiltArea = page.locator('[data-cert-badge-tilt]');
-	const tiltTarget = page.locator('[data-cert-badge-tilt-target]');
-	await tiltArea.scrollIntoViewIfNeeded();
-	const bounds = await tiltArea.boundingBox();
-	expect(bounds).not.toBeNull();
-	if (!bounds) return;
-
-	const tiltMagnitude = () => tiltTarget.evaluate((element) => (
-		Math.abs(Number.parseFloat(element.style.getPropertyValue('--cert-tilt-x')) || 0)
-		+ Math.abs(Number.parseFloat(element.style.getPropertyValue('--cert-tilt-y')) || 0)
-	));
-
-	await page.mouse.move(
-		bounds.x + bounds.width * 0.75,
-		bounds.y + bounds.height * 0.25,
-	);
-	await expect.poll(tiltMagnitude).toBeGreaterThan(6);
-	await expect.poll(() => tiltTarget.evaluate(
-		(element) => getComputedStyle(element).transform,
-	)).toMatch(/^matrix3d\(/);
-
-	await page.mouse.move(bounds.x - 20, bounds.y - 20);
-	await expect.poll(tiltMagnitude).toBe(0);
-
-	await page.emulateMedia({ reducedMotion: 'reduce' });
-	await page.mouse.move(
-		bounds.x + bounds.width * 0.75,
-		bounds.y + bounds.height * 0.25,
-	);
-	await expect.poll(tiltMagnitude).toBe(0);
-	await expect(tiltTarget).toHaveCSS('transform', 'none');
 });
 
 test.describe('theme reveal', () => {
@@ -510,7 +472,7 @@ test.describe('theme reveal', () => {
 		await expect(root).toHaveAttribute('data-theme', 'dark');
 		await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(9, 11, 12)');
 		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
-		await expect(toggle).toHaveAccessibleName('Switch to light mode');
+		await expect(toggle).toHaveAccessibleName('Przełącz na tryb jasny');
 	});
 
 	test('uses and cleans up the Web Animations fallback', async ({ page }) => {
@@ -565,7 +527,7 @@ test('updates project deck state with keyboard, buttons, and pointer drag', asyn
 	await expect(deck).toBeFocused();
 	await expect(slides.nth(1)).toHaveAttribute('aria-current', 'true');
 	await expect(slides.nth(0).locator('[data-project-content]')).toHaveAttribute('inert', '');
-	await expect(status).toHaveText(/Showing project 2 of 4: Self-Hosted Homelab/);
+	await expect(status).toHaveText(/Pokazywany projekt 2 z 4: Własny homelab/);
 
 	await next.click();
 	await expect(deck).toHaveAttribute('data-active-index', '2');
@@ -597,9 +559,9 @@ test('shows role, challenge, and outcome details for every project', async ({ pa
 		await expect(impact).toHaveCount(1);
 
 		for (const [key, label] of [
-			['role', 'Role'],
-			['challenge', 'Challenge'],
-			['outcome', 'Outcome'],
+			['role', 'Rola'],
+			['challenge', 'Wyzwanie'],
+			['outcome', 'Rezultat'],
 		] as const) {
 			const detail = impact.locator(`[data-project-detail="${key}"]`);
 			await expect(detail.locator('dt')).toHaveText(label);
@@ -737,12 +699,12 @@ test('updates gallery controls and announces the current image', async ({ page }
 	await expect(frames.nth(1)).toHaveAttribute('aria-current', 'true');
 	await expect(previous).toBeEnabled();
 	await expect(next).toBeDisabled();
-	await expect(status).toHaveText(/Showing image 2 of 2: Touch of Beauty admin dashboard/);
+	await expect(status).toHaveText(/Pokazywane zdjęcie 2 z 2: Panel administracyjny Touch of Beauty/);
 	await expect.poll(() => gallery.evaluate((element) => {
 		const target = element.querySelectorAll<HTMLElement>('.project-card__image-frame')[1];
 		return Math.abs(element.scrollTop - target.offsetTop);
 	})).toBeLessThanOrEqual(1);
-	await expect(status).toHaveText(/Showing image 2 of 2: Touch of Beauty admin dashboard/);
+	await expect(status).toHaveText(/Pokazywane zdjęcie 2 z 2: Panel administracyjny Touch of Beauty/);
 
 	await previous.click();
 	await expect(gallery).toHaveAttribute('data-active-index', '0');
@@ -817,8 +779,8 @@ test('shows a card focus ring when the gallery scroll region takes keyboard focu
 test('traps dialog focus and returns it to the privacy trigger', async ({ page }) => {
 	await openPortfolio(page);
 
-	const trigger = page.getByRole('button', { name: 'Privacy and data notice' });
-	const dialog = page.getByRole('dialog', { name: 'Privacy & data notice' });
+	const trigger = page.getByRole('button', { name: 'Informacja o prywatności i danych' });
+	const dialog = page.getByRole('dialog', { name: 'Prywatność i dane' });
 	const title = page.locator('[data-privacy-title]');
 
 	await trigger.click();
@@ -832,7 +794,7 @@ test('traps dialog focus and returns it to the privacy trigger', async ({ page }
 	await expect(trigger).toBeFocused();
 
 	await trigger.press('Enter');
-	await page.getByRole('button', { name: 'Close privacy notice' }).click();
+	await page.getByRole('button', { name: 'Zamknij informację o prywatności' }).click();
 	await expect(dialog).toBeHidden();
 	await expect(trigger).toBeFocused();
 });
@@ -858,8 +820,8 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 	expect(response?.status()).toBe(200);
 	expect(await page.locator('[data-page-loader]').count()).toBe(0);
 	expect(await page.locator('html').getAttribute('data-page-loading')).toBeNull();
-	await expect(page).toHaveTitle('Page not found | Adam Salicki');
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('You’ve reached a dead end.');
+	await expect(page).toHaveTitle('Nie znaleziono strony | Adam Salicki');
+	await expect(page.getByRole('heading', { level: 1, name: 'Trafiłeś w ślepą uliczkę.' })).toBeVisible();
 	await expect(page.locator('.not-found__panel')).toHaveCount(0);
 	await expect(page.getByText('Route not found')).toHaveCount(0);
 	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
@@ -868,7 +830,7 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 		'https://adamsalicki.pages.dev/404',
 	);
 	await expect(page.getByRole('contentinfo')).toHaveCount(0);
-	await expect(page.getByRole('link', { name: 'Back to portfolio' })).toHaveAttribute('href', '/');
+	await expect(page.getByRole('link', { name: 'Wróć do portfolio' })).toHaveAttribute('href', '/');
 
 	for (const viewport of [
 		{ width: 320, height: 700 },
@@ -911,14 +873,14 @@ test('renders an accessible custom 404 with working recovery links', async ({ pa
 	})).toBeGreaterThanOrEqual(40);
 
 	await page.setViewportSize({ width: 390, height: 844 });
-	await page.getByRole('button', { name: 'Toggle navigation' }).click();
-	await expect(page.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/#about');
-	await expect(page.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '/#projects');
-	await expect(page.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/#contact');
-	await page.getByRole('button', { name: 'Toggle navigation' }).click();
+	await page.getByRole('button', { name: 'Przełącz nawigację' }).click();
+	await expect(page.getByRole('link', { name: 'O mnie' })).toHaveAttribute('href', '/#about');
+	await expect(page.getByRole('link', { name: 'Projekty' })).toHaveAttribute('href', '/#projects');
+	await expect(page.getByRole('link', { name: 'Kontakt' })).toHaveAttribute('href', '/#contact');
+	await page.getByRole('button', { name: 'Przełącz nawigację' }).click();
 
 	const magneticWrapper = page.locator('.not-found__home-magnetic');
-	const backToPortfolio = page.getByRole('link', { name: 'Back to portfolio' });
+	const backToPortfolio = page.getByRole('link', { name: 'Wróć do portfolio' });
 	const magneticBounds = await magneticWrapper.boundingBox();
 	expect(magneticBounds).not.toBeNull();
 	if (magneticBounds) {
@@ -971,4 +933,124 @@ test.describe('page loader', () => {
 		await expect(loader).toHaveCount(0, { timeout: 3_000 });
 		await expect(navbar).not.toHaveAttribute('inert', '');
 	});
+});
+
+test('serves Polish at the canonical route and English under /en/', async ({ page }) => {
+	await openPortfolio(page);
+	await expect(page.locator('html')).toHaveAttribute('lang', 'pl');
+	await expect(page.getByRole('heading', { name: 'O mnie', exact: true })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Napisz na kontakt.asalicki@protonmail.com' }))
+		.toHaveAttribute('href', 'mailto:kontakt.asalicki@protonmail.com');
+	await expect(page.locator('#certs, a[href$="#certs"]')).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Zmień język na angielski' }))
+		.toHaveAttribute('href', '/en/?lang=en');
+
+	await openPage(page, '/en/');
+	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+	await expect(page.getByRole('heading', { name: 'About me' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Email contact.asalicki@protonmail.com' }))
+		.toHaveAttribute('href', 'mailto:contact.asalicki@protonmail.com');
+	await expect(page.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '#projects');
+	await expect(page.locator('#certs, a[href$="#certs"]')).toHaveCount(0);
+	await expect(page.locator('link[rel="alternate"][hreflang="pl"]'))
+		.toHaveAttribute('href', 'https://adamsalicki.pages.dev/');
+	await page.locator('[data-project-gallery]').first().focus();
+	await page.keyboard.press('ArrowRight');
+	await expect(page.locator('[data-project-status]')).toHaveText('Showing project 2 of 4: Self-Hosted Homelab');
+	await page.keyboard.press('ArrowLeft');
+	await page.locator('[data-gallery-next]').first().click();
+	await expect(page.locator('[data-gallery-status]').first()).toContainText('Showing image 2 of 2: Touch of Beauty admin dashboard');
+});
+
+test('remembers the language chosen in the footer', async ({ page }) => {
+	await openPortfolio(page);
+	await page.getByRole('link', { name: 'Zmień język na angielski' }).click();
+	await expect(page).toHaveURL('/en/');
+	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+	expect(await page.evaluate(() => localStorage.getItem('portfolio-lang'))).toBe('en');
+
+	await page.goto('/');
+	await expect(page).toHaveURL('/en/');
+
+	await page.getByRole('link', { name: 'Switch language to Polish' }).click();
+	await expect(page).toHaveURL('/');
+	await expect(page.locator('html')).toHaveAttribute('lang', 'pl');
+});
+
+test.describe('English device language', () => {
+	test.use({ locale: 'en-US' });
+
+	test('redirects the canonical route and localizes the shared 404', async ({ page }) => {
+		await page.goto('/');
+		await expect(page).toHaveURL('/en/');
+		await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+		await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
+
+		await page.goto('/404.html');
+		await expect(page).toHaveTitle('Page not found | Adam Salicki');
+		await expect(page.getByRole('heading', { level: 1, name: 'You’ve reached a dead end.' }))
+			.toBeVisible();
+		await expect(page.getByRole('link', { name: 'Back to portfolio' })).toBeVisible();
+		await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
+	});
+
+	test('honors an explicit Polish choice when browser storage is unavailable', async ({ page }) => {
+		await page.addInitScript(() => {
+			Object.defineProperty(window, 'localStorage', {
+				get() { throw new DOMException('Storage blocked', 'SecurityError'); },
+			});
+		});
+		await openPage(page, '/?lang=pl&ref=shared#about');
+		await expect(page).toHaveURL('/?ref=shared#about');
+		await expect(page.locator('html')).toHaveAttribute('lang', 'pl');
+		await expect(page.getByRole('heading', { name: 'O mnie', exact: true })).toBeVisible();
+	});
+});
+
+test('keeps heading geometry stable when scrolling replays the scramble', async ({ page }) => {
+	// Wide random glyphs must not make the narrow About column wrap or jump.
+	await page.addInitScript(() => { Math.random = () => 0.54; });
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await openPortfolio(page);
+	const heading = page.getByRole('heading', { name: 'O mnie', exact: true });
+
+	for (const width of [390, 1280]) {
+		await page.setViewportSize({ width, height: 844 });
+		for (const direction of ['down', 'up']) {
+			await heading.evaluate((element, direction) => {
+				const bounds = element.getBoundingClientRect();
+				const top = bounds.top + scrollY;
+				window.scrollTo({
+					top: direction === 'down' ? top - innerHeight - 50 : top + bounds.height + 50,
+					behavior: 'instant',
+				});
+			}, direction);
+			await expect(heading).toHaveText('O mnie');
+			const result = await heading.evaluate(async (element) => {
+				const initial = element.getBoundingClientRect();
+				const samples: { text: string; height: number; width: number }[] = [];
+				const observer = new MutationObserver(() => {
+					const bounds = element.getBoundingClientRect();
+					samples.push({
+						text: element.textContent?.trim() ?? '',
+						height: bounds.height,
+						width: bounds.width,
+					});
+				});
+				observer.observe(element, { childList: true, subtree: true });
+				window.scrollTo({ top: initial.top + scrollY - innerHeight / 2, behavior: 'instant' });
+				const { promise, resolve } = Promise.withResolvers<void>();
+				setTimeout(resolve, 900);
+				await promise;
+				observer.disconnect();
+				return { initial: { height: initial.height, width: initial.width }, samples };
+			});
+			expect(result.samples.some(({ text }) => text !== 'O mnie')).toBe(true);
+			expect(result.samples.every(({ height, width }) =>
+				height === result.initial.height && width === result.initial.width)).toBe(true);
+			await expect(heading).toHaveText('O mnie');
+		}
+	}
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await expect(heading).toHaveText('O mnie');
 });

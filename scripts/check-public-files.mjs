@@ -40,6 +40,7 @@ const [sitemap, robots, llms, headers, manifestSource] = await Promise.all([
 
 const siteUrl = siteConfig.siteUrl.replace(/\/$/, '');
 const homeUrl = `${siteUrl}/`;
+const englishUrl = `${siteUrl}/en/`;
 const sitemapUrl = `${siteUrl}/sitemap.xml`;
 const sitemapLocations = [...(sitemap ?? '').matchAll(/<loc>([^<]+)<\/loc>/g)]
 	.map((match) => match[1].trim());
@@ -48,9 +49,10 @@ const robotsSitemaps = (robots ?? '')
 	.filter((line) => /^Sitemap:/i.test(line))
 	.map((line) => line.replace(/^Sitemap:\s*/i, '').trim());
 
+const expectedSitemapLocations = [homeUrl, englishUrl];
 expect(
-	sitemapLocations.length === 1 && sitemapLocations[0] === homeUrl,
-	`public/sitemap.xml must contain exactly one canonical location: ${homeUrl}`,
+	isDeepStrictEqual(sitemapLocations, expectedSitemapLocations),
+	`public/sitemap.xml must contain exactly these canonical locations: ${expectedSitemapLocations.join(', ')}`,
 );
 expect(
 	robotsSitemaps.length === 1 && robotsSitemaps[0] === sitemapUrl,
@@ -121,6 +123,10 @@ const expectedHeaderRules = new Map([
 		]),
 	}],
 	['/', {
+		detachedHeaders: ['x-robots-tag'],
+		headers: new Map([['x-robots-tag', siteConfig.robots]]),
+	}],
+	['/en/', {
 		detachedHeaders: ['x-robots-tag'],
 		headers: new Map([['x-robots-tag', siteConfig.robots]]),
 	}],
@@ -371,6 +377,7 @@ await Promise.all([
 
 [
 	['Portfolio home', homeUrl],
+	['English portfolio', englishUrl],
 	[`About ${siteConfig.authorName}`, `${siteUrl}/#about`],
 	['Featured projects', `${siteUrl}/#projects`],
 	[`Contact ${siteConfig.authorName}`, `${siteUrl}/#contact`],
@@ -380,7 +387,7 @@ await Promise.all([
 
 expectText(llms ?? '', `# ${siteConfig.siteName}`, 'public/llms.txt', 'the configured site name');
 expectText(llms ?? '', siteConfig.authorName, 'public/llms.txt', 'the configured author name');
-expectText(llms ?? '', `mailto:${siteConfig.contactEmail}`, 'public/llms.txt', 'the configured contact email');
+expectText(llms ?? '', `mailto:${siteConfig.contactEmail.en}`, 'public/llms.txt', 'the configured English contact email');
 expectText(llms ?? '', siteConfig.githubUrl, 'public/llms.txt', 'the configured GitHub URL');
 expectText(llms ?? '', siteConfig.linkedinUrl, 'public/llms.txt', 'the configured LinkedIn URL');
 

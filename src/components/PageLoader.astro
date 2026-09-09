@@ -1,7 +1,13 @@
+---
+import { useTranslations } from '../i18n/ui.js';
+
+const t = useTranslations(Astro.url);
+---
+
 <div
 	class="page-loader"
 	role="status"
-	aria-label="Loading portfolio"
+	aria-label={t('loader')}
 	data-page-loader
 >
 	<div class="page-loader__counter" aria-hidden="true">

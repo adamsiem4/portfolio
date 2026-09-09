@@ -33,7 +33,10 @@ const initializeProjectGallery = (gallery) => {
 
 		if (announce && indexChanged && status) {
 			const description = frames[activeIndex].querySelector('img')?.alt ?? '';
-			status.textContent = `Showing image ${activeIndex + 1} of ${frames.length}: ${description}`;
+			status.textContent = (gallery.dataset.galleryStatusTemplate ?? '')
+				.replace('{index}', String(activeIndex + 1))
+				.replace('{total}', String(frames.length))
+				.replace('{description}', description);
 		}
 	};
 

@@ -3,6 +3,10 @@ import '../styles/global.css';
 import { siteConfig } from '../config/site.js';
 import PointerEffects from '../components/PointerEffects.astro';
 import PageLoader from '../components/PageLoader.astro';
+import { getLocale, localeMeta, useTranslations } from '../i18n/ui.js';
+
+const locale = getLocale(Astro.url);
+const t = useTranslations(locale);
 
 interface Props {
   title?: string;
@@ -10,15 +14,23 @@ interface Props {
   canonical?: string;
   robots?: string;
   showPageLoader?: boolean;
+  localeAuto?: boolean;
+  titleAlternate?: string;
 }
 
 const {
-  title = siteConfig.seoTitle,
-  description = siteConfig.seoDescription,
-  canonical = siteConfig.siteUrl,
+  title = t('meta.title'),
+  description = t('meta.description'),
+  canonical = localeMeta[locale].home,
   robots = siteConfig.robots,
   showPageLoader = true,
+  localeAuto = false,
+  titleAlternate,
 }: Props = Astro.props;
+
+const alternate = locale === 'pl' ? 'en' : 'pl';
+const localeRedirect = !localeAuto && locale === 'pl' && Astro.url.pathname === '/'
+  ? localeMeta.en.home : undefined;
 
 const canonicalUrl = new URL(canonical, siteConfig.siteUrl).toString();
 const socialImageUrl = new URL(siteConfig.socialImage.src, siteConfig.siteUrl).toString();
@@ -30,7 +42,7 @@ const structuredData = {
       name: siteConfig.siteName,
       url: siteConfig.siteUrl,
       description,
-      inLanguage: siteConfig.language,
+      inLanguage: localeMeta[locale].htmlLang,
       publisher: {
         '@type': 'Person',
         name: siteConfig.authorName,
@@ -41,7 +53,7 @@ const structuredData = {
       '@type': 'Person',
       name: siteConfig.authorName,
       url: siteConfig.siteUrl,
-      email: siteConfig.contactEmail,
+      email: siteConfig.contactEmail[locale],
       sameAs: [siteConfig.githubUrl, siteConfig.linkedinUrl],
     },
   ],
@@ -50,7 +62,11 @@ const structuredData = {
 
 <!doctype html>
 <html
-  lang={siteConfig.language}
+  lang={localeMeta[locale].htmlLang}
+  data-locale={locale}
+  data-locale-redirect={localeRedirect}
+  data-locale-auto={localeAuto ? 'true' : undefined}
+  data-title-alternate={titleAlternate}
   data-theme="dark"
   data-theme-preference="system"
   data-theme-storage-key="portfolio-theme"
@@ -63,28 +79,36 @@ const structuredData = {
       content="width=device-width, initial-scale=1"
     />
     <meta name="description" content={description} />
-    <meta name="keywords" content={siteConfig.seoKeywords.join(', ')} />
+    <meta name="keywords" content={t('meta.keywords')} />
     <meta name="robots" content={robots} />
     <meta name="author" content={siteConfig.authorName} />
     <meta name="publisher" content={siteConfig.authorName} />
     <link rel="canonical" href={canonicalUrl} />
+    {!localeAuto && (
+      <>
+        <link rel="alternate" hreflang="pl" href={new URL('/', siteConfig.siteUrl).toString()} />
+        <link rel="alternate" hreflang="en" href={new URL('/en/', siteConfig.siteUrl).toString()} />
+        <link rel="alternate" hreflang="x-default" href={new URL('/', siteConfig.siteUrl).toString()} />
+      </>
+    )}
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={siteConfig.siteName} />
-    <meta property="og:title" content={siteConfig.socialTitle} />
-    <meta property="og:description" content={siteConfig.socialDescription} />
+    <meta property="og:title" content={t('meta.socialTitle')} />
+    <meta property="og:description" content={t('meta.socialDescription')} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:locale" content={siteConfig.locale} />
+    <meta property="og:locale" content={localeMeta[locale].ogLocale} />
+    <meta property="og:locale:alternate" content={localeMeta[alternate].ogLocale} />
     <meta property="og:image" content={socialImageUrl} />
     <meta property="og:image:type" content={siteConfig.socialImage.type} />
     <meta property="og:image:width" content={String(siteConfig.socialImage.width)} />
     <meta property="og:image:height" content={String(siteConfig.socialImage.height)} />
-    <meta property="og:image:alt" content={siteConfig.socialImage.alt} />
+    <meta property="og:image:alt" content={t('meta.socialImageAlt')} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={siteConfig.socialTitle} />
-    <meta name="twitter:description" content={siteConfig.socialDescription} />
+    <meta name="twitter:title" content={t('meta.socialTitle')} />
+    <meta name="twitter:description" content={t('meta.socialDescription')} />
     <meta name="twitter:image" content={socialImageUrl} />
-    <meta name="twitter:image:alt" content={siteConfig.socialImage.alt} />
+    <meta name="twitter:image:alt" content={t('meta.socialImageAlt')} />
 
     <link rel="icon" type={siteConfig.favicon.type} href={siteConfig.favicon.src} />
     <link
@@ -98,11 +122,47 @@ const structuredData = {
     <meta name="apple-mobile-web-app-title" content={siteConfig.authorName} />
     <meta name="theme-color" content={siteConfig.themeColor} />
 
+    <title>{title}</title>
     <script is:inline>
       (() => {
         // Run in <head> before first paint so CSS sees the saved/system theme and,
         // on pages that opt in, the loader state before content becomes visible.
         const root = document.documentElement;
+        // Only an explicit switcher choice persists; shared English URLs do not.
+        const langKey = 'portfolio-lang';
+        const params = new URLSearchParams(location.search);
+        const requestedLang = params.get('lang');
+        const explicitLang = requestedLang === 'pl' || requestedLang === 'en' ? requestedLang : null;
+        let storedLang = null;
+
+        try {
+          if (explicitLang) localStorage.setItem(langKey, explicitLang);
+          const value = localStorage.getItem(langKey);
+          storedLang = value === 'pl' || value === 'en' ? value : null;
+        } catch {
+          // Explicit choices and device detection still work without storage.
+        }
+
+        if (requestedLang !== null) {
+          params.delete('lang');
+          const query = params.toString();
+          history.replaceState(null, '', location.pathname + (query ? `?${query}` : '') + location.hash);
+        }
+
+        const deviceLang = (navigator.languages?.[0] || navigator.language || '').toLowerCase();
+        const preferredLang = explicitLang || storedLang || (deviceLang.startsWith('pl') ? 'pl' : 'en');
+
+        if (root.dataset.localeAuto === 'true') {
+          root.lang = preferredLang;
+          root.dataset.locale = preferredLang;
+          if (preferredLang === 'en' && root.dataset.titleAlternate) {
+            document.title = root.dataset.titleAlternate;
+          }
+        } else if (root.dataset.localeRedirect && preferredLang !== root.dataset.locale) {
+          location.replace(root.dataset.localeRedirect + location.search + location.hash);
+          return;
+        }
+
         const storageKey = root.dataset.themeStorageKey || 'portfolio-theme';
         const pageLoaderEnabled = root.dataset.pageLoaderEnabled === 'true';
         let storedTheme = null;
@@ -173,13 +233,30 @@ const structuredData = {
       set:html={JSON.stringify(structuredData)}
     ></script>
 
-    <title>{title}</title>
   </head>
 
   <body>
-    <a class="skip-link" href="#home">Skip to content</a>
+    <a class="skip-link" href="#home">
+      {localeAuto ? (
+        <>
+          <span data-locale-copy="pl">{t('skip')}</span>
+          <span data-locale-copy="en">{useTranslations('en')('skip')}</span>
+        </>
+      ) : t('skip')}
+    </a>
     <PointerEffects />
     {showPageLoader && <PageLoader />}
     <slot />
   </body>
 </html>
+
+<style is:global>
+  [data-locale-copy] {
+    display: none;
+  }
+
+  html[lang='pl'] [data-locale-copy='pl'],
+  html[lang='en'] [data-locale-copy='en'] {
+    display: contents;
+  }
+</style>
