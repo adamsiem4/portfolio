@@ -214,6 +214,12 @@ const projectCopyPl = {
 	},
 };
 
+/**
+ * @template {{ slug: string, images: { alt: string }[] }} T
+ * @param {T[]} projects
+ * @param {string} locale
+ * @returns {T[]}
+ */
 export const localizeProjects = (projects, locale) => {
 	if (locale === 'en') return projects;
 
