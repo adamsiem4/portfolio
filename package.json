@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@lucide/astro": "1.42.0",
-    "astro": "7.3.2",
+    "astro": "7.3.3",
     "playwright-core": "^1.63.0",
     "simple-icons": "^13"
   },
