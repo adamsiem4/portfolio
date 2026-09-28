@@ -35,13 +35,6 @@ export const getProjectDeckReserve = (projectCount) => {
 	);
 };
 
-/** @param {number} projectCount */
-export const getProjectMaximumCardOffset = (projectCount) => {
-	const normalizedCount = Math.max(0, Math.floor(projectCount));
-
-	return normalizedCount < 2 ? 0 : 12 + ((normalizedCount - 2) * 10);
-};
-
 /**
  * @param {number} deckWidth
  * @param {number} projectCount

@@ -34,7 +34,8 @@ const initializeProjectDeck = (deck) => {
 		slides.forEach((slide, index) => {
 			// Signed distance fans cards to either side of the active card. Cards farther
 			// away translate more, rotate up to a cap, and sit lower in the stack. Keep this
-			// curve aligned with getProjectMaximumCardOffset() and the deck reserve tests.
+			// curve aligned with getProjectDeckReserve() in project-layout.js and the browser
+			// card-fan bounds check.
 			const offset = index - activeIndex;
 			const distanceFromActive = Math.abs(offset);
 			const direction = Math.sign(offset);

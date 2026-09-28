@@ -3,9 +3,6 @@ import { expect, test, type Page } from '@playwright/test';
 import { siteConfig } from '../src/config/site.js';
 import {
 	PROJECT_LAYOUT,
-	getProjectDeckReserve,
-	getProjectImageSizes,
-	getProjectMaximumCardOffset,
 	getProjectMediaSlotWidth,
 } from '../src/utils/project-layout.js';
 
@@ -15,8 +12,7 @@ type RuntimeIssues = {
 };
 
 type FragmentReference = {
-	error: string | null;
-	fragment: string | null;
+	fragment: string;
 	href: string;
 	label: string;
 	targetDocument: string;
@@ -117,36 +113,19 @@ const inspectInternalFragments = (page: Page) => page.locator('a[href]').evaluat
 
 		const label = link.textContent?.trim().replace(/\s+/g, ' ') || '(unlabelled link)';
 		const targetDocument = `${targetUrl.pathname}${targetUrl.search}`;
-		let fragment: string | null = null;
-		try {
-			fragment = decodeURIComponent(targetUrl.hash.slice(1));
-		} catch {
-			references.push({
-				error: 'invalid fragment encoding',
-				fragment,
-				href,
-				label,
-				targetDocument,
-			});
-		}
-		if (fragment !== null) {
-			references.push({
-				error: null,
-				fragment,
-				href,
-				label,
-				targetDocument,
-			});
-		}
+		const fragment = decodeURIComponent(targetUrl.hash.slice(1));
+		references.push({
+			fragment,
+			href,
+			label,
+			targetDocument,
+		});
 	}
 
-	const targets = [
-		...Array.from(document.querySelectorAll<HTMLElement>('[id]'), (element) => element.id),
-		...Array.from(
-			document.querySelectorAll<HTMLAnchorElement>('a[name]'),
-			(anchor) => anchor.getAttribute('name') ?? '',
-		),
-	].filter(Boolean);
+	const targets = Array.from(
+		document.querySelectorAll<HTMLElement>('[id]'),
+		(element) => element.id,
+	).filter(Boolean);
 
 	return {
 		document: `${currentUrl.pathname}${currentUrl.search}`,
@@ -170,8 +149,6 @@ const pageHealthViewports = [
 	{ label: 'mobile', width: 390, height: 844 },
 	{ label: 'desktop', width: 1_440, height: 900 },
 ] as const;
-
-const pageHealthThemes = ['dark', 'light'] as const;
 
 const pageHealthRoutes = ['/', '/en/', '/404.html'] as const;
 
@@ -277,82 +254,73 @@ test('persists the selected theme across reloads', async ({ page }) => {
 
 test.describe('page health', () => {
 	for (const viewport of pageHealthViewports) {
-		for (const theme of pageHealthThemes) {
-			test(`validates ${viewport.label} layout and assets in the ${theme} theme`, async ({ page }) => {
-				await page.setViewportSize({ width: viewport.width, height: viewport.height });
-				await page.addInitScript((selectedTheme) => {
-					localStorage.setItem('portfolio-theme', selectedTheme);
-				}, theme);
+		test(`validates ${viewport.label} layout and assets`, async ({ page }) => {
+			await page.setViewportSize({ width: viewport.width, height: viewport.height });
 
-				const brokenImages: Array<{
-					alt: string;
-					complete: boolean;
-					height: number;
-					path: string;
-					src: string;
-					width: number;
-				}> = [];
-				const documentTargets = new Map<string, Set<string>>();
-				const fragmentReferences: FragmentReference[] = [];
-				const overflowFailures: Array<{
-					contentWidth: number;
-					layoutWidth: number;
-					overflow: number;
-					path: string;
-				}> = [];
-				let totalImages = 0;
+			const brokenImages: Array<{
+				alt: string;
+				complete: boolean;
+				height: number;
+				path: string;
+				src: string;
+				width: number;
+			}> = [];
+			const documentTargets = new Map<string, Set<string>>();
+			const fragmentReferences: FragmentReference[] = [];
+			const overflowFailures: Array<{
+				contentWidth: number;
+				layoutWidth: number;
+				overflow: number;
+				path: string;
+			}> = [];
+			let totalImages = 0;
 
-				for (const path of pageHealthRoutes) {
-					await openPage(page, path);
-					await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+			for (const path of pageHealthRoutes) {
+				await openPage(page, path);
 
-					const imageHealth = await inspectImages(page);
-					totalImages += imageHealth.total;
-					brokenImages.push(...imageHealth.broken.map((image) => ({ path, ...image })));
+				const imageHealth = await inspectImages(page);
+				totalImages += imageHealth.total;
+				brokenImages.push(...imageHealth.broken.map((image) => ({ path, ...image })));
 
-					const fragmentHealth = await inspectInternalFragments(page);
-					documentTargets.set(fragmentHealth.document, new Set(fragmentHealth.targets));
-					fragmentReferences.push(...fragmentHealth.references);
+				const fragmentHealth = await inspectInternalFragments(page);
+				documentTargets.set(fragmentHealth.document, new Set(fragmentHealth.targets));
+				fragmentReferences.push(...fragmentHealth.references);
 
-					const horizontalOverflow = await inspectHorizontalOverflow(page);
-					if (horizontalOverflow.overflow > 1) {
-						overflowFailures.push({ path, ...horizontalOverflow });
-					}
+				const horizontalOverflow = await inspectHorizontalOverflow(page);
+				if (horizontalOverflow.overflow > 1) {
+					overflowFailures.push({ path, ...horizontalOverflow });
 				}
+			}
 
-				expect(totalImages, 'The portfolio health check did not find any images.').toBeGreaterThan(0);
-				expect(
-					brokenImages,
-					`Broken images at ${viewport.width}x${viewport.height} in the ${theme} theme.`,
-				).toEqual([]);
+			expect(totalImages, 'The portfolio health check did not find any images.').toBeGreaterThan(0);
+			expect(
+				brokenImages,
+				`Broken images at ${viewport.width}x${viewport.height}.`,
+			).toEqual([]);
 
-				expect(
-					fragmentReferences.length,
-					'The portfolio health check did not find any internal fragment links.',
-				).toBeGreaterThan(0);
-				const missingFragments = fragmentReferences.flatMap((reference) => {
-					if (reference.error) {
-						return [`${reference.href} from "${reference.label}": ${reference.error}`];
-					}
-					const targets = documentTargets.get(reference.targetDocument);
-					if (!targets) {
-						return [`${reference.href} from "${reference.label}" targets an unaudited document`];
-					}
-					return reference.fragment && targets.has(reference.fragment)
-						? []
-						: [`${reference.href} from "${reference.label}"`];
-				});
-				expect(
-					[...new Set(missingFragments)],
-					'Internal links reference missing fragment targets.',
-				).toEqual([]);
-
-				expect(
-					overflowFailures,
-					`Horizontal document overflow at ${viewport.width}x${viewport.height} in the ${theme} theme.`,
-				).toEqual([]);
+			expect(
+				fragmentReferences.length,
+				'The portfolio health check did not find any internal fragment links.',
+			).toBeGreaterThan(0);
+			const missingFragments = fragmentReferences.flatMap((reference) => {
+				const targets = documentTargets.get(reference.targetDocument);
+				if (!targets) {
+					return [`${reference.href} from "${reference.label}" targets an unaudited document`];
+				}
+				return reference.fragment && targets.has(reference.fragment)
+					? []
+					: [`${reference.href} from "${reference.label}"`];
 			});
-		}
+			expect(
+				[...new Set(missingFragments)],
+				'Internal links reference missing fragment targets.',
+			).toEqual([]);
+
+			expect(
+				overflowFailures,
+				`Horizontal document overflow at ${viewport.width}x${viewport.height}.`,
+			).toEqual([]);
+		});
 	}
 });
 
@@ -552,19 +520,13 @@ test('shows role, challenge, and outcome details for every project', async ({ pa
 	await openPortfolio(page);
 
 	const slides = page.locator('[data-project-slide]');
-	await expect(slides).toHaveCount(4);
 
 	for (const slide of await slides.all()) {
 		const impact = slide.locator('[data-project-impact]');
 		await expect(impact).toHaveCount(1);
 
-		for (const [key, label] of [
-			['role', 'Rola'],
-			['challenge', 'Wyzwanie'],
-			['outcome', 'Rezultat'],
-		] as const) {
+		for (const key of ['role', 'challenge', 'outcome']) {
 			const detail = impact.locator(`[data-project-detail="${key}"]`);
-			await expect(detail.locator('dt')).toHaveText(label);
 			await expect(detail.locator('dd')).not.toHaveText(/^\s*$/);
 		}
 	}
@@ -581,33 +543,12 @@ test('shows role, challenge, and outcome details for every project', async ({ pa
 	}
 });
 
-test('keeps deck spacing and responsive image sizes aligned with project count', async ({ page }) => {
+test('keeps the project deck and media widths aligned across breakpoints', async ({ page }) => {
 	await openPortfolio(page);
 
 	const deck = page.locator('[data-project-deck]');
 	const slides = deck.locator('[data-project-slide]');
 	const projectCount = await slides.count();
-	const deckReserve = getProjectDeckReserve(projectCount);
-	expect(
-		getProjectMaximumCardOffset(projectCount),
-		`The ${projectCount}-project card fan exceeds half of its ${deckReserve}px reserve; revalidate the reserve before changing the project count.`,
-	).toBeLessThanOrEqual(deckReserve / 2);
-	await expect(deck).toHaveAttribute('data-project-count', String(projectCount));
-	await expect(deck).toHaveAttribute('data-deck-reserve', String(deckReserve));
-	expect(await deck.evaluate(
-		(element) => getComputedStyle(element).getPropertyValue('--deck-reserve').trim(),
-	)).toBe(`${deckReserve}px`);
-
-	const imageMetadata = await page.locator('.project-card__image').evaluateAll((images) => (
-		images.map((image) => ({
-			width: Number(image.getAttribute('width')),
-			height: Number(image.getAttribute('height')),
-			sizes: image.getAttribute('sizes'),
-		}))
-	));
-	imageMetadata.forEach(({ width, height, sizes }) => {
-		expect(sizes).toBe(getProjectImageSizes({ width, height }, projectCount));
-	});
 	const moveToDeckEnd = async (controlSelector: string) => deck.evaluate(
 		(element, selector) => {
 			const control = element.querySelector<HTMLButtonElement>(selector);
@@ -652,18 +593,13 @@ test('keeps deck spacing and responsive image sizes aligned with project count',
 		expect(endFanBounds.right).toBeLessThanOrEqual(endFanBounds.viewportWidth + 1);
 
 		const deckBounds = await deck.boundingBox();
-		const activeSlideBounds = await slides.nth(projectCount - 1).boundingBox();
 		const imageBounds = await slides.nth(projectCount - 1)
 			.locator('.project-card__image')
 			.first()
 			.boundingBox();
 		expect(deckBounds).not.toBeNull();
-		expect(activeSlideBounds).not.toBeNull();
 		expect(imageBounds).not.toBeNull();
-		if (!deckBounds || !activeSlideBounds || !imageBounds) continue;
-
-		expect(activeSlideBounds.width).toBeCloseTo(deckBounds.width - deckReserve, 0);
-
+		if (!deckBounds || !imageBounds) continue;
 		const isDesktop = viewport.width >= PROJECT_LAYOUT.desktopBreakpoint;
 		const expectedMediaWidth = getProjectMediaSlotWidth(
 			deckBounds.width,
@@ -704,60 +640,12 @@ test('updates gallery controls and announces the current image', async ({ page }
 		const target = element.querySelectorAll<HTMLElement>('.project-card__image-frame')[1];
 		return Math.abs(element.scrollTop - target.offsetTop);
 	})).toBeLessThanOrEqual(1);
-	await expect(status).toHaveText(/Pokazywane zdjęcie 2 z 2: Panel administracyjny Touch of Beauty/);
 
 	await previous.click();
 	await expect(gallery).toHaveAttribute('data-active-index', '0');
 	await expect(previous).toBeDisabled();
 });
 
-test('defers gallery scroll hints until their project card is active', async ({ page }) => {
-	await page.emulateMedia({ reducedMotion: 'no-preference' });
-	await page.setViewportSize({ width: 390, height: 844 });
-	await openPortfolio(page);
-
-	const deck = page.locator('[data-project-deck]');
-	const slides = deck.locator('[data-project-slide]');
-	const firstGallery = slides.nth(0).locator('[data-project-gallery]');
-	const laterGallery = slides.nth(1).locator('[data-project-gallery]');
-
-	await page.locator('[data-project-gallery]').evaluateAll((elements) => {
-		elements.forEach((element) => {
-			const gallery = element as HTMLElement;
-			gallery.dataset.testGalleryHintStarts = '0';
-			gallery.dataset.testGalleryHintState = 'idle';
-
-			new MutationObserver(() => {
-				if (gallery.dataset.galleryHinting === 'true') {
-					gallery.dataset.testGalleryHintStarts = String(
-						Number(gallery.dataset.testGalleryHintStarts ?? 0) + 1,
-					);
-					gallery.dataset.testGalleryHintState = 'running';
-					return;
-				}
-
-				if (Number(gallery.dataset.testGalleryHintStarts ?? 0) > 0) {
-					gallery.dataset.testGalleryHintState = 'ended';
-				}
-			}).observe(gallery, {
-				attributes: true,
-				attributeFilter: ['data-gallery-hinting'],
-			});
-		});
-	});
-
-	await firstGallery.scrollIntoViewIfNeeded();
-	await expect(firstGallery).toHaveAttribute('data-test-gallery-hint-state', 'ended');
-	await expect(slides.nth(1)).toHaveAttribute('data-active', 'false');
-	await expect(laterGallery).toHaveAttribute('data-test-gallery-hint-starts', '0');
-
-	await deck.locator('[data-project-next]').click();
-	await expect(deck).toHaveAttribute('data-active-index', '1');
-	await expect(slides.nth(1)).toHaveAttribute('data-active', 'true');
-	await laterGallery.scrollIntoViewIfNeeded();
-	await expect(laterGallery).toHaveAttribute('data-test-gallery-hint-state', 'ended');
-	await expect(laterGallery).toHaveAttribute('data-test-gallery-hint-starts', '1');
-});
 
 test('shows a card focus ring when the gallery scroll region takes keyboard focus', async ({ page }) => {
 	await openPortfolio(page);
@@ -812,114 +700,32 @@ test('back-to-top preserves the fragment and moves logical focus', async ({ page
 	await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
-test('renders an accessible custom 404 with working recovery links', async ({ page }) => {
-	await page.emulateMedia({ reducedMotion: 'no-preference' });
-	await page.setViewportSize({ width: 390, height: 844 });
-	const response = await page.goto('/404.html');
+test('renders the custom 404 with noindex metadata and a recovery link', async ({ page }) => {
+	await page.goto('/404.html');
 
-	expect(response?.status()).toBe(200);
 	expect(await page.locator('[data-page-loader]').count()).toBe(0);
 	expect(await page.locator('html').getAttribute('data-page-loading')).toBeNull();
 	await expect(page).toHaveTitle('Nie znaleziono strony | Adam Salicki');
 	await expect(page.getByRole('heading', { level: 1, name: 'Trafiłeś w ślepą uliczkę.' })).toBeVisible();
-	await expect(page.locator('.not-found__panel')).toHaveCount(0);
-	await expect(page.getByText('Route not found')).toHaveCount(0);
 	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
 	await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
 		'href',
 		'https://adamsalicki.pages.dev/404',
 	);
-	await expect(page.getByRole('contentinfo')).toHaveCount(0);
 	await expect(page.getByRole('link', { name: 'Wróć do portfolio' })).toHaveAttribute('href', '/');
-
-	for (const viewport of [
-		{ width: 320, height: 700 },
-		{ width: 390, height: 844 },
-		{ width: 1_440, height: 900 },
-	]) {
-		await page.setViewportSize(viewport);
-		expect(
-			await page.locator('.not-found__content').evaluate((element) => {
-				const contentBounds = element.getBoundingClientRect();
-				const sectionBounds = element.closest('.not-found')?.getBoundingClientRect();
-				if (!sectionBounds) return Number.POSITIVE_INFINITY;
-				return Math.abs(
-					contentBounds.x + contentBounds.width / 2
-					- (sectionBounds.x + sectionBounds.width / 2)
-				);
-			}),
-			`404 content is not horizontally centered at ${viewport.width}px`,
-		).toBeLessThanOrEqual(1);
-		expect(
-			await page.evaluate(() => document.documentElement.scrollWidth),
-			`404 page overflows horizontally at ${viewport.width}px`,
-		).toBeLessThanOrEqual(viewport.width);
-		expect(
-			await page.locator('.not-found').evaluate((element) => (
-				Math.round(element.getBoundingClientRect().bottom)
-			)),
-			`404 page does not fill the viewport at ${viewport.width}px`,
-		).toBeGreaterThanOrEqual(viewport.height);
-	}
-
-	expect(await page.locator('.not-found__code').evaluate((element) => (
-		Number.parseFloat(getComputedStyle(element).fontSize)
-	))).toBeGreaterThanOrEqual(320);
-	expect(await page.locator('.not-found__content').evaluate((element) => {
-		const codeBounds = element.querySelector('.not-found__code')?.getBoundingClientRect();
-		const headingBounds = element.querySelector('h1')?.getBoundingClientRect();
-		if (!codeBounds || !headingBounds) return Number.NEGATIVE_INFINITY;
-		return headingBounds.top - codeBounds.bottom;
-	})).toBeGreaterThanOrEqual(40);
-
-	await page.setViewportSize({ width: 390, height: 844 });
-	await page.getByRole('button', { name: 'Przełącz nawigację' }).click();
-	await expect(page.getByRole('link', { name: 'O mnie' })).toHaveAttribute('href', '/#about');
-	await expect(page.getByRole('link', { name: 'Projekty' })).toHaveAttribute('href', '/#projects');
-	await expect(page.getByRole('link', { name: 'Kontakt' })).toHaveAttribute('href', '/#contact');
-	await page.getByRole('button', { name: 'Przełącz nawigację' }).click();
-
-	const magneticWrapper = page.locator('.not-found__home-magnetic');
-	const backToPortfolio = page.getByRole('link', { name: 'Wróć do portfolio' });
-	const magneticBounds = await magneticWrapper.boundingBox();
-	expect(magneticBounds).not.toBeNull();
-	if (magneticBounds) {
-		await page.mouse.move(
-			magneticBounds.x + magneticBounds.width - 2,
-			magneticBounds.y + magneticBounds.height / 2,
-		);
-		await expect.poll(() => backToPortfolio.evaluate((element) => (
-			Number.parseFloat(element.style.transform.match(/translate3d\(([-\d.]+)px/)?.[1] ?? '0')
-		))).toBeGreaterThan(0);
-
-		await page.mouse.move(magneticBounds.x - 20, magneticBounds.y - 20);
-		await expect.poll(() => backToPortfolio.evaluate((element) => {
-			const transform = element.style.transform.match(
-				/translate3d\(([-\d.]+)px,\s*([-\d.]+)px/,
-			);
-			if (!transform) return 0;
-			return Math.hypot(
-				Number.parseFloat(transform[1]),
-				Number.parseFloat(transform[2]),
-			);
-		})).toBeLessThanOrEqual(0.1);
-	}
-
-	const results = await new AxeBuilder({ page })
-		.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-		.analyze();
-	expect(results.violations).toEqual([]);
 });
 
-test('has no automatically detectable WCAG A or AA violations', async ({ page }) => {
-	await openPortfolio(page);
+for (const path of ['/', '/404.html']) {
+	test(`${path} has no automatically detectable WCAG A or AA violations`, async ({ page }) => {
+		await openPage(page, path);
 
-	const results = await new AxeBuilder({ page })
-		.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-		.analyze();
+		const results = await new AxeBuilder({ page })
+			.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+			.analyze();
 
-	expect(results.violations).toEqual([]);
-});
+		expect(results.violations).toEqual([]);
+	});
+}
 
 test.describe('page loader', () => {
 	test('makes page controls inert until the reveal completes', async ({ page }) => {

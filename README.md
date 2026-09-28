@@ -115,9 +115,9 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   module executes. Adding client-side page transitions requires restoring an
   Astro navigation lifecycle hook or an equivalent teardown/reinitialization path.
 - `Projects.astro` and `ProjectCard.astro` share the project-count geometry in
-  `project-layout.js`. The browser suite verifies the reserve, generated `sizes`,
-  gutters, and rendered media-element width across mobile, tablet, and desktop
-  breakpoints.
+  `project-layout.js`. The browser suite verifies that the card fan stays inside
+  the viewport and that gutters and rendered media-element width match the shared
+  geometry across mobile, tablet, and desktop breakpoints.
 - Theme-aware canvas output depends on the `site-theme-change` event and the shared
   tokens in `src/styles/global.css`; changing theme state without dispatching the
   event leaves the existing canvas composite stale.
@@ -133,7 +133,7 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
 - Every smoke test fails on uncaught page exceptions and error-level console output.
   Dedicated page-health cases also decode every rendered image, resolve internal
   fragment links across both home routes and the 404 page, and reject horizontal document overflow
-  at 390×844 and 1440×900 in both dark and light themes.
+  at 390×844 and 1440×900.
 - `bun run validate:production` queries the deployed URL, the official Schema.org
   validator, and an independent social-card crawler, then checks the live social
   image, sitemap, robots file, and 404 directive. Run it after deployment; it stays
