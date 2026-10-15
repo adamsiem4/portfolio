@@ -174,6 +174,12 @@ warning when it differs from the pin, and leave the explicit pin change for a
 reviewed update. Run `bun run audit:dependencies` for the same vulnerability review
 locally.
 
+Security overrides in `package.json` pin patched transitive dependencies when the
+locked upstream packages still resolve vulnerable versions. The current overrides
+include `http-cache-semantics` 4.3.0, `smol-toml` 1.9.1, `undici` 8.10.2,
+`sharp` 0.35.5, and `source-map-js` 1.2.2. Remove an override once the upstream
+dependency graph resolves a fixed version without it.
+
 ## Optional section integration
 
 `src/components/Certs.astro` is a dormant section template. It remains outside the

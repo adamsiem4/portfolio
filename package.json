@@ -9,8 +9,13 @@
   "overrides": {
     "devalue": "5.9.4",
     "fast-uri": "3.1.8",
+    "http-cache-semantics": "4.3.0",
     "js-yaml": "4.3.2",
-    "nanoid": "3.3.19"
+    "nanoid": "3.3.19",
+    "sharp": "0.35.5",
+    "smol-toml": "1.9.1",
+    "source-map-js": "1.2.2",
+    "undici": "8.10.2"
   },
   "scripts": {
     "dev": "astro dev",
@@ -38,7 +43,7 @@
     "@astrojs/check": "0.9.10",
     "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.63.0",
-    "@types/node": "26.6.3",
+    "@types/node": "26.6.5",
     "typescript": "^6"
   }
 }
