@@ -42,6 +42,11 @@ in `src/content/about.pl.md` or `src/content/about.en.md`. Project records remai
 English in `src/config/projects.js` to match `public/llms.txt`; new projects also
 need Polish copy and image descriptions. Client announcements use translated DOM
 templates rather than a client-side dictionary.
+
+Keep Polish copy concise and professional, preserving product names and established
+technical terms. Count labels use `Liczba projektów: {total}` and
+`Liczba zdjęć: {total}` so they remain grammatical when the number of items changes.
+
 The locale-specific email addresses live in `siteConfig.contactEmail.pl` and
 `siteConfig.contactEmail.en`; visible links and structured metadata use the same address.
 

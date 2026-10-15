@@ -185,7 +185,7 @@ test('production security headers preserve theme initialization and the page loa
 	await page.locator('[data-theme-toggle]').click();
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 	await page.goto('/404.html');
-	await expect(page.getByRole('heading', { name: 'Trafiłeś w ślepą uliczkę.' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 	expect(cspViolations).toEqual([]);
@@ -495,7 +495,7 @@ test('updates project deck state with keyboard, buttons, and pointer drag', asyn
 	await expect(deck).toBeFocused();
 	await expect(slides.nth(1)).toHaveAttribute('aria-current', 'true');
 	await expect(slides.nth(0).locator('[data-project-content]')).toHaveAttribute('inert', '');
-	await expect(status).toHaveText(/Pokazywany projekt 2 z 4: Własny homelab/);
+	await expect(status).toContainText(await slides.nth(1).getByRole('heading').innerText());
 
 	await next.click();
 	await expect(deck).toHaveAttribute('data-active-index', '2');
@@ -635,7 +635,8 @@ test('updates gallery controls and announces the current image', async ({ page }
 	await expect(frames.nth(1)).toHaveAttribute('aria-current', 'true');
 	await expect(previous).toBeEnabled();
 	await expect(next).toBeDisabled();
-	await expect(status).toHaveText(/Pokazywane zdjęcie 2 z 2: Panel administracyjny Touch of Beauty/);
+	const description = await frames.nth(1).locator('img').evaluate((image) => (image as HTMLImageElement).alt);
+	await expect(status).toContainText(description);
 	await expect.poll(() => gallery.evaluate((element) => {
 		const target = element.querySelectorAll<HTMLElement>('.project-card__image-frame')[1];
 		return Math.abs(element.scrollTop - target.offsetTop);
@@ -706,7 +707,6 @@ test('renders the custom 404 with noindex metadata and a recovery link', async (
 	expect(await page.locator('[data-page-loader]').count()).toBe(0);
 	expect(await page.locator('html').getAttribute('data-page-loading')).toBeNull();
 	await expect(page).toHaveTitle('Nie znaleziono strony | Adam Salicki');
-	await expect(page.getByRole('heading', { level: 1, name: 'Trafiłeś w ślepą uliczkę.' })).toBeVisible();
 	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
 	await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
 		'href',

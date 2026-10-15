@@ -6,8 +6,8 @@ const inlineScriptHashes = [
 	'fqF88Kx4kPEibA4V5JUla8adzl7wN506RuioHPwNdWg=',
 	'vz9dl8Q3Qowbcy5sN1m1Vpw2YpOsFN1Q3OjI7kcipfk=',
 	'4xGJFg2sUmpyFBmT4utPAPqPkNluEvgixdWyptLidEE=',
-	'O6rJMr5KDlPE/cfyUoJcPWeZ8zri5blk1GrBGXfkU7s=',
 	'Ig3IGM2qMKFxQwAKXgA/yEd0rpB1uhiTruz5MWsBRFs=',
+	'shaB8c76EIYPOcw/ybxneJBgRCePOXTQKfKYOxJcPrA=',
 ];
 
 // Astro emits small module bundles inline and deliberately inlines component CSS.
@@ -34,10 +34,10 @@ export const siteConfig = {
 	language: 'pl',
 	locale: 'pl_PL',
 	siteUrl: 'https://adamsalicki.pages.dev',
-	seoTitle: 'Adam Salicki | Portfolio: web development i cyberbezpieczeństwo',
-	seoDescription: 'Portfolio Adama Salickiego: projekty webowe, laboratorium homelab i cyberbezpieczeństwo, a także dane kontaktowe do współpracy i rekrutacji.',
+	seoTitle: 'Adam Salicki | Portfolio: aplikacje webowe i cyberbezpieczeństwo',
+	seoDescription: 'Portfolio Adama Salickiego: aplikacje webowe, infrastruktura homelab i cyberbezpieczeństwo. Projekty i kontakt w sprawie pracy lub współpracy.',
 	socialTitle: 'Adam Salicki — Portfolio',
-	socialDescription: 'Front-end developer rozwijający się w kierunku cyberbezpieczeństwa.',
+	socialDescription: 'Programista frontendowy rozwijający umiejętności w cyberbezpieczeństwie.',
 	socialImage: {
 		src: '/social-preview.png',
 		type: 'image/png',
@@ -47,9 +47,9 @@ export const siteConfig = {
 	},
 	seoKeywords: [
 		'Adam Salicki',
-		'portfolio cyberbezpieczeństwo',
+		'portfolio z cyberbezpieczeństwa',
 		'absolwent informatyki',
-		'junior cyberbezpieczeństwo',
+		'junior w cyberbezpieczeństwie',
 		'programista React',
 		'administracja systemami',
 		'Wazuh',
@@ -124,10 +124,10 @@ export const siteConfig = {
 	linkedinUrl: 'https://linkedin.com/in/adam-salicki-054a84295',
 	privacyNotice: {
 		title: 'Prywatność i dane',
-		summary: 'Ta statyczna strona portfolio nie używa reklamowych trackerów, skryptów analitycznych, ciasteczek śledzących ani formularzy kontaktowych.',
-		preference: 'Wybrany motyw kolorystyczny i język są zapisywane lokalnie w Twojej przeglądarce i służą wyłącznie do zapamiętania tych preferencji.',
-		hosting: 'Strona jest hostowana na Cloudflare Pages. Cloudflare może przetwarzać ograniczone dane techniczne, w tym adresy IP i metadane żądań, aby dostarczać, zabezpieczać i utrzymywać swoją sieć.',
-		contact: 'Jeśli napiszesz do mnie e-mail, wykorzystuję podane informacje wyłącznie po to, aby odpowiedzieć na Twoją wiadomość.',
+		summary: 'Strona nie używa reklamowych mechanizmów śledzących, skryptów analitycznych, śledzących plików cookie ani formularzy kontaktowych.',
+		preference: 'Motyw i język są zapisywane lokalnie w Twojej przeglądarce, wyłącznie po to, by zapamiętać Twój wybór.',
+		hosting: 'Strona korzysta z hostingu Cloudflare Pages. Cloudflare może przetwarzać ograniczony zakres danych technicznych, w tym adresy IP i metadane żądań, aby obsługiwać i zabezpieczać swoją sieć.',
+		contact: 'Informacje przesłane e-mailem wykorzystuję wyłącznie po to, by odpowiedzieć na Twoją wiadomość.',
 		providerUrl: 'https://www.cloudflare.com/privacypolicy/',
 	},
 };
