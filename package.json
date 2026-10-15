@@ -34,7 +34,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@lucide/astro": "1.48.0",
+    "@lucide/astro": "1.51.0",
     "astro": "7.3.5",
     "playwright-core": "^1.63.0",
     "simple-icons": "^13"
