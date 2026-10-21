@@ -1,13 +1,13 @@
 const inlineScriptHashes = [
 	'Buluswg2h40UWBJJGuNJDJveceDUyunuXhvURs8pijQ=',
 	'EYJ77fv1/vz8AdR1zKuBySacBW+F9fd02OoyRjZqKHI=',
-	'qnmwh3QNpoo6Q4yXtXCHCMspah3HXPTSC69nXbSzVWw=',
-	'ew3q54vqWuPMxtagj7czCSe7MzD00jssfU5Wm2z/lYQ=',
 	'fqF88Kx4kPEibA4V5JUla8adzl7wN506RuioHPwNdWg=',
-	'vz9dl8Q3Qowbcy5sN1m1Vpw2YpOsFN1Q3OjI7kcipfk=',
 	'4xGJFg2sUmpyFBmT4utPAPqPkNluEvgixdWyptLidEE=',
 	'Ig3IGM2qMKFxQwAKXgA/yEd0rpB1uhiTruz5MWsBRFs=',
 	'shaB8c76EIYPOcw/ybxneJBgRCePOXTQKfKYOxJcPrA=',
+	'eJ442JN5t2jwAfaaaIStTDjuHrLPAoZujsHJ/zWkSdY=',
+	'kxD2YTjpk0HQmjGcQYGGyHG98PGO01JHoYLvqL+2Flc=',
+	'lOGKLgeAizTKYCAVvL/sBROmj2wSSb5iep+ilhhuzsc=',
 ];
 
 // Astro emits small module bundles inline and deliberately inlines component CSS.
