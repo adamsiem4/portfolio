@@ -1,6 +1,6 @@
 ---
-import { Mail } from '@lucide/astro';
-import { siGithub, siLinkedin } from 'simple-icons';
+import { ExternalLink, Mail } from '@lucide/astro';
+import { siGithub } from 'simple-icons';
 import { siteConfig } from '../config/site.js';
 import { getLocale, useTranslations } from '../i18n/ui.js';
 
@@ -18,7 +18,7 @@ const socialLinks = [
 	{
 		label: 'LinkedIn',
 		href: siteConfig.linkedinUrl,
-		brandPath: siLinkedin.path,
+		brandPath: null,
 	},
 ];
 ---
@@ -57,14 +57,18 @@ const socialLinks = [
 								rel="noopener noreferrer"
 								data-magnetic-target
 							>
-								<svg
-									class="contact__brand-icon"
-									viewBox="0 0 24 24"
-									aria-hidden="true"
-									focusable="false"
-								>
-									<path d={brandPath} />
-								</svg>
+								{brandPath ? (
+									<svg
+										class="contact__brand-icon"
+										viewBox="0 0 24 24"
+										aria-hidden="true"
+										focusable="false"
+									>
+										<path d={brandPath} />
+									</svg>
+								) : (
+									<ExternalLink size={24} stroke-width={1.8} aria-hidden="true" />
+								)}
 							</a>
 						</span>
 					))}

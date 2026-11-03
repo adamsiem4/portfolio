@@ -11,6 +11,12 @@ updates:
     open-pull-requests-limit: 10
     commit-message:
       prefix: chore(deps)
+    # Astro checking still requires TypeScript 6's programmatic compiler API.
+    # Remove after https://github.com/withastro/astro/pull/17852 lands in our checker.
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
     groups:
       astro-framework:
         patterns:

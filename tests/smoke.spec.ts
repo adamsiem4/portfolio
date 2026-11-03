@@ -823,30 +823,45 @@ test('keeps heading geometry stable when scrolling replays the scramble', async 
 	for (const width of [390, 1280]) {
 		await page.setViewportSize({ width, height: 844 });
 		for (const direction of ['down', 'up']) {
-			await heading.evaluate((element, direction) => {
+			// Canonical text can predate the scroll, so wait for the browser to observe
+			// the real offscreen state before scrolling back into view.
+			await heading.evaluate(async (element, direction) => {
 				const bounds = element.getBoundingClientRect();
 				const top = bounds.top + scrollY;
+				const { promise, resolve } = Promise.withResolvers<void>();
+				const observer = new IntersectionObserver((entries) => {
+					if (!entries.some((entry) => !entry.isIntersecting)) return;
+
+					observer.disconnect();
+					resolve();
+				});
+				observer.observe(element);
 				window.scrollTo({
 					top: direction === 'down' ? top - innerHeight - 50 : top + bounds.height + 50,
 					behavior: 'instant',
 				});
+				await promise;
 			}, direction);
 			await expect(heading).toHaveText('O mnie');
 			const result = await heading.evaluate(async (element) => {
 				const initial = element.getBoundingClientRect();
+				const initialText = element.textContent?.trim() ?? '';
 				const samples: { text: string; height: number; width: number }[] = [];
+				const { promise, resolve } = Promise.withResolvers<void>();
+				let scrambled = false;
 				const observer = new MutationObserver(() => {
 					const bounds = element.getBoundingClientRect();
-					samples.push({
+					const sample = {
 						text: element.textContent?.trim() ?? '',
 						height: bounds.height,
 						width: bounds.width,
-					});
+					};
+					samples.push(sample);
+					scrambled ||= sample.text !== initialText;
+					if (scrambled && sample.text === initialText) resolve();
 				});
 				observer.observe(element, { childList: true, subtree: true });
 				window.scrollTo({ top: initial.top + scrollY - innerHeight / 2, behavior: 'instant' });
-				const { promise, resolve } = Promise.withResolvers<void>();
-				setTimeout(resolve, 900);
 				await promise;
 				observer.disconnect();
 				return { initial: { height: initial.height, width: initial.width }, samples };

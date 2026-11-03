@@ -30,7 +30,7 @@ const currentYear = new Date().getFullYear();
 						hreflang={localeMeta[code].htmlLang}
 						lang={localeMeta[code].htmlLang}
 						aria-current={code === locale ? 'true' : undefined}
-						aria-label={t(code === 'pl' ? 'footer.switchPl' : 'footer.switchEn')}
+						aria-label={`${localeMeta[code].short} — ${t(code === 'pl' ? 'footer.switchPl' : 'footer.switchEn')}`}
 						data-magnetic-target
 					>{localeMeta[code].short}</a>
 					</span>

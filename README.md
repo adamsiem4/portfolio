@@ -154,8 +154,10 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
 
 Every pull request and push to `main` installs the committed Bun lockfile without
 modification, runs the source and public-file checks, builds the production site,
-and executes the Chromium smoke suite. Failed browser runs retain the HTML report,
-traces, and screenshots as GitHub Actions artifacts for 14 days.
+and executes the Chromium smoke suite. Every workflow explicitly provisions a
+Node version satisfying `engines.node` in `package.json`, rather than relying on
+the runner image's default. Failed browser runs retain the HTML report, traces,
+and screenshots as GitHub Actions artifacts for 14 days.
 
 ## Dependency maintenance
 
@@ -164,6 +166,10 @@ workflows that do not explicitly request another version inherit it. Dependabot
 checks Bun-managed packages and pinned GitHub Actions every Wednesday, grouping
 related minor and patch updates for Astro, browser testing, interface libraries,
 and development tooling while leaving major upgrades isolated for review.
+TypeScript major upgrades are held while `astro-check` depends on the TypeScript 6
+compiler API; TypeScript 7.0 cannot run that check. Remove the Dependabot ignore
+after [Astro's native-compiler support](https://github.com/withastro/astro/pull/17852)
+is available in the installed checker. TypeScript 6 minor and patch updates remain enabled.
 
 The dependency-maintenance workflow runs weekly, on manual dispatch, and whenever a
 pull request changes `package.json` or `bun.lock`. It runs `bun audit`, source and
@@ -173,17 +179,28 @@ the locked Playwright version, while the Edge job installs the current branded
 stable channel; browser binaries are not cached. Failed jobs retain their Playwright
 reports, traces, and screenshots for 14 days.
 
+Desktop project copy keeps enough space for the different fallback-font metrics
+on Linux and Windows. Its named, keyboard-focusable scroll region preserves access
+when content still exceeds the available space. The heading replay regression
+waits for observed viewport exit and a complete scramble cycle instead of assuming
+that scroll events and animation callbacks finish within a fixed delay.
+Footer language links include their visible `PL` or `EN` code in the accessible
+name, so speech-input labels match the controls under current accessibility rules.
+
 Dependabot cannot update the Bun executable pin itself. Scheduled and manual runs
 therefore also build and check with the latest Bun release, publish a workflow
 warning when it differs from the pin, and leave the explicit pin change for a
 reviewed update. Run `bun run audit:dependencies` for the same vulnerability review
-locally.
+locally. Bun version-update PRs are supported, but Dependabot does not currently
+support automatic security-update PRs for Bun; the audit gate remains necessary.
 
 Security overrides in `package.json` pin patched transitive dependencies when the
 locked upstream packages still resolve vulnerable versions. The current overrides
-include `http-cache-semantics` 4.3.0, `smol-toml` 1.9.1, `undici` 8.10.2,
-`sharp` 0.35.5, and `source-map-js` 1.2.2. Remove an override once the upstream
-dependency graph resolves a fixed version without it.
+include `fast-uri` 3.1.9, `http-cache-semantics` 4.3.0, `smol-toml` 1.9.1,
+`undici` 8.12.2, `sharp` 0.35.5, `source-map-js` 1.2.2, and `zod` 4.6.6.
+Remove an override once the upstream dependency graph resolves a fixed version
+without it. LinkedIn uses a generic external-link icon because Simple Icons
+removed its LinkedIn export; the link's accessible name and destination are unchanged.
 
 ## Optional section integration
 
