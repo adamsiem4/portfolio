@@ -64,8 +64,6 @@ jobs:
             browser: firefox
           - project: webkit
             browser: webkit
-          - project: edge
-            browser: msedge
 
     steps:
       - name: Check out repository

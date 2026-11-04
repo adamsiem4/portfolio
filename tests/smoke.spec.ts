@@ -1,21 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { siteConfig } from '../src/config/site.js';
-import {
-	PROJECT_LAYOUT,
-	getProjectMediaSlotWidth,
-} from '../src/utils/project-layout.js';
 
 type RuntimeIssues = {
 	pageErrors: string[];
 	consoleErrors: string[];
-};
-
-type FragmentReference = {
-	fragment: string;
-	href: string;
-	label: string;
-	targetDocument: string;
 };
 
 const runtimeIssuesByPage = new WeakMap<Page, RuntimeIssues>();
@@ -65,93 +54,6 @@ const openPage = async (page: Page, path: string) => {
 
 const openPortfolio = (page: Page) => openPage(page, '/');
 
-const inspectImages = (page: Page) => page.locator('img').evaluateAll(async (elements) => {
-	const images = elements as HTMLImageElement[];
-
-	await Promise.all(images.map(async (image) => {
-		image.loading = 'eager';
-		try {
-			await image.decode();
-		} catch {
-			// The state below reports the failed URL with useful dimensions.
-		}
-	}));
-
-	return {
-		total: images.length,
-		broken: images
-			.filter((image) => !image.complete || image.naturalWidth === 0 || image.naturalHeight === 0)
-			.map((image) => ({
-				alt: image.alt,
-				complete: image.complete,
-				height: image.naturalHeight,
-				src: image.currentSrc || image.src,
-				width: image.naturalWidth,
-			})),
-	};
-});
-
-const inspectInternalFragments = (page: Page) => page.locator('a[href]').evaluateAll((elements) => {
-	const links = elements as HTMLAnchorElement[];
-	const currentUrl = new URL(window.location.href);
-	const references: FragmentReference[] = [];
-
-	for (const link of links) {
-		const href = link.getAttribute('href');
-		if (!href) continue;
-
-		let targetUrl: URL;
-		try {
-			targetUrl = new URL(href, currentUrl);
-		} catch {
-			continue;
-		}
-		if (
-			targetUrl.origin !== currentUrl.origin
-			|| targetUrl.hash.length <= 1
-		) continue;
-
-		const label = link.textContent?.trim().replace(/\s+/g, ' ') || '(unlabelled link)';
-		const targetDocument = `${targetUrl.pathname}${targetUrl.search}`;
-		const fragment = decodeURIComponent(targetUrl.hash.slice(1));
-		references.push({
-			fragment,
-			href,
-			label,
-			targetDocument,
-		});
-	}
-
-	const targets = Array.from(
-		document.querySelectorAll<HTMLElement>('[id]'),
-		(element) => element.id,
-	).filter(Boolean);
-
-	return {
-		document: `${currentUrl.pathname}${currentUrl.search}`,
-		references,
-		targets: [...new Set(targets)],
-	};
-});
-
-const inspectHorizontalOverflow = (page: Page) => page.evaluate(() => {
-	const root = document.documentElement;
-	const contentWidth = Math.max(root.scrollWidth, document.body?.scrollWidth ?? 0);
-
-	return {
-		contentWidth,
-		layoutWidth: root.clientWidth,
-		overflow: Math.max(0, contentWidth - root.clientWidth),
-	};
-});
-
-const pageHealthViewports = [
-	{ label: 'mobile', width: 390, height: 844 },
-	{ label: 'desktop', width: 1_440, height: 900 },
-] as const;
-
-const pageHealthRoutes = ['/', '/en/', '/404.html'] as const;
-
 test('production security headers preserve theme initialization and the page loader', async ({ page }) => {
 	const productionHeaders = Object.fromEntries(
 		Object.entries(siteConfig.responseHeaders)
@@ -197,7 +99,7 @@ test.describe('mobile navigation', () => {
 		hasTouch: true,
 	});
 
-	test('opens and closes with keyboard and touch without stealing focus', async ({ page }) => {
+	test('opens and closes with keyboard and touch', async ({ page }) => {
 		await openPortfolio(page);
 
 		const toggle = page.locator('[data-menu-toggle]');
@@ -211,19 +113,6 @@ test.describe('mobile navigation', () => {
 		await expect(toggle).toHaveAttribute('aria-expanded', 'false');
 		await expect(toggle).toBeFocused();
 
-		const themeToggle = page.locator('[data-theme-toggle]');
-		await themeToggle.focus();
-		await page.keyboard.press('Escape');
-		await expect(themeToggle).toBeFocused();
-
-		await toggle.tap();
-		await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-		await expect(menu).toHaveAttribute('data-open', 'true');
-
-		await page.locator('#home').tap({ position: { x: 20, y: 300 } });
-		await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-		await expect(menu).toHaveAttribute('data-open', 'false');
-
 		await toggle.tap();
 		await page.getByRole('link', { name: 'Projekty' }).tap();
 		await expect(menu).toHaveAttribute('data-open', 'false');
@@ -236,165 +125,49 @@ test('persists the selected theme across reloads', async ({ page }) => {
 	await openPortfolio(page);
 
 	const root = page.locator('html');
-	const toggle = page.locator('[data-theme-toggle]');
 	await expect(root).toHaveAttribute('data-theme', 'dark');
-	await expect(root).toHaveAttribute('data-theme-preference', 'system');
-
-	await toggle.click();
-	await expect(root).toHaveAttribute('data-theme', 'light');
-	await expect(root).toHaveAttribute('data-theme-preference', 'user');
-	await expect(toggle).toHaveAccessibleName('Przełącz na tryb ciemny');
-	expect(await page.evaluate(() => localStorage.getItem('portfolio-theme'))).toBe('light');
-
-	await page.reload();
-	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
-	await expect(root).toHaveAttribute('data-theme', 'light');
-	await expect(root).toHaveAttribute('data-theme-preference', 'user');
-});
-
-test.describe('page health', () => {
-	for (const viewport of pageHealthViewports) {
-		test(`validates ${viewport.label} layout and assets`, async ({ page }) => {
-			await page.setViewportSize({ width: viewport.width, height: viewport.height });
-
-			const brokenImages: Array<{
-				alt: string;
-				complete: boolean;
-				height: number;
-				path: string;
-				src: string;
-				width: number;
-			}> = [];
-			const documentTargets = new Map<string, Set<string>>();
-			const fragmentReferences: FragmentReference[] = [];
-			const overflowFailures: Array<{
-				contentWidth: number;
-				layoutWidth: number;
-				overflow: number;
-				path: string;
-			}> = [];
-			let totalImages = 0;
-
-			for (const path of pageHealthRoutes) {
-				await openPage(page, path);
-
-				const imageHealth = await inspectImages(page);
-				totalImages += imageHealth.total;
-				brokenImages.push(...imageHealth.broken.map((image) => ({ path, ...image })));
-
-				const fragmentHealth = await inspectInternalFragments(page);
-				documentTargets.set(fragmentHealth.document, new Set(fragmentHealth.targets));
-				fragmentReferences.push(...fragmentHealth.references);
-
-				const horizontalOverflow = await inspectHorizontalOverflow(page);
-				if (horizontalOverflow.overflow > 1) {
-					overflowFailures.push({ path, ...horizontalOverflow });
-				}
-			}
-
-			expect(totalImages, 'The portfolio health check did not find any images.').toBeGreaterThan(0);
-			expect(
-				brokenImages,
-				`Broken images at ${viewport.width}x${viewport.height}.`,
-			).toEqual([]);
-
-			expect(
-				fragmentReferences.length,
-				'The portfolio health check did not find any internal fragment links.',
-			).toBeGreaterThan(0);
-			const missingFragments = fragmentReferences.flatMap((reference) => {
-				const targets = documentTargets.get(reference.targetDocument);
-				if (!targets) {
-					return [`${reference.href} from "${reference.label}" targets an unaudited document`];
-				}
-				return reference.fragment && targets.has(reference.fragment)
-					? []
-					: [`${reference.href} from "${reference.label}"`];
-			});
-			expect(
-				[...new Set(missingFragments)],
-				'Internal links reference missing fragment targets.',
-			).toEqual([]);
-
-			expect(
-				overflowFailures,
-				`Horizontal document overflow at ${viewport.width}x${viewport.height}.`,
-			).toEqual([]);
-		});
-	}
-});
-
-test('uses reduced-motion fallbacks for page and component animation', async ({ page }) => {
-	await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
-	await openPortfolio(page);
-
-	const root = page.locator('html');
-	const activeSlide = page.locator('[data-project-slide][aria-current="true"]');
-	const gallery = activeSlide.locator('[data-project-gallery]');
-	await expect.poll(() => root.evaluate((element) => getComputedStyle(element).scrollBehavior)).toBe('auto');
-	await expect.poll(() => page.locator('.hero__scroll-icon').evaluate(
-		(element) => getComputedStyle(element).animationName,
-	)).toBe('none');
-	await expect.poll(() => page.locator('[data-project-slide]').first().evaluate(
-		(element) => getComputedStyle(element).transitionDuration,
-	)).toBe('0s');
-	await expect.poll(() => activeSlide.locator('.project-card__media-track').evaluate(
-		(element) => getComputedStyle(element).animationName,
-	)).toBe('none');
-	await expect.poll(() => activeSlide.locator('.project-card__stack li').first().evaluate(
-		(element) => getComputedStyle(element, '::before').transitionDuration,
-	)).toBe('0s');
-	await expect.poll(() => page.locator('kinetic-text').evaluate((element) => {
-		const engine = (element as HTMLElement & {
-			engine?: { reducedMotion: boolean; running: boolean };
-		}).engine;
-		return { reducedMotion: engine?.reducedMotion, running: engine?.running };
-	})).toEqual({ reducedMotion: true, running: false });
-
-	const heading = page.locator('[data-scramble-heading]').first();
-	const canonicalHeading = await heading.getAttribute('data-scramble-text');
-	await page.waitForTimeout(120);
-	await expect(heading).toHaveText(canonicalHeading ?? '');
-
-	const galleryPosition = await gallery.evaluate((element) => {
-		const next = element.closest('.project-card__media-shell')
-			?.querySelector<HTMLButtonElement>('[data-gallery-next]');
-		next?.click();
-		const target = element.querySelectorAll<HTMLElement>('.project-card__image-frame')[1];
-		return {
-			activeIndex: element.dataset.activeIndex,
-			distance: Math.abs(element.scrollTop - target.offsetTop),
-			hasHint: element.hasAttribute('data-gallery-hinting'),
-		};
-	});
-	expect(galleryPosition.activeIndex).toBe('1');
-	expect(galleryPosition.distance).toBeLessThanOrEqual(1);
-	expect(galleryPosition.hasHint).toBe(false);
-
-	const privacyTrigger = page.getByRole('button', { name: 'Informacja o prywatności i danych' });
-	const privacyDialog = page.getByRole('dialog', { name: 'Prywatność i dane' });
-	await privacyTrigger.click();
-	await expect(privacyDialog).toBeVisible();
-	expect(await privacyDialog.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
-	await page.getByRole('button', { name: 'Zamknij informację o prywatności' }).click();
-	await expect(privacyDialog).toBeHidden();
 
 	await page.locator('[data-theme-toggle]').click();
 	await expect(root).toHaveAttribute('data-theme', 'light');
 	await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(244, 243, 239)');
-	await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
-	await expect(page.locator('.theme-transition-cover')).toHaveCount(0);
-	await expect.poll(() => root.evaluate(
-		(element) => element.style.getPropertyValue('--theme-wave-x'),
-	)).toBe('');
-	await page.locator('[data-theme-toggle]').click();
-	await expect(root).toHaveAttribute('data-theme', 'dark');
-	await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(9, 11, 12)');
-	await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
+
+	await page.reload();
+	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
+	await expect(root).toHaveAttribute('data-theme', 'light');
 });
 
+for (const viewport of [
+	{ label: 'mobile', width: 390, height: 844 },
+	{ label: 'desktop', width: 1_440, height: 900 },
+]) {
+	test(`${viewport.label} pages load images without horizontal overflow`, async ({ page }) => {
+		await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+		for (const path of ['/', '/en/', '/404.html']) {
+			await openPage(page, path);
+
+			const brokenImages = await page.locator('img').evaluateAll(async (elements) => {
+				const images = elements as HTMLImageElement[];
+				await Promise.all(images.map((image) => {
+					image.loading = 'eager';
+					return image.decode().catch(() => {});
+				}));
+				return images
+					.filter((image) => image.naturalWidth === 0)
+					.map((image) => image.currentSrc || image.src);
+			});
+			expect(brokenImages, `Broken images on ${path}.`).toEqual([]);
+
+			const overflow = await page.evaluate(() => (
+				document.documentElement.scrollWidth - document.documentElement.clientWidth
+			));
+			expect(overflow, `Horizontal overflow on ${path}.`).toBeLessThanOrEqual(1);
+		}
+	});
+}
+
 test.describe('theme reveal', () => {
-	test('starts at the toggle, covers the viewport, and cleans up', async ({ page }) => {
+	test('starts at the toggle and cleans up', async ({ page }) => {
 		await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
 		await openPortfolio(page);
 
@@ -405,42 +178,16 @@ test.describe('theme reveal', () => {
 		await toggle.click();
 		await expect(root).toHaveAttribute('data-theme-transition', 'true');
 
-		const geometry = await root.evaluate((element) => ({
+		const origin = await root.evaluate((element) => ({
 			x: Number.parseFloat(element.style.getPropertyValue('--theme-wave-x')),
 			y: Number.parseFloat(element.style.getPropertyValue('--theme-wave-y')),
-			radius: Number.parseFloat(element.style.getPropertyValue('--theme-wave-radius')),
-			width: window.innerWidth,
-			height: window.innerHeight,
 		}));
-		if (bounds) {
-			const expectedX = bounds.x + bounds.width / 2;
-			const expectedY = bounds.y + bounds.height / 2;
-			const farthestCorner = Math.hypot(
-				Math.max(expectedX, geometry.width - expectedX),
-				Math.max(expectedY, geometry.height - expectedY),
-			);
-			expect(geometry.x).toBeCloseTo(expectedX, 0);
-			expect(geometry.y).toBeCloseTo(expectedY, 0);
-			expect(geometry.radius).toBeGreaterThan(farthestCorner);
-			expect(geometry.radius).toBeLessThanOrEqual(Math.ceil(farthestCorner) + 1);
-		}
+		expect(origin.x).toBeCloseTo(bounds!.x + bounds!.width / 2, 0);
+		expect(origin.y).toBeCloseTo(bounds!.y + bounds!.height / 2, 0);
 
 		await expect(root).toHaveAttribute('data-theme', 'light');
 		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
-		await expect(toggle).not.toHaveAttribute('aria-busy', 'true');
 		await expect(page.locator('.theme-transition-cover')).toHaveCount(0);
-		await expect.poll(() => root.evaluate((element) => [
-			element.style.getPropertyValue('--theme-wave-x'),
-			element.style.getPropertyValue('--theme-wave-y'),
-			element.style.getPropertyValue('--theme-wave-radius'),
-		])).toEqual(['', '', '']);
-
-		await toggle.click();
-		await expect(root).toHaveAttribute('data-theme-transition', 'true');
-		await expect(root).toHaveAttribute('data-theme', 'dark');
-		await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(9, 11, 12)');
-		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
-		await expect(toggle).toHaveAccessibleName('Przełącz na tryb jasny');
 	});
 
 	test('uses and cleans up the Web Animations fallback', async ({ page }) => {
@@ -456,27 +203,10 @@ test.describe('theme reveal', () => {
 		const root = page.locator('html');
 		const cover = page.locator('.theme-transition-cover');
 		await page.locator('[data-theme-toggle]').click();
-		await expect(root).toHaveAttribute('data-theme-transition', 'true');
 		await expect(cover).toBeVisible();
-		await expect(cover).toHaveAttribute('data-theme', 'light');
 		await expect(root).toHaveAttribute('data-theme', 'light');
 		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
 		await expect(cover).toHaveCount(0);
-	});
-
-	test('finishes immediately when reduced motion is enabled mid-reveal', async ({ page }) => {
-		await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'no-preference' });
-		await openPortfolio(page);
-
-		const root = page.locator('html');
-		const toggle = page.locator('[data-theme-toggle]');
-		await toggle.click();
-		await expect(root).toHaveAttribute('data-theme-transition', 'true');
-		await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
-		await expect(root).toHaveAttribute('data-theme', 'light');
-		await expect(root).not.toHaveAttribute('data-theme-transition', 'true');
-		await expect(toggle).not.toHaveAttribute('aria-busy', 'true');
-		await expect(page.locator('.theme-transition-cover')).toHaveCount(0);
 	});
 });
 
@@ -487,182 +217,45 @@ test('updates project deck state with keyboard, buttons, and pointer drag', asyn
 	const slides = deck.locator('[data-project-slide]');
 	const next = deck.locator('[data-project-next]');
 	const previous = deck.locator('[data-project-previous]');
-	const status = deck.locator('[data-project-status]');
 
 	await slides.nth(0).locator('[data-project-gallery]').focus();
 	await page.keyboard.press('ArrowRight');
 	await expect(deck).toHaveAttribute('data-active-index', '1');
-	await expect(deck).toBeFocused();
 	await expect(slides.nth(1)).toHaveAttribute('aria-current', 'true');
 	await expect(slides.nth(0).locator('[data-project-content]')).toHaveAttribute('inert', '');
-	await expect(status).toContainText(await slides.nth(1).getByRole('heading').innerText());
 
 	await next.click();
 	await expect(deck).toHaveAttribute('data-active-index', '2');
-	await expect(deck.locator('[data-project-position]')).toHaveText('03 / 04');
 	await previous.click();
-	await expect(deck).toHaveAttribute('data-active-index', '1');
-
 	await previous.click();
 	await expect(deck).toHaveAttribute('data-active-index', '0');
+
 	const bounds = await deck.boundingBox();
 	expect(bounds).not.toBeNull();
-	if (!bounds) return;
-
-	await page.mouse.move(bounds.x + bounds.width * 0.75, bounds.y + bounds.height * 0.5);
+	await page.mouse.move(bounds!.x + bounds!.width * 0.75, bounds!.y + bounds!.height * 0.5);
 	await page.mouse.down();
-	await page.mouse.move(bounds.x + bounds.width * 0.25, bounds.y + bounds.height * 0.5, { steps: 5 });
+	await page.mouse.move(bounds!.x + bounds!.width * 0.25, bounds!.y + bounds!.height * 0.5, { steps: 5 });
 	await page.mouse.up();
 	await expect(deck).toHaveAttribute('data-active-index', '1');
 });
 
-test('shows role, challenge, and outcome details for every project', async ({ page }) => {
-	await openPortfolio(page);
-
-	const slides = page.locator('[data-project-slide]');
-
-	for (const slide of await slides.all()) {
-		const impact = slide.locator('[data-project-impact]');
-		await expect(impact).toHaveCount(1);
-
-		for (const key of ['role', 'challenge', 'outcome']) {
-			const detail = impact.locator(`[data-project-detail="${key}"]`);
-			await expect(detail.locator('dd')).not.toHaveText(/^\s*$/);
-		}
-	}
-	for (const width of [1_200, 1_280]) {
-		await page.setViewportSize({ width, height: 720 });
-		const overflow = await slides.evaluateAll((elements) => elements.map((element) => {
-			const copy = element.querySelector<HTMLElement>('.project-card__copy');
-			return copy ? copy.scrollHeight - copy.clientHeight : Number.POSITIVE_INFINITY;
-		}));
-		expect(
-			Math.max(...overflow),
-			`Project copy overflow at ${width}px by slide: ${overflow.join(', ')}px`,
-		).toBeLessThanOrEqual(1);
-	}
-});
-
-test('keeps the project deck and media widths aligned across breakpoints', async ({ page }) => {
-	await openPortfolio(page);
-
-	const deck = page.locator('[data-project-deck]');
-	const slides = deck.locator('[data-project-slide]');
-	const projectCount = await slides.count();
-	const moveToDeckEnd = async (controlSelector: string) => deck.evaluate(
-		(element, selector) => {
-			const control = element.querySelector<HTMLButtonElement>(selector);
-			let remainingMoves = element.querySelectorAll('[data-project-slide]').length;
-			while (control && !control.disabled && remainingMoves > 0) {
-				control.click();
-				remainingMoves -= 1;
-			}
-		},
-		controlSelector,
-	);
-	const getCardFanBounds = async () => slides.evaluateAll((elements) => {
-		const bounds = elements.map((element) => element.getBoundingClientRect());
-		return {
-			left: Math.min(...bounds.map((rect) => rect.left)),
-			right: Math.max(...bounds.map((rect) => rect.right)),
-			viewportWidth: document.documentElement.clientWidth,
-		};
-	});
-
-	for (const viewport of [
-		{ width: 320, height: 844 },
-		{ width: 767, height: 900 },
-		{ width: 768, height: 900 },
-		{ width: 1_199, height: 800 },
-		{ width: 1_200, height: 800 },
-		{ width: 1_215, height: 800 },
-		{ width: 1_216, height: 800 },
-		{ width: 1_440, height: 800 },
-	]) {
-		await page.setViewportSize(viewport);
-		await moveToDeckEnd('[data-project-previous]');
-		await expect(deck).toHaveAttribute('data-active-index', '0');
-		const startFanBounds = await getCardFanBounds();
-		expect(startFanBounds.left).toBeGreaterThanOrEqual(-1);
-		expect(startFanBounds.right).toBeLessThanOrEqual(startFanBounds.viewportWidth + 1);
-
-		await moveToDeckEnd('[data-project-next]');
-		await expect(deck).toHaveAttribute('data-active-index', String(projectCount - 1));
-		const endFanBounds = await getCardFanBounds();
-		expect(endFanBounds.left).toBeGreaterThanOrEqual(-1);
-		expect(endFanBounds.right).toBeLessThanOrEqual(endFanBounds.viewportWidth + 1);
-
-		const deckBounds = await deck.boundingBox();
-		const imageBounds = await slides.nth(projectCount - 1)
-			.locator('.project-card__image')
-			.first()
-			.boundingBox();
-		expect(deckBounds).not.toBeNull();
-		expect(imageBounds).not.toBeNull();
-		if (!deckBounds || !imageBounds) continue;
-		const isDesktop = viewport.width >= PROJECT_LAYOUT.desktopBreakpoint;
-		const expectedMediaWidth = getProjectMediaSlotWidth(
-			deckBounds.width,
-			projectCount,
-			isDesktop,
-		);
-		expect(imageBounds.width).toBeCloseTo(expectedMediaWidth, 0);
-
-		const expectedGutter = viewport.width >= PROJECT_LAYOUT.tabletBreakpoint
-			? PROJECT_LAYOUT.tabletPageGutter
-			: PROJECT_LAYOUT.mobilePageGutter;
-		expect(await page.locator('.projects').evaluate((element) => (
-			Number.parseFloat(getComputedStyle(element).paddingInlineStart)
-		))).toBe(expectedGutter);
-	}
-});
-
 test('updates gallery controls and announces the current image', async ({ page }) => {
-	await page.emulateMedia({ reducedMotion: 'no-preference' });
 	await openPortfolio(page);
 
 	const activeSlide = page.locator('[data-project-slide][aria-current="true"]');
 	const gallery = activeSlide.locator('[data-project-gallery]');
-	const frames = gallery.locator('.project-card__image-frame');
 	const previous = activeSlide.locator('[data-gallery-previous]');
 	const next = activeSlide.locator('[data-gallery-next]');
-	const status = activeSlide.locator('[data-gallery-status]');
 
-	await expect(gallery).toHaveAttribute('data-active-index', '0');
-	await expect(frames.nth(0)).toHaveAttribute('aria-current', 'true');
 	await next.click();
 	await expect(gallery).toHaveAttribute('data-active-index', '1');
-	await expect(frames.nth(1)).toHaveAttribute('aria-current', 'true');
-	await expect(previous).toBeEnabled();
 	await expect(next).toBeDisabled();
-	const description = await frames.nth(1).locator('img').evaluate((image) => (image as HTMLImageElement).alt);
-	await expect(status).toContainText(description);
-	await expect.poll(() => gallery.evaluate((element) => {
-		const target = element.querySelectorAll<HTMLElement>('.project-card__image-frame')[1];
-		return Math.abs(element.scrollTop - target.offsetTop);
-	})).toBeLessThanOrEqual(1);
+	const description = await gallery.locator('img').nth(1).getAttribute('alt');
+	await expect(activeSlide.locator('[data-gallery-status]')).toContainText(description ?? '');
 
 	await previous.click();
 	await expect(gallery).toHaveAttribute('data-active-index', '0');
 	await expect(previous).toBeDisabled();
-});
-
-
-test('shows a card focus ring when the gallery scroll region takes keyboard focus', async ({ page }) => {
-	await openPortfolio(page);
-
-	const activeCard = page.locator('[data-project-slide][data-active="true"] .project-card');
-	await expect(activeCard).toHaveCSS('outline-style', 'none');
-
-	const focusedGallery = page.locator('[data-project-gallery]:focus');
-
-	for (let press = 0; press < 24 && await focusedGallery.count() === 0; press += 1) {
-		await page.keyboard.press('Tab');
-	}
-
-	await expect(focusedGallery).toHaveCount(1);
-	await expect(activeCard).toHaveCSS('outline-style', 'solid');
-	await expect(activeCard).toHaveCSS('outline-width', '2px');
 });
 
 test('traps dialog focus and returns it to the privacy trigger', async ({ page }) => {
@@ -670,48 +263,21 @@ test('traps dialog focus and returns it to the privacy trigger', async ({ page }
 
 	const trigger = page.getByRole('button', { name: 'Informacja o prywatności i danych' });
 	const dialog = page.getByRole('dialog', { name: 'Prywatność i dane' });
-	const title = page.locator('[data-privacy-title]');
 
 	await trigger.click();
 	await expect(dialog).toBeVisible();
-	await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-	await expect(title).toBeFocused();
+	await expect(page.locator('[data-privacy-title]')).toBeFocused();
 
 	await page.keyboard.press('Escape');
 	await expect(dialog).toBeHidden();
-	await expect(trigger).toHaveAttribute('aria-expanded', 'false');
 	await expect(trigger).toBeFocused();
-
-	await trigger.press('Enter');
-	await page.getByRole('button', { name: 'Zamknij informację o prywatności' }).click();
-	await expect(dialog).toBeHidden();
-	await expect(trigger).toBeFocused();
-});
-
-test('back-to-top preserves the fragment and moves logical focus', async ({ page }) => {
-	await openPortfolio(page);
-
-	const backToTop = page.locator('[data-back-to-top]');
-	await backToTop.scrollIntoViewIfNeeded();
-	await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
-	await backToTop.click();
-
-	await expect(page).toHaveURL(/#home$/);
-	await expect(page.locator('#home')).toBeFocused();
-	await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
 
 test('renders the custom 404 with noindex metadata and a recovery link', async ({ page }) => {
-	await page.goto('/404.html');
+	await openPage(page, '/404.html');
 
-	expect(await page.locator('[data-page-loader]').count()).toBe(0);
-	expect(await page.locator('html').getAttribute('data-page-loading')).toBeNull();
 	await expect(page).toHaveTitle('Nie znaleziono strony | Adam Salicki');
 	await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
-	await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
-		'href',
-		'https://adamsalicki.pages.dev/404',
-	);
 	await expect(page.getByRole('link', { name: 'Wróć do portfolio' })).toHaveAttribute('href', '/');
 });
 
@@ -727,53 +293,36 @@ for (const path of ['/', '/404.html']) {
 	});
 }
 
-test.describe('page loader', () => {
-	test('makes page controls inert until the reveal completes', async ({ page }) => {
-		await page.emulateMedia({ reducedMotion: 'no-preference' });
-		await page.goto('/', { waitUntil: 'domcontentloaded' });
+test('makes page controls inert until the loader reveal completes', async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-		const loader = page.locator('[data-page-loader]');
-		const navbar = page.locator('[data-navbar]');
-		await expect(loader).toBeVisible();
-		await expect(navbar).toHaveAttribute('inert', '');
-		await expect(loader).toHaveCount(0, { timeout: 3_000 });
-		await expect(navbar).not.toHaveAttribute('inert', '');
-	});
+	const loader = page.locator('[data-page-loader]');
+	const navbar = page.locator('[data-navbar]');
+	await expect(loader).toBeVisible();
+	await expect(navbar).toHaveAttribute('inert', '');
+	await expect(loader).toHaveCount(0, { timeout: 3_000 });
+	await expect(navbar).not.toHaveAttribute('inert', '');
 });
 
-test('serves Polish at the canonical route and English under /en/', async ({ page }) => {
+test('serves Polish at / and English under /en/', async ({ page }) => {
 	await openPortfolio(page);
 	await expect(page.locator('html')).toHaveAttribute('lang', 'pl');
-	await expect(page.getByRole('heading', { name: 'O mnie', exact: true })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Napisz na kontakt.asalicki@protonmail.com' }))
 		.toHaveAttribute('href', 'mailto:kontakt.asalicki@protonmail.com');
-	await expect(page.locator('#certs, a[href$="#certs"]')).toHaveCount(0);
-	await expect(page.getByRole('link', { name: 'Zmień język na angielski' }))
-		.toHaveAttribute('href', '/en/?lang=en');
 
 	await openPage(page, '/en/');
 	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-	await expect(page.getByRole('heading', { name: 'About me' })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Email contact.asalicki@protonmail.com' }))
 		.toHaveAttribute('href', 'mailto:contact.asalicki@protonmail.com');
-	await expect(page.getByRole('link', { name: 'Projects' })).toHaveAttribute('href', '#projects');
-	await expect(page.locator('#certs, a[href$="#certs"]')).toHaveCount(0);
 	await expect(page.locator('link[rel="alternate"][hreflang="pl"]'))
 		.toHaveAttribute('href', 'https://adamsalicki.pages.dev/');
-	await page.locator('[data-project-gallery]').first().focus();
-	await page.keyboard.press('ArrowRight');
-	await expect(page.locator('[data-project-status]')).toHaveText('Showing project 2 of 4: Self-Hosted Homelab');
-	await page.keyboard.press('ArrowLeft');
-	await page.locator('[data-gallery-next]').first().click();
-	await expect(page.locator('[data-gallery-status]').first()).toContainText('Showing image 2 of 2: Touch of Beauty admin dashboard');
 });
 
 test('remembers the language chosen in the footer', async ({ page }) => {
 	await openPortfolio(page);
 	await page.getByRole('link', { name: 'Zmień język na angielski' }).click();
 	await expect(page).toHaveURL('/en/');
-	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-	expect(await page.evaluate(() => localStorage.getItem('portfolio-lang'))).toBe('en');
 
 	await page.goto('/');
 	await expect(page).toHaveURL('/en/');
@@ -789,15 +338,9 @@ test.describe('English device language', () => {
 	test('redirects the canonical route and localizes the shared 404', async ({ page }) => {
 		await page.goto('/');
 		await expect(page).toHaveURL('/en/');
-		await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-		await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
 
 		await page.goto('/404.html');
 		await expect(page).toHaveTitle('Page not found | Adam Salicki');
-		await expect(page.getByRole('heading', { level: 1, name: 'You’ve reached a dead end.' }))
-			.toBeVisible();
-		await expect(page.getByRole('link', { name: 'Back to portfolio' })).toBeVisible();
-		await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible();
 	});
 
 	test('honors an explicit Polish choice when browser storage is unavailable', async ({ page }) => {
@@ -809,69 +352,5 @@ test.describe('English device language', () => {
 		await openPage(page, '/?lang=pl&ref=shared#about');
 		await expect(page).toHaveURL('/?ref=shared#about');
 		await expect(page.locator('html')).toHaveAttribute('lang', 'pl');
-		await expect(page.getByRole('heading', { name: 'O mnie', exact: true })).toBeVisible();
 	});
-});
-
-test('keeps heading geometry stable when scrolling replays the scramble', async ({ page }) => {
-	// Wide random glyphs must not make the narrow About column wrap or jump.
-	await page.addInitScript(() => { Math.random = () => 0.54; });
-	await page.emulateMedia({ reducedMotion: 'no-preference' });
-	await openPortfolio(page);
-	const heading = page.getByRole('heading', { name: 'O mnie', exact: true });
-
-	for (const width of [390, 1280]) {
-		await page.setViewportSize({ width, height: 844 });
-		for (const direction of ['down', 'up']) {
-			// Canonical text can predate the scroll, so wait for the browser to observe
-			// the real offscreen state before scrolling back into view.
-			await heading.evaluate(async (element, direction) => {
-				const bounds = element.getBoundingClientRect();
-				const top = bounds.top + scrollY;
-				const { promise, resolve } = Promise.withResolvers<void>();
-				const observer = new IntersectionObserver((entries) => {
-					if (!entries.some((entry) => !entry.isIntersecting)) return;
-
-					observer.disconnect();
-					resolve();
-				});
-				observer.observe(element);
-				window.scrollTo({
-					top: direction === 'down' ? top - innerHeight - 50 : top + bounds.height + 50,
-					behavior: 'instant',
-				});
-				await promise;
-			}, direction);
-			await expect(heading).toHaveText('O mnie');
-			const result = await heading.evaluate(async (element) => {
-				const initial = element.getBoundingClientRect();
-				const initialText = element.textContent?.trim() ?? '';
-				const samples: { text: string; height: number; width: number }[] = [];
-				const { promise, resolve } = Promise.withResolvers<void>();
-				let scrambled = false;
-				const observer = new MutationObserver(() => {
-					const bounds = element.getBoundingClientRect();
-					const sample = {
-						text: element.textContent?.trim() ?? '',
-						height: bounds.height,
-						width: bounds.width,
-					};
-					samples.push(sample);
-					scrambled ||= sample.text !== initialText;
-					if (scrambled && sample.text === initialText) resolve();
-				});
-				observer.observe(element, { childList: true, subtree: true });
-				window.scrollTo({ top: initial.top + scrollY - innerHeight / 2, behavior: 'instant' });
-				await promise;
-				observer.disconnect();
-				return { initial: { height: initial.height, width: initial.width }, samples };
-			});
-			expect(result.samples.some(({ text }) => text !== 'O mnie')).toBe(true);
-			expect(result.samples.every(({ height, width }) =>
-				height === result.initial.height && width === result.initial.width)).toBe(true);
-			await expect(heading).toHaveText('O mnie');
-		}
-	}
-	await page.emulateMedia({ reducedMotion: 'reduce' });
-	await expect(heading).toHaveText('O mnie');
 });

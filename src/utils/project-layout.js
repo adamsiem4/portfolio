@@ -36,30 +36,6 @@ export const getProjectDeckReserve = (projectCount) => {
 };
 
 /**
- * @param {number} deckWidth
- * @param {number} projectCount
- * @param {boolean} isDesktop
- */
-export const getProjectMediaSlotWidth = (
-	deckWidth,
-	projectCount,
-	isDesktop,
-) => {
-	const cardContentWidth = Math.max(
-		0,
-		deckWidth - getProjectDeckReserve(projectCount) - PROJECT_LAYOUT.cardInlineBorders,
-	);
-
-	if (!isDesktop) return cardContentWidth;
-
-	return Math.max(
-		0,
-		(cardContentWidth * PROJECT_LAYOUT.desktopMediaShare)
-			- PROJECT_LAYOUT.desktopMediaDivider,
-	);
-};
-
-/**
  * @param {ImageDimensions} dimensions
  * @param {number} projectCount
  */
