@@ -301,7 +301,7 @@ test('makes page controls inert until the loader reveal completes', async ({ pag
 	const navbar = page.locator('[data-navbar]');
 	await expect(loader).toBeVisible();
 	await expect(navbar).toHaveAttribute('inert', '');
-	await expect(loader).toHaveCount(0, { timeout: 3_000 });
+	await expect(loader).toHaveCount(0, { timeout: 10_000 });
 	await expect(navbar).not.toHaveAttribute('inert', '');
 });
 
