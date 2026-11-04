@@ -111,7 +111,9 @@ if (configurationFailures.length > 0) {
 	const isBotBlock = (target, status) => {
 		if (status === 429 || status === 999) return true;
 		const hostname = new URL(target.url).hostname.replace(/^www\./, '');
-		return hostname === 'linkedin.com' && (status === 401 || status === 403);
+		// Touch of Beauty answers scripted requests with 403 while loading normally in browsers.
+		return ['linkedin.com', 'touchofbeauty.vercel.app'].includes(hostname)
+			&& (status === 401 || status === 403);
 	};
 	const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 	const requestHeaders = {

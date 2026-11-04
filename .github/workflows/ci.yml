@@ -15,9 +15,9 @@ concurrency:
 
 jobs:
   validate:
-    name: Check, build, and Chromium smoke
+    name: Check, build, and browser smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Check out repository
@@ -36,24 +36,30 @@ jobs:
       - name: Install locked dependencies
         run: bun install --frozen-lockfile
 
+      - name: Review dependency vulnerabilities
+        run: bun run audit:dependencies
+
       - name: Check source and public files
         run: bun run check
+
+      - name: Run script unit tests
+        run: bun test scripts
 
       - name: Build production site
         run: bun run build
 
-      - name: Install Chromium and system dependencies
-        run: bunx playwright install --with-deps chromium
+      - name: Install browsers and system dependencies
+        run: bunx playwright install --with-deps chromium firefox webkit
 
-      - name: Run Chromium smoke suite
-        id: chromium_smoke
-        run: bunx playwright test --project=chromium
+      - name: Run browser smoke suite
+        id: browser_smoke
+        run: bunx playwright test
 
       - name: Retain Playwright diagnostics
-        if: failure() && steps.chromium_smoke.outcome == 'failure'
+        if: failure() && steps.browser_smoke.outcome == 'failure'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: playwright-chromium-${{ github.run_id }}-${{ github.run_attempt }}
+          name: playwright-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             playwright-report/
             test-results/

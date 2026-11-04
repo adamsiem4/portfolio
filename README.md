@@ -120,9 +120,7 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
   module executes. Adding client-side page transitions requires restoring an
   Astro navigation lifecycle hook or an equivalent teardown/reinitialization path.
 - `Projects.astro` and `ProjectCard.astro` share the project-count geometry in
-  `project-layout.js`. The browser suite verifies that the card fan stays inside
-  the viewport and that gutters and rendered media-element width match the shared
-  geometry across mobile, tablet, and desktop breakpoints.
+  `project-layout.js`.
 - Theme-aware canvas output depends on the `site-theme-change` event and the shared
   tokens in `src/styles/global.css`; changing theme state without dispatching the
   event leaves the existing canvas composite stale.
@@ -136,9 +134,8 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
 - `bun run build` verifies that every generated inline script is authorized by the
   configured Content Security Policy and that no stale script hashes remain.
 - Every smoke test fails on uncaught page exceptions and error-level console output.
-  Dedicated page-health cases also decode every rendered image, resolve internal
-  fragment links across both home routes and the 404 page, and reject horizontal document overflow
-  at 390×844 and 1440×900.
+  Dedicated page-health cases also decode every rendered image and reject horizontal
+  document overflow on both home routes and the 404 page at 390×844 and 1440×900.
 - `bun run validate:production` queries the deployed URL, the official Schema.org
   validator, and an independent social-card crawler, then checks the live social
   image, sitemap, robots file, and 404 directive. Run it after deployment; it stays
@@ -153,8 +150,9 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
 ## Continuous integration
 
 Every pull request and push to `main` installs the committed Bun lockfile without
-modification, runs the source and public-file checks, builds the production site,
-and executes the Chromium smoke suite. Every workflow explicitly provisions a
+modification, runs `bun audit`, the source and public-file checks, and the script
+unit tests, builds the production site, and executes the smoke suite in Chromium,
+Firefox, and WebKit. Every workflow explicitly provisions a
 Node version satisfying `engines.node` in `package.json`, rather than relying on
 the runner image's default. Failed browser runs retain the HTML report, traces,
 and screenshots as GitHub Actions artifacts for 14 days.
@@ -165,34 +163,25 @@ and screenshots as GitHub Actions artifacts for 14 days.
 workflows that do not explicitly request another version inherit it. Dependabot
 checks Bun-managed packages and pinned GitHub Actions every Wednesday, grouping
 related minor and patch updates for Astro, browser testing, interface libraries,
-and development tooling while leaving major upgrades isolated for review.
+and development tooling while leaving major upgrades isolated for review. GitHub
+Actions updates arrive as a single grouped pull request. Every Dependabot pull
+request runs the full CI workflow; merge them manually once it passes.
 TypeScript major upgrades are held while `astro-check` depends on the TypeScript 6
 compiler API; TypeScript 7.0 cannot run that check. Remove the Dependabot ignore
 after [Astro's native-compiler support](https://github.com/withastro/astro/pull/17852)
 is available in the installed checker. TypeScript 6 minor and patch updates remain enabled.
 
-The dependency-maintenance workflow runs weekly, on manual dispatch, and whenever a
-pull request changes `package.json` or `bun.lock`. It runs `bun audit`, source and
-public-file checks, a production build, and independent Chromium, Firefox, WebKit,
-and Edge smoke jobs. Chromium, Firefox, and WebKit install the revisions required by
-the locked Playwright version, while the Edge job installs the current branded
-stable channel; browser binaries are not cached. Failed jobs retain their Playwright
-reports, traces, and screenshots for 14 days.
-
 Desktop project copy keeps enough space for the different fallback-font metrics
 on Linux and Windows. Its named, keyboard-focusable scroll region preserves access
-when content still exceeds the available space. The heading replay regression
-waits for observed viewport exit and a complete scramble cycle instead of assuming
-that scroll events and animation callbacks finish within a fixed delay.
+when content still exceeds the available space.
 Footer language links include their visible `PL` or `EN` code in the accessible
 name, so speech-input labels match the controls under current accessibility rules.
 
-Dependabot cannot update the Bun executable pin itself. Scheduled and manual runs
-therefore also build and check with the latest Bun release, publish a workflow
-warning when it differs from the pin, and leave the explicit pin change for a
-reviewed update. Run `bun run audit:dependencies` for the same vulnerability review
-locally. Bun version-update PRs are supported, but Dependabot does not currently
-support automatic security-update PRs for Bun; the audit gate remains necessary.
+Dependabot cannot update the Bun executable pin itself; bump `packageManager` by
+hand after checking a new Bun release. Run `bun run audit:dependencies` for the same
+vulnerability review locally. Bun version-update PRs are supported, but Dependabot
+does not currently support automatic security-update PRs for Bun; the CI audit gate
+remains necessary.
 
 Security overrides in `package.json` pin patched transitive dependencies when the
 locked upstream packages still resolve vulnerable versions. The current overrides
