@@ -36,6 +36,9 @@ const ACCENT_HEAT = 0.35;
 const ACCENT_EVERY = 32;
 const ALPHA_LEVELS = 32;
 const SETTLE_STEPS = 90;
+// Motion starts on the first of these events, or this long after `load`.
+const ARM_EVENTS = ['pointermove', 'pointerdown', 'touchstart', 'wheel', 'scroll', 'keydown'];
+const MOTION_DELAY_MS = 5000;
 // Cursor wake, in cells and seconds.
 const WAKE_RADIUS = 2.2;
 const WAKE_STEP = 0.5;
@@ -45,6 +48,12 @@ const WAKE_INTENSITY = 0.75;
 // even a heated light-theme glyph (strength 2) stays faint enough to read over.
 const QUIET_ALPHA = 0.35;
 const QUIET_MAX_ALPHA = 0.2;
+// Quiet zones are rounded rectangles, in cells: the block padded by QUIET_PADDING,
+// corners of QUIET_RADIUS, and dimming that fades out over QUIET_FEATHER beyond
+// the edge so the hole in the field reads as a soft rounded box, not a cutout.
+const QUIET_PADDING = 1.5;
+const QUIET_RADIUS = 3;
+const QUIET_FEATHER = 2;
 // Atlas slots overhang the cell so glyphs wider or taller than it are not clipped.
 const ATLAS_PADDING = 2;
 const FONT_FAMILY = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
@@ -100,7 +109,8 @@ export const initCyberBackground = (canvas) => {
 	let wakeActive = false;
 	let strength = 1;
 	let dpr = 1;
-	let quiet = new Uint8Array(0);
+	// Per-cell dim weight: 0 leaves the glyph alone, 1 applies the full hush.
+	let quiet = new Float32Array(0);
 	// Atlas slot edge in device pixels, and the same edge in CSS pixels.
 	let slot = 0;
 	let slotSize = 0;
@@ -164,7 +174,7 @@ export const initCyberBackground = (canvas) => {
 		seeds = Uint8Array.from({ length: cols * rows }, () => Math.random() * 256);
 		wake = new Float32Array(cols * rows);
 		wakeActive = false;
-		quiet = new Uint8Array(cols * rows);
+		quiet = new Float32Array(cols * rows);
 
 		// Resizing the backing store resets context state.
 		context.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -214,21 +224,49 @@ export const initCyberBackground = (canvas) => {
 		wakeActive = strongest > 0;
 	};
 
-	// Marks every cell under a quiet block, padded by one cell. Rects are read
+	// Writes each cell's dim weight from the quiet blocks: 1 inside a padded,
+	// rounded rectangle around the block, easing to 0 over QUIET_FEATHER cells
+	// outside it. Overlapping blocks keep the stronger weight. Rects are read
 	// fresh each frame because the blocks scroll under the fixed canvas; nothing
 	// here writes to layout, so the reads cannot thrash.
 	const markQuiet = () => {
 		quiet.fill(0);
 		const { cols, rows } = cells;
 		const cell = profile.cell;
+		const reach = (QUIET_PADDING + QUIET_FEATHER) * cell;
 		for (const node of quietNodes) {
 			const rect = node.getBoundingClientRect();
-			if (rect.bottom <= 0 || rect.right <= 0 || rect.top >= height || rect.left >= width) continue;
-			const left = Math.max(0, Math.floor(rect.left / cell) - 1);
-			const right = Math.min(cols - 1, Math.ceil(rect.right / cell));
-			const top = Math.max(0, Math.floor(rect.top / cell) - 1);
-			const bottom = Math.min(rows - 1, Math.ceil(rect.bottom / cell));
-			for (let row = top; row <= bottom; row += 1) quiet.fill(1, row * cols + left, row * cols + right + 1);
+			if (rect.bottom + reach <= 0 || rect.right + reach <= 0
+				|| rect.top - reach >= height || rect.left - reach >= width) continue;
+			// Rounded rect in cell units: centre, half extents, and corner radius.
+			const halfX = (rect.right - rect.left) / cell / 2 + QUIET_PADDING;
+			const halfY = (rect.bottom - rect.top) / cell / 2 + QUIET_PADDING;
+			const centerX = (rect.left + rect.right) / cell / 2;
+			const centerY = (rect.top + rect.bottom) / cell / 2;
+			const radius = Math.min(QUIET_RADIUS, halfX, halfY);
+			const innerX = halfX - radius;
+			const innerY = halfY - radius;
+			const left = Math.max(0, Math.floor(centerX - halfX - QUIET_FEATHER));
+			const right = Math.min(cols - 1, Math.ceil(centerX + halfX + QUIET_FEATHER));
+			const top = Math.max(0, Math.floor(centerY - halfY - QUIET_FEATHER));
+			const bottom = Math.min(rows - 1, Math.ceil(centerY + halfY + QUIET_FEATHER));
+			for (let row = top; row <= bottom; row += 1) {
+				const offsetY = Math.abs(row + 0.5 - centerY) - innerY;
+				for (let col = left; col <= right; col += 1) {
+					const offsetX = Math.abs(col + 0.5 - centerX) - innerX;
+					// Signed distance from the cell centre to the rounded rect edge.
+					const distance = Math.hypot(Math.max(offsetX, 0), Math.max(offsetY, 0))
+						+ Math.min(Math.max(offsetX, offsetY), 0) - radius;
+					if (distance >= QUIET_FEATHER) continue;
+					let weight = 1;
+					if (distance > 0) {
+						const fade = distance / QUIET_FEATHER;
+						weight = 1 - fade * fade * (3 - 2 * fade);
+					}
+					const index = row * cols + col;
+					if (weight > quiet[index]) quiet[index] = weight;
+				}
+			}
 		}
 	};
 
@@ -272,12 +310,12 @@ export const initCyberBackground = (canvas) => {
 			const warmth = heat[index];
 			if (Math.random() < scramble + warmth * HEAT_SCRAMBLE * dt) seeds[index] = Math.random() * 256;
 
-			const quieted = quiet[index] === 1;
+			const dim = quiet[index];
 			// Random accents would flicker behind text; only the wake may accent there.
 			const accent = warmth > ACCENT_HEAT
-				|| (!quieted && value >= preset.coreFrom && seeds[index] % ACCENT_EVERY === 0);
+				|| (dim <= 0.5 && value >= preset.coreFrom && seeds[index] % ACCENT_EVERY === 0);
 			let glyphAlpha = (MIN_ALPHA + (MAX_ALPHA - MIN_ALPHA) * value) * strength + HEAT_ALPHA * warmth;
-			if (quieted) glyphAlpha = hush(glyphAlpha);
+			if (dim > 0) glyphAlpha += (hush(glyphAlpha) - glyphAlpha) * dim;
 
 			if (!preset.tiles) {
 				glyphBuckets[bucketIndex(accent ? ACCENT : TEXT, glyphAlpha)].push(index);
@@ -285,7 +323,7 @@ export const initCyberBackground = (canvas) => {
 			}
 
 			let tileAlpha = (TILE_MIN_ALPHA + (TILE_MAX_ALPHA - TILE_MIN_ALPHA) * value) * strength + TILE_HEAT_ALPHA * warmth;
-			if (quieted) tileAlpha = hush(tileAlpha);
+			if (dim > 0) tileAlpha += (hush(tileAlpha) - tileAlpha) * dim;
 			tileBuckets[bucketIndex(accent ? ACCENT : TEXT, tileAlpha)].push(index);
 			glyphBuckets[value >= preset.coreFrom
 				? bucketIndex(BACKGROUND, CUTOUT_ALPHA)
@@ -342,15 +380,41 @@ export const initCyberBackground = (canvas) => {
 		frame = 0;
 	};
 
+	// The loop waits for the first interaction, or MOTION_DELAY_MS after `load`. Until
+	// then the canvas shows the settled still frame: a background that keeps changing
+	// while the page loads never matches the final filmstrip frame, which inflated Speed
+	// Index (3.8 s on PageSpeed mobile) and kept the CPU from going quiet.
+	let motionArmed = false;
+	let motionTimer = 0;
+	// Settling advances the scene, so it runs once: arming under reduced motion or a
+	// visibility change must not make the still frame jump.
+	let settled = false;
+	const armMotion = () => {
+		if (motionArmed) return;
+		motionArmed = true;
+		clearTimeout(motionTimer);
+		ARM_EVENTS.forEach((type) => window.removeEventListener(type, armMotion));
+		syncMotion();
+	};
+	ARM_EVENTS.forEach((type) => window.addEventListener(type, armMotion, { passive: true }));
+	const scheduleMotion = () => {
+		motionTimer = window.setTimeout(armMotion, MOTION_DELAY_MS);
+	};
+	if (document.readyState === 'complete') scheduleMotion();
+	else window.addEventListener('load', scheduleMotion, { once: true });
+
 	const syncMotion = () => {
 		stop();
 		// The first measurement calls this again once there is a grid.
 		if (!cells) return;
-		if (reducedMotion.matches) {
+		if (reducedMotion.matches || !motionArmed) {
 			// One settled frame instead of a loop; a still frame carries no wake.
 			wake.fill(0);
 			wakeActive = false;
-			for (let index = 0; index < SETTLE_STEPS; index += 1) scene.step(1 / 30, null);
+			if (!settled) {
+				for (let index = 0; index < SETTLE_STEPS; index += 1) scene.step(1 / 30, null);
+				settled = true;
+			}
 			render(0);
 			return;
 		}

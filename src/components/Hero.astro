@@ -26,7 +26,7 @@ const eyebrowCharacters = Array.from(eyebrowText);
 
 	<span class="hero__scroll-magnetic" data-magnetic data-magnetic-max="8">
 		<a
-			class="hero__scroll-link"
+			class="hero__scroll-link glass-surface"
 			href="#about"
 			aria-label={t('hero.scroll')}
 			data-magnetic-target
@@ -120,19 +120,8 @@ const eyebrowCharacters = Array.from(eyebrowText);
 		width: 100%;
 		height: 100%;
 		place-items: center;
-		border: 1px solid var(--glass-border);
 		border-radius: 50%;
-		background: var(--glass-surface);
-		color: var(--color-text);
-		box-shadow: inset 0 1px 0 var(--glass-highlight);
-		backdrop-filter: blur(12px);
-		transition: border-color 180ms ease, background-color 180ms ease;
 		will-change: transform;
-	}
-
-	.hero__scroll-link:hover {
-		border-color: var(--glass-border-hover);
-		background: var(--glass-surface-hover);
 	}
 
 	.hero__scroll-link:focus-visible {

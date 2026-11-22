@@ -31,6 +31,8 @@ const { scene, glyphs } = siteConfig.background;
 	}
 
 	.cyber-background {
+		--cyber-cell: 14px;
+		--cyber-grid: color-mix(in srgb, var(--color-text) 3.5%, transparent);
 		position: fixed;
 		z-index: -1;
 		top: 0;
@@ -40,13 +42,18 @@ const { scene, glyphs } = siteConfig.background;
 		/* Large viewport height stays constant while mobile browser bars collapse. */
 		height: 100lvh;
 		pointer-events: none;
-	}
-
-	.cyber-background[data-active] {
-		--cyber-grid: color-mix(in srgb, var(--color-text) 3.5%, transparent);
+		/* The grid is painted by CSS from the first frame instead of appearing when the
+		   script starts: a full-viewport change after first paint inflated Speed Index.
+		   core.js sets the same cell sizes for its profiles. */
 		background-image:
 			linear-gradient(to right, var(--cyber-grid) 1px, transparent 1px),
 			linear-gradient(to bottom, var(--cyber-grid) 1px, transparent 1px);
 		background-size: var(--cyber-cell) var(--cyber-cell);
+	}
+
+	@media not ((hover: hover) and (pointer: fine)) {
+		.cyber-background {
+			--cyber-cell: 12px;
+		}
 	}
 </style>

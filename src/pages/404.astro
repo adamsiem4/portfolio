@@ -37,7 +37,7 @@ const titleAlternate = `${en('notFound.title')} | ${siteConfig.authorName}`;
 				data-magnetic-max="6"
 				data-magnetic-strength="0.16"
 			>
-				<a class="not-found__home-link" href="/" data-magnetic-target>
+				<a class="not-found__home-link glass-surface" href="/" data-magnetic-target>
 					<ArrowLeft size={20} stroke-width={1.8} aria-hidden="true" />
 					<span data-locale-copy="pl">{pl('notFound.back')}</span>
 					<span data-locale-copy="en">{en('notFound.back')}</span>
@@ -112,20 +112,11 @@ const titleAlternate = `${en('notFound.title')} | ${siteConfig.authorName}`;
 		align-items: center;
 		gap: 0.55rem;
 		padding: 0.7rem 1rem;
-		border: 1px solid var(--glass-border);
 		border-radius: 999px;
-		background: var(--glass-surface);
-		box-shadow: inset 0 1px 0 var(--glass-highlight);
 		font-family: "Open Sans", "Open Sans Fallback", sans-serif;
 		font-size: 0.85rem;
 		font-weight: 700;
 		will-change: transform;
-		transition: border-color 180ms ease, background-color 180ms ease;
-	}
-
-	.not-found__home-link:hover {
-		border-color: var(--glass-border-hover);
-		background: var(--glass-surface-hover);
 	}
 
 	.not-found__home-link:focus-visible {

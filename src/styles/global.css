@@ -138,6 +138,48 @@
 	pointer-events: none;
 }
 
+/* Shared navbar glass for every button-like control. Components keep size, shape, and
+   layout; colour, border, highlights, blur, and hover come from here. */
+.glass-surface {
+	border: 1px solid var(--glass-border);
+	background: var(--glass-material);
+	color: var(--color-text);
+	box-shadow:
+		inset 0 1px 0 var(--glass-highlight),
+		inset 0 -1px 0 var(--glass-inset-bottom),
+		0 8px 30px var(--glass-shadow);
+	backdrop-filter: var(--glass-backdrop);
+	transition:
+		background-color 180ms ease,
+		border-color 180ms ease,
+		box-shadow 180ms ease,
+		color 180ms ease,
+		opacity 180ms ease;
+}
+
+:is(.glass-surface:hover, [data-magnetic]:hover .glass-surface, .glass-surface[aria-expanded='true']):not(:disabled) {
+	border-color: var(--glass-border-hover);
+	background-color: var(--glass-material-hover);
+	box-shadow:
+		inset 0 1px 0 var(--glass-highlight-hover),
+		0 12px 28px var(--glass-shadow);
+}
+
+/* ponytail: url() inside backdrop-filter renders only in Chromium — Firefox and WebKit
+   parse it and then drop the whole declaration, so gate it on a Chromium-only property. */
+@supports (backdrop-filter: url('#liquid-glass')) and (-webkit-app-region: none) {
+	.glass-surface {
+		backdrop-filter: url('#liquid-glass') var(--glass-backdrop);
+	}
+}
+
+/* ponytail: no backdrop-filter (older Firefox) — fall back to an opaque chrome. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+	.glass-surface {
+		background: var(--glass-material-opaque);
+	}
+}
+
 *,
 *::before,
 *::after {

@@ -288,7 +288,7 @@ for (const path of ['/', '/404.html']) {
 	});
 }
 
-test('keeps the ASCII background behind content and still under reduced motion', async ({ page }) => {
+test('keeps the ASCII background behind content, still until interaction or under reduced motion', async ({ page }) => {
 	await openPortfolio(page);
 
 	const background = page.locator('[data-cyber-background]');
@@ -317,7 +317,10 @@ test('keeps the ASCII background behind content and still under reduced motion',
 	await page.waitForTimeout(400);
 	expect(await snapshot()).toBe(stillFrame);
 
+	// Motion starts on the first interaction (or a delay after load); a pointer move arms it.
 	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await page.mouse.move(200, 200);
+	await page.mouse.move(400, 300);
 	await expect.poll(snapshot).not.toBe(stillFrame);
 });
 

@@ -25,7 +25,7 @@ const currentYear = new Date().getFullYear();
 						data-magnetic-strength="0.16"
 					>
 					<a
-						class="site-footer__language-link"
+						class="site-footer__language-link glass-surface"
 						href={`${localeMeta[code].home}?lang=${code}`}
 						hreflang={localeMeta[code].htmlLang}
 						lang={localeMeta[code].htmlLang}
@@ -43,7 +43,7 @@ const currentYear = new Date().getFullYear();
 				data-magnetic-strength="0.16"
 			>
 				<button
-					class="site-footer__privacy-button"
+					class="site-footer__privacy-button glass-surface"
 					type="button"
 					aria-label={t('footer.privacy')}
 					title={t('footer.privacy')}
@@ -64,7 +64,7 @@ const currentYear = new Date().getFullYear();
 				data-magnetic-strength="0.16"
 			>
 				<a
-					class="site-footer__top-link"
+					class="site-footer__top-link glass-surface"
 					href="#home"
 					data-back-to-top
 					data-magnetic-target
@@ -92,7 +92,7 @@ const currentYear = new Date().getFullYear();
 					{t('privacy.title')}
 				</h2>
 				<button
-					class="privacy-dialog__close"
+					class="privacy-dialog__close glass-surface"
 					type="button"
 					aria-label={t('footer.privacyClose')}
 					data-privacy-close
@@ -409,10 +409,6 @@ const currentYear = new Date().getFullYear();
 		display: inline-flex;
 		align-items: center;
 		flex: 0 0 auto;
-		border: 1px solid var(--glass-border);
-		background: var(--glass-surface);
-		color: var(--color-text);
-		transition: background-color 180ms ease;
 	}
 
 	.site-footer__privacy-button,
@@ -436,12 +432,6 @@ const currentYear = new Date().getFullYear();
 		border-radius: 999px;
 		font-size: 0.8rem;
 		white-space: nowrap;
-	}
-
-	.site-footer__privacy-button:hover,
-	.site-footer__top-link:hover,
-	.privacy-dialog__close:hover {
-		background: var(--glass-surface-hover);
 	}
 
 	.site-footer__privacy-button:focus-visible,
@@ -546,22 +536,12 @@ const currentYear = new Date().getFullYear();
 		min-width: 2.25rem;
 		min-height: 2.25rem;
 		padding: 0.45rem 0.55rem;
-		border: 1px solid var(--glass-border);
 		border-radius: 999px;
-		background: var(--glass-surface);
-		color: var(--color-muted);
 		font-size: 0.75rem;
 		font-weight: 700;
 		letter-spacing: 0.04em;
 		transform: translate3d(0, 0, 0);
 		will-change: transform;
-		transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
-	}
-
-	.site-footer__language .site-footer__magnetic:hover .site-footer__language-link {
-		background: var(--glass-surface-hover);
-		border-color: var(--glass-border-hover);
-		color: var(--color-text);
 	}
 
 	.site-footer__language-link[aria-current='true'],
