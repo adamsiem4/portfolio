@@ -1,13 +1,12 @@
 const inlineScriptHashes = [
 	'Buluswg2h40UWBJJGuNJDJveceDUyunuXhvURs8pijQ=',
 	'EYJ77fv1/vz8AdR1zKuBySacBW+F9fd02OoyRjZqKHI=',
-	'fqF88Kx4kPEibA4V5JUla8adzl7wN506RuioHPwNdWg=',
 	'4xGJFg2sUmpyFBmT4utPAPqPkNluEvgixdWyptLidEE=',
 	'Ig3IGM2qMKFxQwAKXgA/yEd0rpB1uhiTruz5MWsBRFs=',
 	'shaB8c76EIYPOcw/ybxneJBgRCePOXTQKfKYOxJcPrA=',
 	'eJ442JN5t2jwAfaaaIStTDjuHrLPAoZujsHJ/zWkSdY=',
 	'kxD2YTjpk0HQmjGcQYGGyHG98PGO01JHoYLvqL+2Flc=',
-	'lOGKLgeAizTKYCAVvL/sBROmj2wSSb5iep+ilhhuzsc=',
+	'ZsXt8ZZR5Tl+lG6GcPMFgJtaUGbZqUGzC/f7AeeqiW4=',
 ];
 
 // Astro emits small module bundles inline and deliberately inlines component CSS.
@@ -122,6 +121,12 @@ export const siteConfig = {
 	},
 	githubUrl: 'https://github.com/adamsiem4',
 	linkedinUrl: 'https://linkedin.com/in/adam-salicki-054a84295',
+	// Animated page background: `scene` from src/scripts/cyber-background/scenes,
+	// `glyphs` from src/scripts/cyber-background/glyphs.js.
+	background: {
+		scene: 'swarm',
+		glyphs: 'ascii',
+	},
 	privacyNotice: {
 		title: 'Prywatność i dane',
 		summary: 'Strona nie używa reklamowych mechanizmów śledzących, skryptów analitycznych, śledzących plików cookie ani formularzy kontaktowych.',

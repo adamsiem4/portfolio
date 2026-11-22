@@ -374,7 +374,7 @@ const currentYear = new Date().getFullYear();
 		background:
 			linear-gradient(var(--glass-surface), var(--glass-surface)),
 			var(--color-background);
-		font-family: "Open Sans", sans-serif;
+		font-family: "Open Sans", "Open Sans Fallback", sans-serif;
 	}
 
 	.site-footer__inner {
@@ -387,7 +387,7 @@ const currentYear = new Date().getFullYear();
 	}
 
 	.site-footer__copyright {
-		font-size: 0.75rem;
+		font-size: 0.8rem;
 		font-weight: 700;
 		white-space: nowrap;
 	}
@@ -434,7 +434,7 @@ const currentYear = new Date().getFullYear();
 		gap: 0.35rem;
 		padding: 0.45rem 0.65rem;
 		border-radius: 999px;
-		font-size: 0.75rem;
+		font-size: 0.8rem;
 		white-space: nowrap;
 	}
 
@@ -550,7 +550,7 @@ const currentYear = new Date().getFullYear();
 		border-radius: 999px;
 		background: var(--glass-surface);
 		color: var(--color-muted);
-		font-size: 0.7rem;
+		font-size: 0.75rem;
 		font-weight: 700;
 		letter-spacing: 0.04em;
 		transform: translate3d(0, 0, 0);
@@ -589,6 +589,23 @@ const currentYear = new Date().getFullYear();
 			flex-wrap: wrap;
 			justify-content: center;
 			row-gap: 0.5rem;
+		}
+	}
+
+	/* Touch screens get 44px hit areas; fine pointers keep the compact desktop pills. */
+	@media (pointer: coarse) {
+		.site-footer__language-link {
+			min-width: 2.75rem;
+			min-height: 2.75rem;
+		}
+
+		.site-footer__privacy-button {
+			width: 2.75rem;
+			height: 2.75rem;
+		}
+
+		.site-footer__top-link {
+			min-height: 2.75rem;
 		}
 	}
 

@@ -17,7 +17,6 @@ const titleAlternate = `${en('notFound.title')} | ${siteConfig.authorName}`;
 	description={pl('notFound.description')}
 	canonical="/404"
 	robots={siteConfig.notFoundRobots}
-	showPageLoader={false}
 	localeAuto
 >
 	<Navbar localeAuto />
@@ -28,7 +27,7 @@ const titleAlternate = `${en('notFound.title')} | ${siteConfig.authorName}`;
 				<span data-locale-copy="pl">{pl('notFound.heading')}</span>
 				<span data-locale-copy="en">{en('notFound.heading')}</span>
 			</h1>
-			<p class="not-found__description">
+			<p class="not-found__description" data-background-quiet>
 				<span data-locale-copy="pl">{pl('notFound.body')}</span>
 				<span data-locale-copy="en">{en('notFound.body')}</span>
 			</p>
@@ -53,7 +52,6 @@ const titleAlternate = `${en('notFound.title')} | ${siteConfig.authorName}`;
 		min-height: 100vh;
 		min-height: 100dvh;
 		display: grid;
-		overflow: hidden;
 		padding: clamp(7rem, 18vh, 10rem) var(--page-gutter) clamp(3.5rem, 10vh, 6rem);
 		place-items: center;
 	}
@@ -64,8 +62,11 @@ const titleAlternate = `${en('notFound.title')} | ${siteConfig.authorName}`;
 
 	.not-found__code {
 		color: var(--color-text);
-		font-family: "Open Sans", sans-serif;
-		font-size: clamp(10rem, 33vw, 26rem);
+		font-family: "Open Sans", "Open Sans Fallback", sans-serif;
+		/* "404" is ~1.84em wide; the floor stays inside a 280px box at 320px and is
+		   capped by 45vw so enlarged text settings cannot push it past the viewport.
+		   Sizing (not clipping) keeps it centred and leaves real content unclipped. */
+		font-size: clamp(min(9rem, 45vw), 33vw, 26rem);
 		font-variant-numeric: tabular-nums;
 		font-weight: 800;
 		letter-spacing: -0.055em;
@@ -115,7 +116,7 @@ const titleAlternate = `${en('notFound.title')} | ${siteConfig.authorName}`;
 		border-radius: 999px;
 		background: var(--glass-surface);
 		box-shadow: inset 0 1px 0 var(--glass-highlight);
-		font-family: "Open Sans", sans-serif;
+		font-family: "Open Sans", "Open Sans Fallback", sans-serif;
 		font-size: 0.85rem;
 		font-weight: 700;
 		will-change: transform;

@@ -12,6 +12,8 @@ export const PROJECT_LAYOUT = Object.freeze({
 	tabletPageGutter: 32,
 	tabletBreakpoint: 768,
 	desktopBreakpoint: 1_200,
+	// Landscape viewports switch to the side-by-side card earlier (see ProjectCard.astro).
+	landscapeSplitBreakpoint: 960,
 	desktopMaxBreakpointRem: 76,
 	desktopMediaShare: 17 / 24,
 	cardInlineBorders: 2,
@@ -76,9 +78,12 @@ export const getProjectImageSizes = (
 		- PROJECT_LAYOUT.desktopMediaDivider
 	));
 
+	const desktopSlot = `calc(${desktopViewportShare}vw - ${desktopOffset}px)`;
+
 	return [
 		`(min-width: ${PROJECT_LAYOUT.desktopMaxBreakpointRem}rem) ${desktopMaximum}px`,
-		`(min-width: ${PROJECT_LAYOUT.desktopBreakpoint / 16}rem) calc(${desktopViewportShare}vw - ${desktopOffset}px)`,
+		`(min-width: ${PROJECT_LAYOUT.desktopBreakpoint / 16}rem) ${desktopSlot}`,
+		`(orientation: landscape) and (min-width: ${PROJECT_LAYOUT.landscapeSplitBreakpoint / 16}rem) ${desktopSlot}`,
 		`(min-width: ${PROJECT_LAYOUT.tabletBreakpoint / 16}rem) calc(${viewportShare}vw - ${tabletOffset}px)`,
 		`calc(${viewportShare}vw - ${mobileOffset}px)`,
 	].join(', ');

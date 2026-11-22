@@ -2,8 +2,9 @@
 import '../styles/global.css';
 import { siteConfig } from '../config/site.js';
 import PointerEffects from '../components/PointerEffects.astro';
-import PageLoader from '../components/PageLoader.astro';
+import CyberBackground from '../components/CyberBackground.astro';
 import { getLocale, localeMeta, useTranslations } from '../i18n/ui.js';
+import ralewayLatinUrl from '../assets/fonts/raleway-latin-wght.woff2?url';
 
 const locale = getLocale(Astro.url);
 const t = useTranslations(locale);
@@ -13,7 +14,7 @@ interface Props {
   description?: string;
   canonical?: string;
   robots?: string;
-  showPageLoader?: boolean;
+  showBackground?: boolean;
   localeAuto?: boolean;
   titleAlternate?: string;
 }
@@ -23,7 +24,7 @@ const {
   description = t('meta.description'),
   canonical = localeMeta[locale].home,
   robots = siteConfig.robots,
-  showPageLoader = true,
+  showBackground = true,
   localeAuto = false,
   titleAlternate,
 }: Props = Astro.props;
@@ -70,7 +71,6 @@ const structuredData = {
   data-theme="dark"
   data-theme-preference="system"
   data-theme-storage-key="portfolio-theme"
-  data-page-loader-enabled={showPageLoader ? 'true' : undefined}
 >
   <head>
     <meta charset="UTF-8" />
@@ -121,12 +121,13 @@ const structuredData = {
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content={siteConfig.authorName} />
     <meta name="theme-color" content={siteConfig.themeColor} />
+    {/* The hero name is the LCP element; fetch its font with the HTML instead of after style resolution. */}
+    <link rel="preload" href={ralewayLatinUrl} as="font" type="font/woff2" crossorigin />
 
     <title>{title}</title>
     <script is:inline>
       (() => {
-        // Run in <head> before first paint so CSS sees the saved/system theme and,
-        // on pages that opt in, the loader state before content becomes visible.
+        // Run in <head> before first paint so CSS sees the saved/system theme.
         const root = document.documentElement;
         // Only an explicit switcher choice persists; shared English URLs do not.
         const langKey = 'portfolio-lang';
@@ -164,7 +165,6 @@ const structuredData = {
         }
 
         const storageKey = root.dataset.themeStorageKey || 'portfolio-theme';
-        const pageLoaderEnabled = root.dataset.pageLoaderEnabled === 'true';
         let storedTheme = null;
 
         try {
@@ -181,49 +181,6 @@ const structuredData = {
 
         root.dataset.theme = theme;
         root.dataset.themePreference = storedTheme ? 'user' : 'system';
-
-        // Error pages render immediately: do not create loading state, timers, or
-        // scroll-restoration work when the loader component is omitted.
-        if (!pageLoaderEnabled) return;
-
-        root.dataset.pageLoading = 'true';
-
-        // Browsers may restore the previous scroll position late during a reload.
-        // Repeating the reset across two paint frames wins that race without
-        // changing normal back/forward navigation behavior.
-        const navigationEntry = performance.getEntriesByType('navigation')[0];
-        if (navigationEntry?.type === 'reload') {
-          const resetScroll = () => window.scrollTo(0, 0);
-
-          history.scrollRestoration = 'manual';
-          root.style.scrollBehavior = 'auto';
-          resetScroll();
-
-          window.addEventListener('load', () => {
-            resetScroll();
-            requestAnimationFrame(() => {
-              resetScroll();
-              requestAnimationFrame(() => {
-                resetScroll();
-                root.style.removeProperty('scroll-behavior');
-                history.scrollRestoration = 'auto';
-              });
-            });
-          }, { once: true });
-        }
-
-        // Fail open if the loader script stalls: never leave the document inert,
-        // busy, or visually covered because an animation event did not arrive.
-        window.setTimeout(() => {
-          if (root.dataset.pageLoading !== 'true') return;
-          delete root.dataset.pageLoading;
-          document.body?.removeAttribute('aria-busy');
-          document.querySelectorAll('[data-page-loader-inert]').forEach((element) => {
-            element.removeAttribute('inert');
-            element.removeAttribute('data-page-loader-inert');
-          });
-          document.querySelector('[data-page-loader]')?.remove();
-        }, 6000);
       })();
     </script>
 
@@ -252,8 +209,8 @@ const structuredData = {
         </>
       ) : t('skip')}
     </a>
+    {showBackground && <CyberBackground />}
     <PointerEffects />
-    {showPageLoader && <PageLoader />}
     <slot />
   </body>
 </html>

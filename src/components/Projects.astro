@@ -139,7 +139,6 @@ const getInitialSlideStyle = (index: number) => {
 		align-items: start;
 		overflow: clip;
 		padding: clamp(5rem, 8vw, 6rem) var(--page-gutter);
-		border-block-start: 1px solid var(--glass-border);
 		scroll-margin-top: 5rem;
 	}
 
@@ -276,7 +275,7 @@ const getInitialSlideStyle = (index: number) => {
 		min-width: 4.5rem;
 		color: var(--color-muted);
 		font-family: monospace;
-		font-size: 0.72rem;
+		font-size: 0.8rem;
 		letter-spacing: 0.1em;
 		text-align: center;
 	}
@@ -303,7 +302,8 @@ const getInitialSlideStyle = (index: number) => {
 		}
 	}
 
-	@media (min-width: 75rem) {
+	/* Mirrors the side-by-side card breakpoint in ProjectCard.astro. */
+	@media (min-width: 75rem), (orientation: landscape) and (min-width: 60rem) {
 		.projects__slide,
 		.projects__card-shell {
 			height: auto;

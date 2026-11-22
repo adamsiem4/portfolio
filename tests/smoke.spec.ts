@@ -48,13 +48,11 @@ test.afterEach(({ page }) => {
 
 const openPage = async (page: Page, path: string) => {
 	await page.goto(path);
-	await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
-	await expect(page.locator('html')).not.toHaveAttribute('data-page-loading', 'true');
 };
 
 const openPortfolio = (page: Page) => openPage(page, '/');
 
-test('production security headers preserve theme initialization and the page loader', async ({ page }) => {
+test('production security headers preserve theme initialization', async ({ page }) => {
 	const productionHeaders = Object.fromEntries(
 		Object.entries(siteConfig.responseHeaders)
 			.map(([name, value]) => [name.toLowerCase(), value]),
@@ -82,13 +80,11 @@ test('production security headers preserve theme initialization and the page loa
 	expect(response?.headers()['content-security-policy']).toBe(
 		siteConfig.responseHeaders['Content-Security-Policy'],
 	);
-	await expect(page.locator('[data-page-loader]')).toHaveCount(0, { timeout: 10_000 });
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 	await page.locator('[data-theme-toggle]').click();
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 	await page.goto('/404.html');
 	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 	expect(cspViolations).toEqual([]);
 });
@@ -132,7 +128,6 @@ test('persists the selected theme across reloads', async ({ page }) => {
 	await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(244, 243, 239)');
 
 	await page.reload();
-	await expect(page.locator('[data-page-loader]')).toHaveCount(0);
 	await expect(root).toHaveAttribute('data-theme', 'light');
 });
 
@@ -293,16 +288,37 @@ for (const path of ['/', '/404.html']) {
 	});
 }
 
-test('makes page controls inert until the loader reveal completes', async ({ page }) => {
-	await page.emulateMedia({ reducedMotion: 'no-preference' });
-	await page.goto('/', { waitUntil: 'domcontentloaded' });
+test('keeps the ASCII background behind content and still under reduced motion', async ({ page }) => {
+	await openPortfolio(page);
 
-	const loader = page.locator('[data-page-loader]');
-	const navbar = page.locator('[data-navbar]');
-	await expect(loader).toBeVisible();
-	await expect(navbar).toHaveAttribute('inert', '');
-	await expect(loader).toHaveCount(0, { timeout: 10_000 });
-	await expect(navbar).not.toHaveAttribute('inert', '');
+	const background = page.locator('[data-cyber-background]');
+	await expect(background).toHaveAttribute('aria-hidden', 'true');
+	await expect(background).toHaveCSS('pointer-events', 'none');
+
+	const link = page.locator('#home a').first();
+	const box = await link.boundingBox();
+	expect(box).not.toBeNull();
+	const hitsLink = await page.evaluate(
+		({ x, y }) => document.elementFromPoint(x, y)?.closest('#home a') !== null,
+		{ x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 },
+	);
+	expect(hitsLink).toBe(true);
+
+	const snapshot = () => background.evaluate((canvas: HTMLCanvasElement) => canvas.toDataURL());
+	const paintedPixels = await background.evaluate((canvas: HTMLCanvasElement) => {
+		const { data } = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height);
+		let painted = 0;
+		for (let index = 3; index < data.length; index += 4) if (data[index] > 0) painted += 1;
+		return painted;
+	});
+	expect(paintedPixels).toBeGreaterThan(0);
+
+	const stillFrame = await snapshot();
+	await page.waitForTimeout(400);
+	expect(await snapshot()).toBe(stillFrame);
+
+	await page.emulateMedia({ reducedMotion: 'no-preference' });
+	await expect.poll(snapshot).not.toBe(stillFrame);
 });
 
 test('serves Polish at / and English under /en/', async ({ page }) => {

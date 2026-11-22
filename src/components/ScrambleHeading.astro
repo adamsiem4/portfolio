@@ -25,16 +25,21 @@ const { id, text } = Astro.props;
 
 <style>
 	h2 {
-		font-size: clamp(3.5rem, 16vw, 7rem);
+		/* cqi tracks a narrow parent column (About's header is a size container);
+		   without a container it resolves against the viewport and changes nothing. */
+		font-size: clamp(3.5rem, min(16vw, 34cqi), 7rem);
 		font-weight: 800;
 		line-height: 0.88;
 		letter-spacing: -0.055em;
 		overflow-x: clip;
+		overflow-wrap: anywhere;
 	}
 
+	/* Words may break between character boxes only when one cannot fit the line
+	   (e.g. user text-spacing overrides), so glyphs wrap instead of being clipped. */
 	.scramble-word {
 		display: inline-block;
-		white-space: nowrap;
+		max-width: 100%;
 	}
 
 	.scramble-character {
