@@ -375,6 +375,9 @@ const currentYear = new Date().getFullYear();
 			linear-gradient(var(--glass-surface), var(--glass-surface)),
 			var(--color-background);
 		font-family: "Open Sans", "Open Sans Fallback", sans-serif;
+		/* The footer is a flat bar, so its glass controls drop the floating shadow that
+		   made them look like puffy white blobs on the light theme. */
+		--glass-shadow: transparent;
 	}
 
 	.site-footer__inner {
@@ -533,10 +536,10 @@ const currentYear = new Date().getFullYear();
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		min-width: 2.25rem;
-		min-height: 2.25rem;
-		padding: 0.45rem 0.55rem;
-		border-radius: 999px;
+		width: 2.25rem;
+		height: 2.25rem;
+		padding: 0;
+		border-radius: 50%;
 		font-size: 0.75rem;
 		font-weight: 700;
 		letter-spacing: 0.04em;
@@ -544,15 +547,12 @@ const currentYear = new Date().getFullYear();
 		will-change: transform;
 	}
 
+	/* The current language keeps the glass of its siblings and is marked by accent
+	   text and ring instead of a solid teal disc. */
 	.site-footer__language-link[aria-current='true'],
 	.site-footer__language .site-footer__magnetic:hover .site-footer__language-link[aria-current='true'] {
-		border-color: var(--color-accent);
-		background: var(--color-accent);
-		color: #ffffff;
-	}
-
-	.site-footer__language .site-footer__magnetic:hover .site-footer__language-link[aria-current='true'] {
-		background: color-mix(in srgb, var(--color-accent), #000000 15%);
+		border-color: var(--color-accent-text);
+		color: var(--color-accent-text);
 	}
 
 	.site-footer__language-link:active {
