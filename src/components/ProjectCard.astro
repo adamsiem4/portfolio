@@ -335,6 +335,10 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 		z-index: 2;
 		flex: 0 0 auto;
 		aspect-ratio: 16 / 9;
+		/* Stacked cards on short viewports (landscape phones) would otherwise get a 16:9
+		   frame taller than the screen; capping it letterboxes the contained image instead. */
+		max-height: 55vh;
+		max-height: 55svh;
 		overflow: hidden;
 		border-block-end: 1px solid var(--glass-border);
 		background: var(--glass-surface);
@@ -426,6 +430,15 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 		cursor: default;
 		opacity: 0.32;
 	}
+	/* Touch input needs 44px targets with clear separation; desktop keeps the compact pair. */
+	@media (pointer: coarse) {
+		.project-card__gallery-controls {
+			gap: 0.5rem;
+		}
+		.project-card__gallery-control {
+			width: 2.75rem;
+		}
+	}
 	.project-card__details {
 		display: flex;
 		flex: 1;
@@ -441,7 +454,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 	}
 	.project-card__label {
 		color: var(--color-accent-text);
-		font-size: 0.7rem;
+		font-size: 0.75rem;
 		font-weight: 700;
 		letter-spacing: 0.15em;
 		text-transform: uppercase;
@@ -469,7 +482,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 	}
 	.project-card__impact dt {
 		color: var(--color-accent-text);
-		font-size: 0.58rem;
+		font-size: 0.75rem;
 		font-weight: 700;
 		letter-spacing: 0.13em;
 		line-height: 1.2;
@@ -477,8 +490,8 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 	}
 	.project-card__impact dd {
 		color: var(--color-muted);
-		font-size: clamp(0.72rem, 2.4vw, 0.8rem);
-		line-height: 1.35;
+		font-size: clamp(0.875rem, 2.4vw, 0.9375rem);
+		line-height: 1.5;
 		overflow-wrap: anywhere;
 	}
 	.project-card__stack {
@@ -498,7 +511,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 		border: 1px solid var(--glass-border);
 		border-radius: 999px;
 		color: var(--color-muted);
-		font-size: 0.65rem;
+		font-size: 0.75rem;
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		line-height: 1;
@@ -533,8 +546,8 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 		clip-path: circle(150% at 0 100%);
 	}
 	.project-card__stack-icon {
-		width: 0.8rem;
-		height: 0.8rem;
+		width: 0.875rem;
+		height: 0.875rem;
 		flex: 0 0 auto;
 		fill: currentColor;
 	}
@@ -586,7 +599,10 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 		height: 1.35rem;
 		fill: currentColor;
 	}
-	@media (min-width: 75rem) {
+	/* Side-by-side whenever the viewport is wide enough, and already on landscape tablets and
+	   small laptops, where a stacked card would be taller than the screen.
+	   Keep in sync with Projects.astro and getProjectImageSizes in utils/project-layout.js. */
+	@media (min-width: 75rem), (orientation: landscape) and (min-width: 60rem) {
 		.project-card {
 			display: grid;
 			height: auto;
@@ -594,6 +610,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 			grid-template-columns: minmax(0, 17fr) minmax(0, 7fr);
 		}
 		.project-card__media-shell {
+			max-height: none;
 			border-block-end: 0;
 			border-inline-end: 1px solid var(--glass-border);
 		}
@@ -623,7 +640,7 @@ const projectImageWidths = [240, 320, 400, 480, 560, 640, 750, 828, 1080, 1280, 
 			font-size: clamp(2rem, 3.2vw, 2.75rem);
 		}
 		.project-card__impact dd {
-			font-size: 0.74rem;
+			font-size: 0.875rem;
 		}
 		.project-card__source,
 		.project-card__action {

@@ -1,3 +1,87 @@
+/* Self-hosted variable fonts so visitors without Raleway/Open Sans installed don't fall back to Arial.
+   latin-ext covers Polish diacritics; unicode-range lets the browser fetch it only when needed. */
+@font-face {
+	font-family: 'Raleway';
+	src: url('../assets/fonts/raleway-latin-ext-wght.woff2') format('woff2');
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'Raleway';
+	src: url('../assets/fonts/raleway-latin-wght.woff2') format('woff2');
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	src: url('../assets/fonts/open-sans-latin-ext-wght.woff2') format('woff2');
+	font-weight: 300 800;
+	font-style: normal;
+	font-display: swap;
+	unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	src: url('../assets/fonts/open-sans-latin-wght.woff2') format('woff2');
+	font-weight: 300 800;
+	font-style: normal;
+	font-display: swap;
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Metric-matched Arial stand-ins shown until the web fonts arrive, so the swap does not
+   rewrap or shift text (it caused the hero's layout shift in Lighthouse). Values come
+   from canvas measurements in Chromium: Raleway 400 is 4.37% wider than Arial,
+   Raleway 800 matches Arial Bold within 1%; Open Sans is ~4% wider than Arial;
+   ascent/descent overrides restate each family's 0.94/0.23 and 1.07/0.29 em extents
+   relative to the adjusted size. */
+@font-face {
+	font-family: 'Raleway Fallback';
+	src: local('Arial'), local('ArialMT');
+	font-weight: 100 650;
+	size-adjust: 104.37%;
+	ascent-override: 90.06%;
+	descent-override: 22.04%;
+	line-gap-override: 0%;
+}
+
+@font-face {
+	font-family: 'Raleway Fallback';
+	src: local('Arial Bold'), local('Arial-BoldMT');
+	font-weight: 651 900;
+	size-adjust: 100.76%;
+	ascent-override: 93.29%;
+	descent-override: 22.83%;
+	line-gap-override: 0%;
+}
+
+@font-face {
+	font-family: 'Open Sans Fallback';
+	src: local('Arial'), local('ArialMT');
+	font-weight: 100 650;
+	size-adjust: 104.32%;
+	ascent-override: 102.57%;
+	descent-override: 27.8%;
+	line-gap-override: 0%;
+}
+
+@font-face {
+	font-family: 'Open Sans Fallback';
+	src: local('Arial Bold'), local('Arial-BoldMT');
+	font-weight: 651 900;
+	size-adjust: 103.5%;
+	ascent-override: 103.38%;
+	descent-override: 28.02%;
+	line-gap-override: 0%;
+}
+
 :root {
 	color-scheme: dark;
 	--color-background-dark: #090b0c;
@@ -20,8 +104,11 @@
 	--glass-material: rgba(255, 255, 255, 0.07);
 	--glass-material-hover: rgba(255, 255, 255, 0.13);
 	--glass-material-opaque: #171a1b;
-	--glass-backdrop: blur(6px) saturate(180%) brightness(1.25);
+	/* No brightness lift: over the teal Contact section it pushed white nav text below 4.5:1. */
+	--glass-backdrop: blur(6px) saturate(140%);
 	--page-gutter: 1.25rem;
+	/* Multiplies ASCII background opacity; dark ink on paper needs more than light on black. */
+	--background-glyph-strength: 1;
 }
 
 :root[data-theme='light'] {
@@ -43,6 +130,7 @@
 	--glass-material-hover: rgba(255, 255, 255, 0.48);
 	--glass-material-opaque: #fbfaf7;
 	--glass-backdrop: blur(6px) saturate(180%) brightness(1.03);
+	--background-glyph-strength: 2;
 }
 
 .glass-filter {
@@ -70,7 +158,7 @@ html {
 body {
 	min-width: 320px;
 	min-height: 100vh;
-	font-family: "Raleway", sans-serif;
+	font-family: "Raleway", "Raleway Fallback", sans-serif;
 	line-height: 1.5;
 	background-color: var(--color-background);
 	color: var(--color-text);
@@ -87,7 +175,7 @@ body {
 	border-radius: 0.75rem;
 	background-color: var(--color-background);
 	color: var(--color-text);
-	font-family: "Open Sans", sans-serif;
+	font-family: "Open Sans", "Open Sans Fallback", sans-serif;
 	font-size: 0.9rem;
 	transform: translateY(-200%);
 }

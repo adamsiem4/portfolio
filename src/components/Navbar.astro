@@ -367,7 +367,7 @@ const links = [
 		inset-block-start: 0;
 		inset-inline: 0;
 		padding: 1rem var(--page-gutter);
-		font-family: "Open Sans", sans-serif;
+		font-family: "Open Sans", "Open Sans Fallback", sans-serif;
 	}
 
 	.navbar {
@@ -634,6 +634,34 @@ const links = [
 			opacity: 1;
 			transform: none;
 			transition: none;
+		}
+	}
+
+	/* Touch screens wide enough for the inline pill: trim the pill's inner padding so
+	   each link fills a 44px hit area without changing the pill's outer size. */
+	@media (min-width: 48rem) and (pointer: coarse) {
+		.nav-links {
+			padding-block: 0.125rem;
+		}
+
+		.nav-links a {
+			display: flex;
+			min-height: 2.75rem;
+			align-items: center;
+		}
+	}
+
+	/* Very short viewports (400% zoom, landscape phones): a fixed 82–98px header hides the
+	   hero eyebrow. Tighter padding plus sticky keeps it pinned while scrolling but in flow
+	   at the top, and scroll padding stops anchor jumps from landing under it. */
+	@media (max-height: 30rem) {
+		:global(html) {
+			scroll-padding-block-start: 3.625rem;
+		}
+
+		.site-header {
+			position: sticky;
+			padding-block: 0.25rem;
 		}
 	}
 

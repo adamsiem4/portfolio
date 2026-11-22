@@ -14,8 +14,8 @@ A minimal, mobile-first portfolio for web, infrastructure, and hardware projects
 
 Astro emits static HTML and scoped CSS; interactive component scripts are bundled
 as native ES modules. There are no client framework components, `client:*`
-directives, or hydration runtime. Inline JavaScript is reserved for the language,
-theme, and page-loader bootstrap because it must run before deferred modules and
+directives, or hydration runtime. Inline JavaScript is reserved for the language
+and theme bootstrap because it must run before deferred modules and
 before the first paint. The production Content Security Policy authorizes each generated
 inline script by its SHA-256 hash; the post-build check rejects missing or stale
 hashes. All other behavior is layered onto server-rendered markup through stable
@@ -58,24 +58,17 @@ return HTTP 404; Vite preview uses a homepage fallback for unknown paths.
 
 1. The inline bootstrap in `Layout.astro` resolves the language first, then a stored
    theme, falling back to `prefers-color-scheme`. It writes `data-theme` before
-   rendering can flash the wrong palette. On pages that opt into the loader, it
-   also sets `data-page-loading` and temporarily switches scroll restoration to manual on reload.
-2. The portfolio page's `PageLoader.astro` marks the document busy and advances
-   toward 92% while waiting for `load`. After both `load` and the 650 ms minimum
-   duration, it interpolates to 100%, runs the accent curtain, and removes itself.
-   The 404 page opts out so recovery content paints immediately. Transition
-   listeners have timeout fallbacks, and the layout has an independent six-second
-   escape hatch.
-3. Deferred component modules initialize against the complete DOM. The kinetic
-   custom element replaces its visual fallback, while navigation, deck, gallery,
-   heading, and footer controllers attach to existing elements.
+   rendering can flash the wrong palette.
+2. Deferred component modules initialize against the complete DOM. The background
+   canvas starts immediately, while navigation, deck, gallery, heading, and footer
+   controllers attach to existing elements.
 
 ## Rendering and interaction internals
 
 | System | Implementation details |
 | --- | --- |
-| Theme transition | The navbar serializes theme changes and computes a circle radius from the toggle to the farthest viewport corner. `document.startViewTransition()` performs the reveal when available; otherwise a temporary cover uses the Web Animations API. A `site-theme-change` event invalidates consumers such as the kinetic renderer. |
-| Kinetic heading | `<kinetic-text>` owns four canvases: a text mask, warped frame, chromatic tint buffer, and final composite. `ResizeObserver` controls backing-store dimensions, DPR is capped on mobile/coarse pointers, and rendering is restricted to tiles intersecting measured glyph bounds. `IntersectionObserver` and `visibilitychange` stop the animation off-screen or in a hidden document. |
+| Theme transition | The navbar serializes theme changes and computes a circle radius from the toggle to the farthest viewport corner. `document.startViewTransition()` performs the reveal when available; otherwise a temporary cover uses the Web Animations API. A `site-theme-change` event invalidates consumers such as the background renderer. |
+| ASCII background | `CyberBackground.astro` mounts one fixed `100lvh` canvas at `z-index: -1` (body is isolated). `cyber-background/core.js` owns a square cell grid (14 px desktop, 12 px coarse pointers at 30 fps and DPR ≤ 1.5, backing store capped at 6 M px), the loop, pointer and touch input, a decaying wake under the cursor or finger, and theme colours. The first `ResizeObserver` callback performs the only initial measurement. Desktop draws at 30 fps while idle and 60 fps while the wake is active; glyphs are blitted from a per-colour atlas rebuilt on resize and theme change. Elements marked `data-background-quiet` (hero eyebrow, About copy, 404 description) dim the glyphs under them to ≤ 0.2 alpha so text keeps its contrast; a still frame is redrawn on scroll under reduced motion for the same reason. It pauses while hidden and draws one settled frame under reduced motion. Touch is followed through passive `touchstart`/`touchmove` listeners because touch pointer events are cancelled once scrolling begins. A scene from `scenes/` writes per-cell intensity and heat; a `glyphs.js` preset maps intensity to characters (optionally on shaded tiles with dense glyphs knocked out) and heat to teal and faster scrambling. `siteConfig.background` selects both; the default is `swarm` with the full printable-ASCII `ascii` preset. The `swarm` scene sums metaball nodes chained into ragged streaks that drift along a flow field at half tempo, flee the cursor or finger, and scatter from mouse-click rings; clicks on interactive elements are ignored. |
 | Project deck | Astro precomputes each card's translation, rotation, and stacking layer as CSS custom properties. The controller maintains one clamped active index and synchronizes `inert`, `aria-hidden`, `aria-current`, control disabled states, position text, and the live region in one update pass. |
 | Deck gestures | Pointer movement is direction-locked after a 7 px threshold. Horizontal drag is capped at 110 px, receives resistance at either boundary, and changes cards after 48 px. Pointer capture keeps the gesture coherent; the following click is suppressed so a completed swipe cannot activate a card link. |
 | Image gallery | Frames form a vertical scroll-snap track inside the fixed media viewport. Controls call `scrollTo()` using frame offsets, while passive scroll events schedule a single control-state calculation per animation frame. An observer threshold sequence arms the delayed scroll hint only when enough of the gallery is visible. |
@@ -124,9 +117,9 @@ overlay-scrollbar platforms. Astro generates candidates at 240, 320, 400, 480, 5
 - Theme-aware canvas output depends on the `site-theme-change` event and the shared
   tokens in `src/styles/global.css`; changing theme state without dispatching the
   event leaves the existing canvas composite stale.
-- Reduced-motion handling is functional, not cosmetic: loaders exit directly,
-  galleries use immediate scrolling, heading substitution stops, and continuous
-  canvas animation resolves to a static frame.
+- Reduced-motion handling is functional, not cosmetic: galleries use immediate
+  scrolling, heading substitution stops, and continuous canvas animation resolves
+  to a static frame.
 - `bun run check:public` validates the hand-maintained sitemap, robots file, response
   headers, web manifest, favicon/social-image formats and dimensions, and LLM
   index against `siteConfig` and the current project records. Metadata, URL,
@@ -171,9 +164,13 @@ compiler API; TypeScript 7.0 cannot run that check. Remove the Dependabot ignore
 after [Astro's native-compiler support](https://github.com/withastro/astro/pull/17852)
 is available in the installed checker. TypeScript 6 minor and patch updates remain enabled.
 
-Desktop project copy keeps enough space for the different fallback-font metrics
-on Linux and Windows. Its named, keyboard-focusable scroll region preserves access
-when content still exceeds the available space.
+Raleway and Open Sans are self-hosted variable WOFF2 files (latin and latin-ext
+subsets selected by `unicode-range`) in `src/assets/fonts/`, so every visitor gets
+the same metrics. Every stack names a metric-matched local Arial face
+(`size-adjust` and ascent/descent overrides measured against the web fonts), so the
+`font-display: swap` exchange does not rewrap or shift text; the Raleway latin file
+is preloaded because it renders the LCP hero name. Desktop project copy still keeps a named, keyboard-focusable
+scroll region for content that exceeds the available space.
 Footer language links include their visible `PL` or `EN` code in the accessible
 name, so speech-input labels match the controls under current accessibility rules.
 
@@ -184,9 +181,8 @@ does not currently support automatic security-update PRs for Bun; the CI audit g
 remains necessary.
 
 Security overrides in `package.json` pin patched transitive dependencies when the
-locked upstream packages still resolve vulnerable versions. The current overrides
-include `fast-uri` 3.1.9, `http-cache-semantics` 4.3.0, `smol-toml` 1.9.1,
-`undici` 8.12.2, `sharp` 0.35.5, `source-map-js` 1.2.2, and `zod` 4.6.6.
+locked upstream packages still resolve vulnerable versions. See `overrides` in
+`package.json` for the current pins.
 Remove an override once the upstream dependency graph resolves a fixed version
 without it. LinkedIn uses a generic external-link icon because Simple Icons
 removed its LinkedIn export; the link's accessible name and destination are unchanged.

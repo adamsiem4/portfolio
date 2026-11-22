@@ -1,6 +1,5 @@
 ---
 import { ChevronDown } from '@lucide/astro';
-import KineticText from './KineticText.astro';
 import { useTranslations } from '../i18n/ui.js';
 
 const t = useTranslations(Astro.url);
@@ -10,7 +9,7 @@ const eyebrowCharacters = Array.from(eyebrowText);
 
 <section class="hero" id="home" aria-labelledby="hero-title" tabindex="-1">
 	<div class="hero__content">
-		<p class="hero__eyebrow">
+		<p class="hero__eyebrow" data-background-quiet>
 			<span class="hero__eyebrow-accessible">{eyebrowText}</span>
 			<span class="hero__eyebrow-letters" aria-hidden="true" data-eyebrow-repel>
 				{eyebrowCharacters.map((character) => (
@@ -21,7 +20,7 @@ const eyebrowCharacters = Array.from(eyebrowText);
 			</span>
 		</p>
 		<h1 class="hero__title" id="hero-title">
-			<KineticText text="Adam Salicki" />
+			Adam Salicki
 		</h1>
 	</div>
 
@@ -92,6 +91,18 @@ const eyebrowCharacters = Array.from(eyebrowText);
 		clip-path: inset(50%);
 		white-space: nowrap;
 		border: 0;
+	}
+
+	.hero__title {
+		padding-block: clamp(3rem, 12vw, 7.5rem);
+		color: var(--color-text);
+		font-size: clamp(2.75rem, 13vw, 11rem);
+		font-weight: 800;
+		line-height: 0.95;
+		text-align: center;
+		/* No nowrap: enlarged text spacing must wrap between the words instead of
+		   scrolling the page; balance keeps a wrapped name visually even. */
+		text-wrap: balance;
 	}
 
 	.hero__scroll-magnetic {

@@ -14,7 +14,7 @@ const AboutCopy = getLocale(Astro.url) === 'en' ? AboutEn : AboutPl;
 			<ScrambleHeading id="about-title" text={t('about.title')} />
 		</header>
 
-		<div class="about__copy">
+		<div class="about__copy" data-background-quiet>
 			<AboutCopy />
 		</div>
 	</div>
@@ -27,7 +27,6 @@ const AboutCopy = getLocale(Astro.url) === 'en' ? AboutEn : AboutPl;
 		display: grid;
 		align-items: start;
 		padding: clamp(5rem, 14vw, 9rem) var(--page-gutter);
-		border-block-start: 1px solid var(--glass-border);
 		scroll-margin-top: 5rem;
 	}
 
@@ -36,6 +35,10 @@ const AboutCopy = getLocale(Astro.url) === 'en' ? AboutEn : AboutPl;
 		width: min(100%, 72rem);
 		margin-inline: auto;
 		gap: clamp(2.5rem, 8vw, 5rem);
+	}
+
+	.about__heading {
+		container-type: inline-size;
 	}
 
 	.about__copy {
