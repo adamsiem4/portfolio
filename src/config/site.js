@@ -7,6 +7,7 @@ const inlineScriptHashes = [
 	'eJ442JN5t2jwAfaaaIStTDjuHrLPAoZujsHJ/zWkSdY=',
 	'kxD2YTjpk0HQmjGcQYGGyHG98PGO01JHoYLvqL+2Flc=',
 	'ZsXt8ZZR5Tl+lG6GcPMFgJtaUGbZqUGzC/f7AeeqiW4=',
+	'GjkzyI9K+xTzEG6J7fuSIRNG2WbTrr0+qOFkqoiqHDk=',
 ];
 
 // Astro emits small module bundles inline and deliberately inlines component CSS.

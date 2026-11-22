@@ -33,7 +33,7 @@ const socialLinks = [
 			<div class="contact__methods">
 				<span class="contact__magnetic" data-magnetic data-magnetic-max="10">
 					<a
-						class="contact__email"
+						class="contact__email glass-surface"
 						href={emailHref}
 						aria-label={t('contact.email', { email })}
 						data-magnetic-target
@@ -49,7 +49,7 @@ const socialLinks = [
 					{socialLinks.map(({ label, href, brandPath }) => (
 						<span class="contact__magnetic" data-magnetic data-magnetic-max="8">
 							<a
-								class="contact__social-link"
+								class="contact__social-link glass-surface"
 								href={href}
 								aria-label={label}
 								title={label}
@@ -88,6 +88,18 @@ const socialLinks = [
 		background: var(--color-accent);
 		color: #ffffff;
 		scroll-margin-top: 0;
+		/* Contact is teal with white content in both themes, so its glass controls keep
+		   the dark-theme tokens: the light theme's brighter material dropped white text
+		   to 3.5:1 over teal. */
+		--glass-material: rgba(255, 255, 255, 0.07);
+		--glass-material-hover: rgba(255, 255, 255, 0.13);
+		--glass-border: rgba(255, 255, 255, 0.14);
+		--glass-border-hover: rgba(255, 255, 255, 0.35);
+		--glass-highlight: rgba(255, 255, 255, 0.2);
+		--glass-highlight-hover: rgba(255, 255, 255, 0.4);
+		--glass-inset-bottom: rgba(255, 255, 255, 0.05);
+		--glass-shadow: rgba(0, 0, 0, 0.24);
+		--glass-backdrop: blur(6px) saturate(140%);
 	}
 
 	.contact__inner {
@@ -138,12 +150,9 @@ const socialLinks = [
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		border: 1px solid rgba(255, 255, 255, 0.32);
-		background: rgba(255, 255, 255, 0.08);
-		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		color: #ffffff;
 		transform: translate3d(0, 0, 0);
 		will-change: transform;
-		transition: background-color 180ms ease;
 	}
 
 	.contact__magnetic {
@@ -184,11 +193,6 @@ const socialLinks = [
 		width: 3.5rem;
 		aspect-ratio: 1;
 		border-radius: 50%;
-	}
-
-	.contact__magnetic:hover .contact__email,
-	.contact__magnetic:hover .contact__social-link {
-		background: rgba(255, 255, 255, 0.14);
 	}
 
 	.contact__brand-icon {
